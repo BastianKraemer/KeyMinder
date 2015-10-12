@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<ApplicationProfile name="Plink_Socks" version="1.0">
+
+	<Configuration id="default" execute="${sshtools.plinkpath}" require="${sshtools.plinkpath}; ${socks_ssh_host}; ${socks_proxyport}" >
+		<!-- This profile will be started without an assigned tree node. The following variables will be preset by the "SSH-Tools Module" -->
+		<!-- Available variables: "${socks_ssh_host}", "${socks_ssh_port}", "${socks_ssh_user}", "${socks_ssh_password}", ${socks_proxyport} -->
+		
+		<!-- The variable "mypw" will only created if there is a given user name, later the option "-pw" will be only set if "${mypw}" is available -->
+		<var name="mypw" if="${socks_ssh_user}" defaultValue="${socks_ssh_password}" ignoreOn="."/>
+		<option>-ssh</option>
+		<option>-N</option>
+		<option>-D</option>
+		<option>${socks_proxyport}</option>
+		<option if="${socks_ssh_port}">-P</option>
+		<option if="${socks_ssh_port}">${socks_ssh_port}</option>
+		<option if="${mypw}">-pw</option>
+		<option if="${mypw}">${mypw}</option>
+		<option if="${socks_ssh_user}">-l</option>
+		<option if="${socks_ssh_user}">${socks_ssh_user}</option>
+		<option>${socks_ssh_host}</option>
+	</Configuration>
+</ApplicationProfile>
