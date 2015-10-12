@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<ApplicationProfile name="PuTTY" socks="using_socks" icon="icon_bash" version="1.0">
+
+	<Configuration id="default" execute="${sshtools.puttypath}" require="${sshtools.puttypath}; ${ssh_host}; ${ssh_port}" >
+		<var name="myuser" defaultValue="${ssh_user}" alternative="${sshtools.defaultuser}" ignoreOn="." />
+		<var name="mypw" if="${myuser}" defaultValue="${ssh_password}" alternative="${sshtools.defaultpassword}" ignoreOn="."/>
+		<option>-ssh</option>
+		<option if="${ssh_x11}">-X</option>
+		<option if="${myuser}">-l</option>
+		<option if="${myuser}">${myuser}</option>
+		<option>${ssh_host}</option>
+		<option>-P</option>
+		<option>${ssh_port}</option>
+		<option if="${ssh_portforwarding}" parameterSeperator="\n">${ssh_portforwarding}</option>
+		<option if="${mypw}">-pw</option>
+		<option if="${mypw}">${mypw}</option>
+	</Configuration>
+	
+	<Configuration id="using_socks" execute="${sshtools.puttypath}" require="${sshtools.puttypath}; ${ssh_host}; ${ssh_port}; ${putty_sessionname}" >
+		<var name="myuser" defaultValue="${ssh_user}" alternative="${sshtools.defaultuser}" ignoreOn="." />
+		<var name="mypw" if="${myuser}" defaultValue="${ssh_password}" alternative="${sshtools.defaultpassword}" ignoreOn="."/>
+		<option>-ssh</option>
+		<option if="${ssh_x11}">-X</option>
+		<option>-load</option>
+		<option>${putty_sessionname}</option>
+		<option if="${myuser}">-l</option>
+		<option if="${myuser}">${myuser}</option>
+		<option>${ssh_host}</option>
+		<option>-P</option>
+		<option>${ssh_port}</option>
+		<option if="${ssh_portforwarding}" parameterSeperator="\n">${ssh_portforwarding}</option>
+		<option if="${mypw}">-pw</option>
+		<option if="${mypw}">${mypw}</option>
+	</Configuration>
+
+</ApplicationProfile>

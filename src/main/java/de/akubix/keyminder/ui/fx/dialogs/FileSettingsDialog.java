@@ -1,0 +1,283 @@
+/*	KeyMinder
+	Copyright (C) 2015 Bastian Kraemer
+
+	FileSettingsDialog.java
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+package de.akubix.keyminder.ui.fx.dialogs;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+
+import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.Separator;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+
+public class FileSettingsDialog {
+
+	public static final double size_x = 480;
+	public static final double size_y = 540;
+	
+	private Stage me;
+	private ApplicationInstance app;
+	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI;
+	private Map<String, String> fileSettingsCopy;
+	
+	private Map<String, String> originalFileSettingsReference;
+	boolean saveSettings = false;
+	
+	public FileSettingsDialog(Stage primaryStage, ApplicationInstance instance)
+	{
+		this.app = instance;
+		this.fxUI = instance.getFxUserInterface();
+		this.originalFileSettingsReference = app.currentFile.fileSettings;
+		this.fileSettingsCopy = new HashMap<String, String>();
+
+		de.akubix.keyminder.lib.Tools.hashCopy(app.currentFile.fileSettings, fileSettingsCopy);
+		
+		me = new Stage();
+		me.setTitle(ApplicationInstance.APP_NAME + " - " + fxUI.getLocaleBundleString("filesettings.title"));
+		me.initOwner(primaryStage);
+	}
+	
+	/**
+	 * This mehtod shows the FileSettingsDialig an will return if the has saved the settings or not.
+	 * Important: ALL EVENTS WILL BE FIRED AUTOMATICALLY
+	 * @return TRUE if the user has saved the new changes, FALSE if not
+	 */
+	public boolean show()
+	{
+		BorderPane root = new BorderPane();
+		TabPane tabs = new TabPane();
+
+		// Allgemeine Einstellungen
+		if(app.currentFile == null){return false;}
+	   
+		tabs.getTabs().add(createSecuritySettingsTab());
+		
+		app.fireEvent(SettingsEvent.OnFileSettingsDialogOpened, tabs, fileSettingsCopy);
+		root.setCenter(tabs);
+	   
+		HBox bottom = new HBox(4);
+		
+		Button ok = new Button(fxUI.getLocaleBundleString("filesettings.button_save"));
+		ok.setOnAction(new EventHandler<ActionEvent>() {
+	   	 
+			@Override
+			public void handle(ActionEvent event) {
+		 
+				de.akubix.keyminder.lib.Tools.hashCopy(fileSettingsCopy, originalFileSettingsReference);
+
+				app.fileSettingsHasBeenUpdated();
+				
+				saveSettings = true;
+				me.close();
+				
+			}
+		});
+		
+		Button cancel = new Button(fxUI.getLocaleBundleString("cancel"));
+		cancel.setOnAction(new EventHandler<ActionEvent>() {
+	   	 
+			@Override
+			public void handle(ActionEvent event) {
+				saveSettings = false;
+				me.close();
+			}
+		});
+		
+		ok.setMinWidth(120);
+		cancel.setMinWidth(120);
+		
+		bottom.setAlignment(Pos.CENTER_RIGHT);
+		bottom.getChildren().add(ok);
+		bottom.getChildren().add(cancel);
+		   
+		cancel.setCancelButton(true);
+		ok.setDefaultButton(true);
+		 
+		root.setBottom(bottom); 
+		BorderPane.setMargin(bottom, new Insets(8,8,8,8));
+	   
+		Scene myScene = new Scene(root, size_x, size_y);
+		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
+		
+		me.setScene(myScene);
+		 
+		//Set position of second window, related to primary window.
+		me.setResizable(false);
+		me.initModality(Modality.APPLICATION_MODAL);
+		me.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		me.showAndWait();
+		
+		return saveSettings;
+		
+	}
+	
+	private Tab createSecuritySettingsTab()
+	{
+		Tab settings_security = new Tab(fxUI.getLocaleBundleString("filesettings.tabs.security.title"));
+		settings_security.setClosable(false);
+
+		Button setEncryptFile = new Button(fxUI.getLocaleBundleString("filesettings.security.button_enable_encryption"));
+		Button setNotEncryptFile = new Button(fxUI.getLocaleBundleString("filesettings.security.button_disable_encryption"));
+
+		final Separator passwordHintSeparator = new Separator(Orientation.HORIZONTAL);
+		passwordHintSeparator.setPadding(new Insets(32,0,0,0));
+		final Label passwordHintLabel = new Label(fxUI.getLocaleBundleString("filesettings.security.label_password_hint"));
+		final TextField passwordHintTextField = new TextField(app.currentFile.fileAttributes.containsKey("PasswordHint") ? app.currentFile.fileAttributes.get("PasswordHint") : "");
+
+		passwordHintTextField.setOnKeyReleased((event) -> app.currentFile.fileAttributes.put("PasswordHint", passwordHintTextField.getText()));
+
+		Consumer<Boolean> passwordHintVisibility = (value) -> {
+			passwordHintSeparator.setVisible(value);
+			passwordHintLabel.setVisible(value);
+			passwordHintTextField.setVisible(value);
+		};
+
+		passwordHintVisibility.accept(app.currentFile.isEncrypted());
+
+		if(app.currentFile.isEncrypted())
+		{
+			setEncryptFile.setText(fxUI.getLocaleBundleString("filesettings.security.button_changepassword"));
+		}
+		else
+		{
+			setNotEncryptFile.setDisable(true);
+		}
+
+		setEncryptFile.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+					boolean wasEncrypted = app.currentFile.isEncrypted();
+					boolean enable = !wasEncrypted;
+					
+					if(!enable)
+					{
+						String currentPw = InputDialog.show(fxUI, fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.headline"), fxUI.getLocaleBundleString("filesettings.security.enter_current_password"), "", true);
+						enable = app.currentFile.getEncryptionManager().checkPassword(currentPw.toCharArray());
+					}
+
+					if(enable)
+					{
+						if(app.currentFile.getEncryptionManager() == null){app.currentFile.encryptFile(new de.akubix.keyminder.core.encryption.EncryptionManager(true));}
+						
+						if(app.currentFile.getEncryptionManager().requestPasswordInputWithConfirm(app,
+							fxUI.getLocaleBundleString("filesettings.security.button_changepassword"),
+							fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.text"),
+							fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.conformtext")))
+						{
+							// New password has been set
+							setNotEncryptFile.setDisable(false);
+							setEncryptFile.setText(fxUI.getLocaleBundleString("filesettings.security.button_changepassword"));
+							app.saveFile();
+						}
+						else
+						{
+							// Operation canceled
+							if(wasEncrypted)
+							{
+								// Undo everything -> delete the created encryption manager
+								app.currentFile.disableEncryption();
+							}
+							fxUI.alert(AlertType.INFORMATION, ApplicationInstance.APP_NAME, fxUI.getLocaleBundleString("filesettings.security.wrong_password_notification_title"), fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.passwords_not_equal"));
+						}
+					}
+					else
+					{
+						fxUI.alert(AlertType.INFORMATION, ApplicationInstance.APP_NAME, fxUI.getLocaleBundleString("filesettings.security.wrong_password_notification_title"), fxUI.getLocaleBundleString("filesettings.security.wrong_password"));
+					}
+					passwordHintVisibility.accept(app.currentFile.isEncrypted());
+				}
+		});
+		
+		setNotEncryptFile.setOnAction(new EventHandler<ActionEvent>() {
+			@Override
+			public void handle(ActionEvent event) {
+		 
+				if(app.currentFile.isEncrypted())
+				{
+					Alert alert = new Alert(AlertType.CONFIRMATION);
+					alert.setTitle(ApplicationInstance.APP_NAME);
+					alert.setHeaderText(fxUI.getLocaleBundleString("filesettings.security.confirm_disable_encryption.title"));
+					alert.setContentText(fxUI.getLocaleBundleString("filesettings.security.confirm_disable_encryption.message"));
+					
+					ButtonType buttonYes = new ButtonType(fxUI.getLocaleBundleString("yes"), ButtonData.YES);
+					ButtonType buttonNo = new ButtonType(fxUI.getLocaleBundleString("no"), ButtonData.NO);
+					ButtonType buttonCancel = new ButtonType(fxUI.getLocaleBundleString("cancel"), ButtonData.CANCEL_CLOSE);
+					
+					alert.getButtonTypes().setAll(buttonYes, buttonNo, buttonCancel);
+					
+					Stage s = (Stage) alert.getDialogPane().getScene().getWindow();
+					s.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+					s.initOwner(me);
+					
+					if(alert.showAndWait().get() == buttonYes)
+					{
+						String currentPw = InputDialog.show(fxUI, fxUI.getLocaleBundleString("filesettings.security.confirm_disable_encryption.title"), fxUI.getLocaleBundleString("filesettings.security.enter_current_password"), "", true);
+						
+						if(app.currentFile.getEncryptionManager().checkPassword(currentPw.toCharArray()))
+						{
+							app.currentFile.disableEncryption();
+							setNotEncryptFile.setDisable(true);
+							setEncryptFile.setText(fxUI.getLocaleBundleString("filesettings.security.button_enable_encryption"));
+						}
+						else
+						{
+							fxUI.alert(AlertType.WARNING, ApplicationInstance.APP_NAME, fxUI.getLocaleBundleString("filesettings.security.wrong_password_notification_title"), fxUI.getLocaleBundleString("filesettings.security.wrong_password"));
+						}
+					}
+					passwordHintVisibility.accept(app.currentFile.isEncrypted());
+				}	 	
+			}
+		});
+		
+		VBox vbox = new VBox(8);
+		vbox.setPadding(new Insets(4, 8, 0, 8));
+		Label title = new Label(fxUI.getLocaleBundleString("filesettings.tabs.security.headline"));
+		title.getStyleClass().add("h2");
+   
+		HBox hbox = new HBox(8);
+		hbox.setAlignment(Pos.TOP_CENTER);
+		hbox.getChildren().addAll(setEncryptFile, setNotEncryptFile);
+		vbox.getChildren().addAll(title, hbox, passwordHintSeparator, passwordHintLabel, passwordHintTextField);
+		
+		settings_security.setContent(vbox);
+		return settings_security;
+	}
+	
+}

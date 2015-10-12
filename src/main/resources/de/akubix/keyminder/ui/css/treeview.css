@@ -1,0 +1,11 @@
+.strikeout .text {
+	-fx-strikethrough: true;
+}
+
+.bold .text {
+	-fx-font-weight: bold;
+}
+
+.italic .text {
+	-fx-font-style: italic;
+}

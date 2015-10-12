@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<KeyMind version="1.1.0">
+    <configuration/>
+    <data>
+        <settings/>
+        <tree>
+            <Node color="" id="1" modified="1443013064487" text="My Passwords">
+                <Node color="" created="1443013014387" id="2" modified="1443013069359" text="E-Mail">
+                    <Node color="" created="1443013038859" id="6" modified="1443013126554" password="secret_password" text="example@somedomain.com" username="example"/>
+                    <Node color="" created="1443013168047" id="9" modified="1443013186435" password="other_secret_password" text="example@anotherdomain.org" username="example"/>
+                </Node>
+                <Node color="" created="1443013030715" id="3" modified="1443013201716" text="Node2">
+                    <Node color="" created="1443013197569" id="11" modified="1443013205851" text="Node2_1"/>
+                    <Node color="" created="1443013197569" id="10" modified="1443013210564" text="Node2_2"/>
+                    <Node color="" created="1443013220770" id="13" modified="1443013220770" text="Node2_3"/>
+                    <Node color="" created="1443013236010" id="16" modified="1443013236010" text="Node2_4"/>
+                </Node>
+                <Node color="" created="1443013032941" id="4" modified="1443013032941" text="Node 3">
+                    <Node color="" created="1443013242554" id="17" modified="1443013242554" text="Node3_1"/>
+                    <Node color="" created="1443013245699" id="18" modified="1443013245699" text="Node3_2"/>
+                    <Node color="" created="1443013248514" id="19" modified="1443013248514" text="Node3_3"/>
+                    <Node color="" created="1443013257665" email="HelloWorld@example.com" etc="Hello World" id="20" linked_nodes="6" modified="1443013377008" password="World" text="LinkTest" username="Hello"/>
+                </Node>
+            </Node>
+        </tree>
+    </data>
+</KeyMind>

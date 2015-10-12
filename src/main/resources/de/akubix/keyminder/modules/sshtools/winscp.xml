@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ApplicationProfile name="WinSCP" version="1.0">
+	<Configuration id="default" execute="${sshtools.winscppath}" require="${sshtools.winscppath}; ${ssh_host};" version="1.0">
+		<var name="myuser" defaultValue="${ssh_user}" alternative="${sshtools.defaultuser}" ignoreOn="." />
+		<var name="mypw" if="${myuser}" defaultValue="${ssh_password}" alternative="${sshtools.defaultpassword}" ignoreOn="." />
+
+		<!-- the following lines will create a variable called "myhost" -->
+		<var name="myhost_login" defaultValue="${ssh_host}" />
+		<!-- If there is a username (${myuser}) then ${myhost} will be "${myuser}@${ssh_host}", otherwise the value won't be changed-->
+		<var name="myhost_login" if="${myuser}" defaultValue="${myuser}@${ssh_host}" />
+		<!-- If there is a password (${mypw}), which is only available if there is also a username (see line 3) then ... -->
+		<!-- "${myhost}" will be "${myuser}:${mypw}@${ssh_host}", otherwise the value won't be changed -->
+		<var name="myhost_login" if="${mypw}" defaultValue="${myuser}:${mypw}@${ssh_host}" />
+
+		<!-- Now the port (if available) will be added to the hostname, therfor a new vairable will be created -->
+		<var name="myhost" defaultValue="${myhost_login}" />
+		<!-- The default value of "${myhost}" is "${myhost_login}", if "${ssh_port}" is available it will be overwritten to "${myhost}:${ssh_port}" -->
+		<var name="myhost" if="${ssh_port}" defaultValue="${myhost}:${ssh_port}" alernative="${myhost_login}" />
+
+		<option>sftp://${myhost}</option>
+		<!--<option if="${winscp_inifile}">/ini=${winscp_inifile}</option>--> <!-- The variable ${winscp_inifile} should contain the path to the ini file -->
+	</Configuration>
+</ApplicationProfile>
