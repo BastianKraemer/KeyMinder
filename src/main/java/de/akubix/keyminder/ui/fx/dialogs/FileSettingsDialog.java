@@ -18,11 +18,13 @@
 */
 package de.akubix.keyminder.ui.fx.dialogs;
 
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -32,9 +34,10 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Tab;
@@ -50,7 +53,7 @@ import javafx.stage.Stage;
 public class FileSettingsDialog {
 
 	public static final double size_x = 480;
-	public static final double size_y = 540;
+	public static final double size_y = 520;
 	
 	private Stage me;
 	private ApplicationInstance app;
@@ -157,23 +160,57 @@ public class FileSettingsDialog {
 		Button setNotEncryptFile = new Button(fxUI.getLocaleBundleString("filesettings.security.button_disable_encryption"));
 
 		final Separator passwordHintSeparator = new Separator(Orientation.HORIZONTAL);
-		passwordHintSeparator.setPadding(new Insets(32,0,0,0));
 		final Label passwordHintLabel = new Label(fxUI.getLocaleBundleString("filesettings.security.label_password_hint"));
 		final TextField passwordHintTextField = new TextField(app.currentFile.fileAttributes.containsKey("PasswordHint") ? app.currentFile.fileAttributes.get("PasswordHint") : "");
 
-		passwordHintTextField.setOnKeyReleased((event) -> app.currentFile.fileAttributes.put("PasswordHint", passwordHintTextField.getText()));
+		passwordHintTextField.setOnKeyReleased((event) -> {
+				app.currentFile.fileAttributes.put("PasswordHint", passwordHintTextField.getText());
+				app.getTree().setTreeChangedStatus(true);
+			});
 
-		Consumer<Boolean> passwordHintVisibility = (value) -> {
+		// select encryption cipher
+
+		final Separator cipherSeparator = new Separator(Orientation.HORIZONTAL);
+		final Label cipherLabel = new Label(fxUI.getLocaleBundleString("filesettings.security.label_cipher_selection"));
+		final ComboBox<String> cipherSelection = new ComboBox<>();
+		for(String cipherName: EncryptionManager.getCipherAlgorithms()){
+			if(!cipherName.equals("None")){
+				cipherSelection.getItems().add(cipherName);
+			}
+		}
+		cipherSelection.setMaxWidth(Double.MAX_VALUE);
+
+		cipherSelection.setOnAction((event) -> {
+				try {
+					app.currentFile.getEncryptionManager().setCipher(cipherSelection.getSelectionModel().getSelectedItem());
+				} catch (NoSuchAlgorithmException e) {
+					app.alert("ERROR: Cannot change encryption algorithm. The cipher does not exist."); // Should never occur.
+				}
+			});
+
+		// info label
+
+		final Separator infoLabelSeparator = new Separator(Orientation.HORIZONTAL);
+		final Label infoLabel = new Label(fxUI.getLocaleBundleString("filesettings.security.infolabel"));
+		infoLabel.setWrapText(true);
+		infoLabel.getStyleClass().add("borderedArea");
+
+		Consumer<Boolean> changeElementVisibility = (value) -> {
 			passwordHintSeparator.setVisible(value);
 			passwordHintLabel.setVisible(value);
 			passwordHintTextField.setVisible(value);
+			cipherSelection.setVisible(value);
+			cipherSeparator.setVisible(value);
+			cipherLabel.setVisible(value);
+			infoLabelSeparator.setVisible(value);
 		};
 
-		passwordHintVisibility.accept(app.currentFile.isEncrypted());
+		changeElementVisibility.accept(app.currentFile.isEncrypted());
 
 		if(app.currentFile.isEncrypted())
 		{
 			setEncryptFile.setText(fxUI.getLocaleBundleString("filesettings.security.button_changepassword"));
+			cipherSelection.getSelectionModel().select(app.currentFile.getEncryptionManager().getCipher().getCipherName());
 		}
 		else
 		{
@@ -204,6 +241,7 @@ public class FileSettingsDialog {
 							// New password has been set
 							setNotEncryptFile.setDisable(false);
 							setEncryptFile.setText(fxUI.getLocaleBundleString("filesettings.security.button_changepassword"));
+							cipherSelection.getSelectionModel().select(app.currentFile.getEncryptionManager().getCipher().getCipherName());
 							app.saveFile();
 						}
 						else
@@ -221,7 +259,7 @@ public class FileSettingsDialog {
 					{
 						fxUI.alert(AlertType.INFORMATION, ApplicationInstance.APP_NAME, fxUI.getLocaleBundleString("filesettings.security.wrong_password_notification_title"), fxUI.getLocaleBundleString("filesettings.security.wrong_password"));
 					}
-					passwordHintVisibility.accept(app.currentFile.isEncrypted());
+					changeElementVisibility.accept(app.currentFile.isEncrypted());
 				}
 		});
 		
@@ -261,7 +299,7 @@ public class FileSettingsDialog {
 							fxUI.alert(AlertType.WARNING, ApplicationInstance.APP_NAME, fxUI.getLocaleBundleString("filesettings.security.wrong_password_notification_title"), fxUI.getLocaleBundleString("filesettings.security.wrong_password"));
 						}
 					}
-					passwordHintVisibility.accept(app.currentFile.isEncrypted());
+					changeElementVisibility.accept(app.currentFile.isEncrypted());
 				}	 	
 			}
 		});
@@ -274,7 +312,14 @@ public class FileSettingsDialog {
 		HBox hbox = new HBox(8);
 		hbox.setAlignment(Pos.TOP_CENTER);
 		hbox.getChildren().addAll(setEncryptFile, setNotEncryptFile);
-		vbox.getChildren().addAll(title, hbox, passwordHintSeparator, passwordHintLabel, passwordHintTextField);
+		vbox.getChildren().addAll(title, hbox, passwordHintSeparator, passwordHintLabel, passwordHintTextField,
+								  cipherSeparator, cipherLabel, cipherSelection,
+								  infoLabelSeparator, infoLabel);
+
+		final Insets defaultMargin = new Insets(8,0,8,0);
+		VBox.setMargin(passwordHintSeparator, defaultMargin);
+		VBox.setMargin(cipherSeparator, defaultMargin);
+		VBox.setMargin(infoLabelSeparator, defaultMargin);
 		
 		settings_security.setContent(vbox);
 		return settings_security;

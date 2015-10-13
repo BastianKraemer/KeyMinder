@@ -24,6 +24,7 @@ import java.lang.reflect.Constructor;
 import java.net.JarURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -1574,6 +1575,27 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 							out.print("\n\nKnown file extensions:\n");
 							instance.storageManager.forEachKnownExtension((extension, assignedType) -> out.println(String.format("%-16s\t%s", extension, assignedType)));
 							return "";
+
+						case "set-cipher":
+							if(currentFile != null){
+								if(args.length != 2){println("Usage: file set-cipher [cipher name]\n"); return "";}
+								try {
+									if(args[1].toLowerCase().equals("none")){
+										out.println("Please use the 'passwd reset' to disable the encryption of your password file.");
+										return "";
+									}
+									instance.currentFile.getEncryptionManager().setCipher(args[1]);
+									out.printf("Encryption alorithm has been changed to '%s'\nPlease save your password file to apply this change.", args[1]);
+									return "ok";
+								} catch (NoSuchAlgorithmException e) {
+									out.printf("Unknown encryption algorithm: '%s'.", args[1]);
+									return "cipher not found";
+								}
+							}
+							else{
+								out.println("No file opened.");
+								return "";
+							}
 					}
 				}
 
@@ -1583,9 +1605,10 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 				"  file create		to create a new file.\n" +
 				"  file info		to show the currently opened password file.\n" +
 				"  file open 		to open a passowrd file.\n" +
-				"  file save		to write all cghanges to your harddisk.\n" +
+				"  file save		to write all changes to your harddisk.\n" +
 				"  file close		to close the currently opened password file.\n" +
-				"  file types		to print a list of all supported file types.\n");
+				"  file types		to print a list of all supported file types.\n"
+				+ "file set-cipher	to change the encryption algorithm of your file");
 		
 		provideNewCommand("module", new Command() {
 			@Override
