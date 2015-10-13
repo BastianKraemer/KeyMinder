@@ -1676,7 +1676,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 		b.setOnAction((event) -> {
 			TreeNode node = getSelectedTreeNode();
-			if(node.hasAttribute(de.akubix.keyminder.core.ApplicationInstance.NODE_ATTRIBUTE_FAVORITE_NODE))
+			if(node.hasAttribute(ApplicationInstance.NODE_ATTRIBUTE_FAVORITE_NODE))
 			{
 				app.removeFavoriteNode(node);
 			}
@@ -1815,20 +1815,22 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	@Override
 	public void alert(String text) {
 		if(isFXThread()){
-			alert(AlertType.INFORMATION, de.akubix.keyminder.core.ApplicationInstance.APP_NAME, null, text);
+			alert(AlertType.INFORMATION, "", null, text);
 		}
 		else{
-			runAsFXThread(() -> {alert(AlertType.INFORMATION, de.akubix.keyminder.core.ApplicationInstance.APP_NAME, null, text);});
+			runAsFXThread(() -> {alert(AlertType.INFORMATION, "", null, text);});
 		}
 	}
 	
 	@Override
 	public void alert(AlertType type, String title, String headline, String contentText){
+		final String alertTile = title.equals("") ? ApplicationInstance.APP_NAME : title;
+
 		if(isFXThread()){
-			showAlert(type, de.akubix.keyminder.core.ApplicationInstance.APP_NAME, headline, contentText);
+			showAlert(type, alertTile, headline, contentText);
 		}
 		else{
-			runAsFXThread(() -> {showAlert(type, de.akubix.keyminder.core.ApplicationInstance.APP_NAME, headline, contentText);});
+			runAsFXThread(() -> {showAlert(type, alertTile, headline, contentText);});
 		}
 	}
 	
