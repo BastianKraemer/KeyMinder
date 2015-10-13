@@ -26,6 +26,7 @@ import java.util.function.Consumer;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
+import de.akubix.keyminder.lib.gui.StyleSelector;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -283,6 +284,7 @@ public class FileSettingsDialog {
 					Stage s = (Stage) alert.getDialogPane().getScene().getWindow();
 					s.getIcons().add(new Image(ApplicationInstance.APP_ICON));
 					s.initOwner(me);
+					StyleSelector.assignDefaultStylesheet(s.getScene());
 					
 					if(alert.showAndWait().get() == buttonYes)
 					{

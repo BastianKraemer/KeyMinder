@@ -33,6 +33,7 @@ import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
 import de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler;
 import de.akubix.keyminder.lib.gui.ImageSelector;
+import de.akubix.keyminder.lib.gui.StyleSelector;
 import de.akubix.keyminder.lib.gui.StyleSelector.WindowSelector;
 import de.akubix.keyminder.ui.fx.dialogs.FindAndReplaceDialog;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
@@ -322,7 +323,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			// Generate the whole graphical user interface
 			buildUI(rootPanel);
 			
-			de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(scene, WindowSelector.MainWindow);
+			StyleSelector.assignStylesheets(scene, WindowSelector.MainWindow);
 			me.setScene(scene);
 			me.setMinWidth(640);
 			me.setMinHeight(400);
@@ -1839,6 +1840,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		Stage s = (Stage) msg.getDialogPane().getScene().getWindow();
 		s.getIcons().add(new Image(ApplicationInstance.APP_ICON));
 		s.initOwner(me);
+		StyleSelector.assignDefaultStylesheet(s.getScene());
 		msg.showAndWait();
 	}
 	
@@ -1945,6 +1947,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		alert.setContentText(contentText);
 		Stage s = (Stage) alert.getDialogPane().getScene().getWindow();
 		s.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		StyleSelector.assignDefaultStylesheet(alert.getDialogPane().getScene());
 		s.initOwner(me);
 		
 		ButtonType buttonYes = new ButtonType(localeBundle.getString("yes"), ButtonData.YES);
