@@ -189,24 +189,9 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 	
 	private void loadAllApplicationStarter(){
 
-		if(app.getSettingsValueAsBoolean("sshtools.enable_putty", false)){
-			AppStarter as = new AppStarter(app, this, () -> {try {
-					return XMLCore.loadDocumentFromStream(getXMLProfileInputStream("default:putty"));
-				} catch (Exception e) {
-					throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
-			}});
-			appStarterList.add(as);
-		}
+		loadDefaultApplicationStarter("PuTTY", "sshtools.enable_putty", "default:putty");
+		loadDefaultApplicationStarter("WinSCP", "sshtools.enable_winscp", "default:winscp");
 
-		if(app.getSettingsValueAsBoolean("sshtools.enable_winscp", false)){
-			AppStarter as = new AppStarter(app, this, () -> {try {
-					return XMLCore.loadDocumentFromStream(getXMLProfileInputStream("default:winscp"));
-				} catch (Exception e) {
-					return null; 
-			}});
-			appStarterList.add(as);
-		}
-		
 		File dir = new File(app.getSettingsValue(SETTINGS_KEY_APP_PROFILES_PATH));
 		if(dir.exists()){
 			File [] files = dir.listFiles(new java.io.FilenameFilter() {
@@ -237,6 +222,24 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		}
 	}
 	
+	private void loadDefaultApplicationStarter(String name, String settings_value, String inputStreamSrc){
+		try{
+			if(app.getSettingsValueAsBoolean(settings_value, false)){
+				AppStarter as = new AppStarter(app, this, () -> {try {
+						return XMLCore.loadDocumentFromStream(getXMLProfileInputStream(inputStreamSrc));
+					} catch (Exception e) {
+						throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
+				}});
+				appStarterList.add(as);
+			}
+		}
+		catch(IllegalArgumentException e){
+			// This will occur if a built-in profile has a syntax error
+			String message = String.format("Warning: Syntax error in application profile '%s.", name);
+			if(Launcher.verbose_mode){app.alert(message);}else{app.log(message);}
+		}
+	}
+
 	private void createSocksAppStarter(){
 		// create socks application starter
 		if(app.settingsContainsKey(SETTINGS_KEY_SOCKS_ACTION)){
@@ -249,8 +252,8 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 				}});
 			}
 			catch(IllegalArgumentException e){
-				System.out.println("Exception...");
-				e.printStackTrace();
+				String message = "Warning: Syntax error in socks application profile.";
+				if(Launcher.verbose_mode){app.alert(message);}else{app.log(message);}
 				socksAppStarter = null;
 			}
 		}
