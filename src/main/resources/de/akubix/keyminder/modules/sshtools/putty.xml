@@ -37,8 +37,10 @@
 					The result of this will be -L 80:example.com:80 -L 443:example.com:443
 			-->
 			<split src="${ssh_portforwarding}" delimiter="\n" var="single_forward">
-				<option>-L</option>
-				<option>${single_forward}</option>
+				<if not_equals="${single_forward} == ''">
+					<option>-L</option>
+					<option>${single_forward}</option>
+				</if>
 			</split>
 		</if>
 
