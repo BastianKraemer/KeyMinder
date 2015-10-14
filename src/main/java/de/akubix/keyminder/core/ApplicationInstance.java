@@ -71,7 +71,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 
 	/* Static configurations variables */
 	
-	public static String APP_VERSION = "0.1";
+	public static String APP_VERSION = "0.2-SNAPSHOT";
 	public static final String APP_ICON = "/de/akubix/keyminder/images/app/AppIcon32.png";
 	public static final String APP_NAME = "KeyMinder";
 

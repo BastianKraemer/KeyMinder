@@ -3,7 +3,7 @@
 	<groupId>de.akubix.keyminder</groupId>
 	<artifactId>KeyMinder</artifactId>
 	<packaging>jar</packaging>
-	<version>0.1</version>
+	<version>0.2-SNAPSHOT</version>
 	<name>KeyMinder</name>
 	<url>http://maven.apache.org</url>
 	
