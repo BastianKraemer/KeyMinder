@@ -147,7 +147,7 @@ public class XMLCore{
 	 * @throws SAXException if the XML document could not be parsed
 	 * @throws IOException if there is any IO error
 	 */
-	public static Document loadXMLFromString(String xml) throws ParserConfigurationException, SAXException, IOException
+	public static Document loadDocumentFromString(String xml) throws ParserConfigurationException, SAXException, IOException
 	{
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
@@ -229,7 +229,12 @@ public class XMLCore{
 		return attribs;
 	}
 
-	private static boolean hasChildNodes(org.w3c.dom.Node xmlnode)
+	/**
+	 * CHecks if a node has real child nodes and not just something like a {@link Node#TEXT_NODE}
+	 * @param xmlnode the xml node that will be checked
+	 * @return {@code true} it´has child nodes, {@code false} if not
+	 */
+	public static boolean hasChildNodes(org.w3c.dom.Node xmlnode)
 	{
 		for(int i = 0; i < xmlnode.getChildNodes().getLength(); i++){
 			if(xmlnode.getChildNodes().item(i).getNodeType() == Node.ELEMENT_NODE){return true;}

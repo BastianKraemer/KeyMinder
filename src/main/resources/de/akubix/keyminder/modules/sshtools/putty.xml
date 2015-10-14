@@ -1,24 +1,64 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
-<ApplicationProfile name="PuTTY" socks="using_socks" icon="icon_bash" version="1.0">
+<ApplicationProfile name="PuTTY" socks="using_socks" icon="icon_bash" version="2.0">
 
-	<Configuration id="default" execute="${sshtools.puttypath}" require="${sshtools.puttypath}; ${ssh_host}; ${ssh_port}" >
-		<var name="myuser" defaultValue="${ssh_user}" alternative="${sshtools.defaultuser}" ignoreOn="." />
-		<var name="mypw" if="${myuser}" defaultValue="${ssh_password}" alternative="${sshtools.defaultpassword}" ignoreOn="."/>
+	<Configuration id="default" execute="${sshtools.puttypath}" require="${ssh_host}; ${ssh_port}" >
+		<!-- Do not enter this section if ${ssh_user} == "." -->
+		<if not_equals="${ssh_user} == '.'">
+			<var name="myuser">
+				<if exists="${ssh_user}" else="${sshtools.defaultuser}">${ssh_user}</if>
+			</var>
+		</if>
+
+		<!-- Do not enter this section if ${ssh_password} == "." -->
+		<if not_equals="${ssh_password} == '.'">
+			<if exists="${myuser}">
+				<var name="mypw">
+					<if exists="${ssh_password}" else="${sshtools.defaultpassword}">${ssh_password}</if>
+				</var>
+			</if>
+		</if>
+
+		<!-- Every option tag will append a new parameter to the whole command line -->
 		<option>-ssh</option>
+
+		<!-- This parameter will be added if the variable "${ssh_x11}" exists -->
 		<option if="${ssh_x11}">-X</option>
 		<option if="${myuser}">-l</option>
 		<option if="${myuser}">${myuser}</option>
 		<option>${ssh_host}</option>
 		<option>-P</option>
 		<option>${ssh_port}</option>
-		<option if="${ssh_portforwarding}" parameterSeperator="\n">${ssh_portforwarding}</option>
-		<option if="${mypw}">-pw</option>
-		<option if="${mypw}">${mypw}</option>
+		<if exists="${ssh_portforwarding}">
+			<!-- The split tag is similar to a "for each". All tags inside a split tag will be repeated with each split string
+				 The content of ${single_forward} will contain the next part and changes every loop.
+
+				  Example:
+					${ssh_portforwarding} = "80:example.com:80\n443:example.com:443
+					The result of this will be -L 80:example.com:80 -L 443:example.com:443
+			-->
+			<split src="${ssh_portforwarding}" delimiter="\n" var="single_forward">
+				<option>-L</option>
+				<option>${single_forward}</option>
+			</split>
+		</if>
+
+		<if exists="${mypw}">
+			<option>-pw</option>
+			<option>${mypw}</option>
+		</if>
 	</Configuration>
 	
-	<Configuration id="using_socks" execute="${sshtools.puttypath}" require="${sshtools.puttypath}; ${ssh_host}; ${ssh_port}; ${putty_sessionname}" >
-		<var name="myuser" defaultValue="${ssh_user}" alternative="${sshtools.defaultuser}" ignoreOn="." />
-		<var name="mypw" if="${myuser}" defaultValue="${ssh_password}" alternative="${sshtools.defaultpassword}" ignoreOn="."/>
+	<Configuration id="using_socks" execute="${sshtools.puttypath}" require="${ssh_host}; ${ssh_port}; ${putty_sessionname}" >
+		<if not_equals="${ssh_user} == '.'">
+			<var name="myuser">
+				<if exists="${ssh_user}" else="${sshtools.defaultuser}">${ssh_user}</if>
+			</var>
+		</if>
+		<if not_equals="${ssh_password} == '.'">
+			<var name="mypw">
+				<if exists="${ssh_password}" else="${sshtools.defaultpassword}">${ssh_password}</if>
+			</var>
+		</if>
 		<option>-ssh</option>
 		<option if="${ssh_x11}">-X</option>
 		<option>-load</option>
@@ -28,9 +68,15 @@
 		<option>${ssh_host}</option>
 		<option>-P</option>
 		<option>${ssh_port}</option>
-		<option if="${ssh_portforwarding}" parameterSeperator="\n">${ssh_portforwarding}</option>
-		<option if="${mypw}">-pw</option>
-		<option if="${mypw}">${mypw}</option>
+		<if exists="${ssh_portforwarding}">
+			<split src="${ssh_portforwarding}" delimiter="\n" var="single_forward">
+				<option>-L</option>
+				<option>${single_forward}</option>
+			</split>
+		</if>
+		<if exists="${mypw}">
+			<option>-pw</option>
+			<option>${mypw}</option>
+		</if>
 	</Configuration>
-
 </ApplicationProfile>

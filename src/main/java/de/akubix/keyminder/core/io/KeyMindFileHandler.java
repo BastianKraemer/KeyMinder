@@ -228,7 +228,7 @@ public class KeyMindFileHandler implements StorageHandler {
 
 									de.akubix.keyminder.core.encryption.EncryptionManager em = new EncryptionManager(cipherName, pw.toCharArray(), aesIV, salt);
 
-									Document xmldoc = XMLCore.loadXMLFromString(em.decrypt(dataNode.getTextContent()));
+									Document xmldoc = XMLCore.loadDocumentFromString(em.decrypt(dataNode.getTextContent()));
 
 									for(int i = 0; i < xmldoc.getDocumentElement().getChildNodes().getLength(); i++)
 									{

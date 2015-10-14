@@ -1,23 +1,34 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<ApplicationProfile name="WinSCP" version="1.0">
-	<Configuration id="default" execute="${sshtools.winscppath}" require="${sshtools.winscppath}; ${ssh_host};" version="1.0">
-		<var name="myuser" defaultValue="${ssh_user}" alternative="${sshtools.defaultuser}" ignoreOn="." />
-		<var name="mypw" if="${myuser}" defaultValue="${ssh_password}" alternative="${sshtools.defaultpassword}" ignoreOn="." />
+<ApplicationProfile name="WinSCP" version="2.0">
+	<Configuration id="default" execute="${sshtools.winscppath}" require="${ssh_host}">
 
-		<!-- the following lines will create a variable called "myhost" -->
-		<var name="myhost_login" defaultValue="${ssh_host}" />
-		<!-- If there is a username (${myuser}) then ${myhost} will be "${myuser}@${ssh_host}", otherwise the value won't be changed-->
-		<var name="myhost_login" if="${myuser}" defaultValue="${myuser}@${ssh_host}" />
-		<!-- If there is a password (${mypw}), which is only available if there is also a username (see line 3) then ... -->
-		<!-- "${myhost}" will be "${myuser}:${mypw}@${ssh_host}", otherwise the value won't be changed -->
-		<var name="myhost_login" if="${mypw}" defaultValue="${myuser}:${mypw}@${ssh_host}" />
+		<!-- Do not enter this section if ${ssh_user} == "." -->
+		<if not_equals="${ssh_user} == '.'">
+			<var name="myuser">
+				<if exists="${ssh_user}" else="${sshtools.defaultuser}">${ssh_user}</if>
+			</var>
+		</if>
 
-		<!-- Now the port (if available) will be added to the hostname, therfor a new vairable will be created -->
-		<var name="myhost" defaultValue="${myhost_login}" />
-		<!-- The default value of "${myhost}" is "${myhost_login}", if "${ssh_port}" is available it will be overwritten to "${myhost}:${ssh_port}" -->
-		<var name="myhost" if="${ssh_port}" defaultValue="${myhost}:${ssh_port}" alernative="${myhost_login}" />
-
-		<option>sftp://${myhost}</option>
-		<!--<option if="${winscp_inifile}">/ini=${winscp_inifile}</option>--> <!-- The variable ${winscp_inifile} should contain the path to the ini file -->
+		<!-- Do not enter this section if ${ssh_password} == "." -->
+		<if not_equals="${ssh_password} == '.'">
+			<if exists="${myuser}">
+				<var name="mypw">
+					<!-- ${mypw} will be "${ssh_password}" if the variable "${ssh_password}" exists, otherwise it will get "${sshtools.defaultpassword}" as value -->
+					<if exists="${ssh_password}" else="${sshtools.defaultpassword}">${ssh_password}</if>
+				</var>
+			</if>
+		</if>
+		
+		<option>
+			<!-- The append tag simply appends text
+				The result of this structure will be "sftp://[${myuser}[:${mypw}]@]${ssh_host}[:${ssh_port}]"
+				Note: The brackets "[...]" should describe "if the variable exists" -->
+			<append>sftp://</append>
+			<if exists="${myuser}">
+				<if exists="${mypw}" else="${myuser}@"><append>${myuser}:${mypw}@</append></if> <!-- in this case an append tag is not necessary, but if you want to, you can use it anyway -->
+			</if>
+			<append>${ssh_host}</append>
+			<if exists="${ssh_port}">:${ssh_port}</if>
+		</option>
 	</Configuration>
 </ApplicationProfile>

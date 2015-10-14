@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 import org.w3c.dom.Node;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.Breakout;
+import de.akubix.keyminder.core.XMLApplicationProfileParser;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.etc.MenuEntryPosition;
 import de.akubix.keyminder.lib.Tools;
@@ -127,7 +127,8 @@ public class AppStarter {
 
 	public List<String> getCommandLineArgs(Map<String, String> predefinedVariables, String id, TreeNode treeNode) throws IllegalArgumentException{
 		if(id == null){id = "default";}
-		return Breakout.generateParameterListForProfile(app, xmldocument.get(), id, treeNode, predefinedVariables);
+		XMLApplicationProfileParser xapp = new XMLApplicationProfileParser(app, xmldocument.get(), predefinedVariables);
+		return xapp.generateCommandLineParameters(id, treeNode);
 	}
 	
 	public void createUsingSocksItem(String socksProfileId, String socksProfileName){
