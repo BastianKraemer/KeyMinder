@@ -495,7 +495,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 	
 	public String startApplication(AppStarter appStarter, TreeNode node, boolean ignorePortForwarding, String socksProfileId)
 	{
-		Map<String, String> var = (socksProfileId == null) ? new HashMap<String, String>() : createSocksProfileBreakoutVariables(socksProfileId);
+		Map<String, String> var = createVariablePreset(socksProfileId, node);
 		if(ignorePortForwarding){var.put("ssh_portforwarding", "");} // Variables will be first looked up in the documents variable map, so the value of the node attribute wont be used 
 		
 		try
@@ -535,21 +535,42 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 	
 	/* =============================================================================================================================================== */
 	
-	private Map<String, String> createSocksProfileBreakoutVariables(String socksProfileId){
+	private Map<String, String> createVariablePreset(String socksProfileId, TreeNode treeNode){
 		Map<String, String> variablePreset = new HashMap<>();
-		variablePreset.put("socks_ssh_user", getSocksProfileValues(socksProfileId, "user", defaultUsername));
-		variablePreset.put("socks_ssh_password", getSocksProfileValues(socksProfileId, "password", defaultPassword));
-		variablePreset.put("socks_ssh_host", app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".host"));
-		variablePreset.put("socks_ssh_port", app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".sshport"));
-		variablePreset.put("socks_proxyport", app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".socksport"));
 		
-		for(String line: app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".customargs").split("\n")){
-			if(!line.matches("^( |\t)*\\#.*")){
-				String[] splitstr = line.split("=", 2);
-				if(splitstr.length == 2){variablePreset.put(splitstr[0].trim(), splitstr[1].trim());}
+		//Socks profile variables
+		if(socksProfileId != null && !socksProfileId.equals("")){
+			variablePreset.put("socks_ssh_user", getSocksProfileValues(socksProfileId, "user", defaultUsername));
+			variablePreset.put("socks_ssh_password", getSocksProfileValues(socksProfileId, "password", defaultPassword));
+			variablePreset.put("socks_ssh_host", app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".host"));
+			variablePreset.put("socks_ssh_port", app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".sshport"));
+			variablePreset.put("socks_proxyport", app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".socksport"));
+			
+			for(String line: app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".customargs").split("\n")){
+				if(!line.matches("^( |\t)*\\#.*")){
+					String[] splitstr = line.split("=", 2);
+					if(splitstr.length == 2){variablePreset.put(splitstr[0].trim(), splitstr[1].trim());}
+				}
 			}
 		}
-
+		
+		// "Overwrite" the ${ssh_portforwarding} variable to exclude lines that begins with a '#'
+		if(treeNode != null){
+			String value = treeNode.getAttribute("ssh_portforwarding");
+			if(!value.equals("") && value.contains("#")){
+				StringBuilder strbuilder = new StringBuilder();
+				for(String line: value.split("\n")){
+					if(!line.matches("^( |\t)*\\#.*")){
+						strbuilder.append(line);
+						strbuilder.append("\n");
+					}
+				}
+				// If a variable name is found in this map, then this value will be used. In this case something like the tree node attributes won't be checked.
+				// Take a look at the 'getValueOfVariable()' method in the XMLApplicationProfileParser class */
+				variablePreset.put("ssh_portforwarding", strbuilder.toString());
+			}
+		}
+		
 		return variablePreset;
 	}
 	
@@ -566,7 +587,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		{			
 			try	{
 				String sshpw = getSocksProfileValues(socksProfileId, "password", defaultPassword);
-				List<String> cmd = socksAppStarter.getCommandLineArgs(createSocksProfileBreakoutVariables(socksProfileId), null, app.getTree().getSelectedNode());
+				List<String> cmd = socksAppStarter.getCommandLineArgs(createVariablePreset(socksProfileId, null), null, app.getTree().getSelectedNode());
 
 				if(confirmCommandlineArguments(cmd, sshpw.equals("") ? null : sshpw))
 				{
