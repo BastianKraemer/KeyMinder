@@ -28,6 +28,7 @@ import java.util.Timer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
@@ -1847,7 +1848,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 	
 	@Override
-	public String showInputDialog(String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog)
+	public String showInputDialog(String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog) throws UserCanceledOperationException
 	{
 		InputDialog id = new InputDialog(me, this, windowTitle, labelText, defaultValueOrPasswordHint, useAsPasswordDialog);
 		return id.getInput();
@@ -1859,23 +1860,25 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	private void showAddTreeNodeDialog(boolean add2Root)
 	{
 		InputDialog id = new InputDialog(me, this, localeBundle.getString("mainwindow.dialogs.add_node.title"), localeBundle.getString("mainwindow.dialogs.add_node.text"), "", false);
-		String input = id.getInput();
+		try {
+			String input = id.getInput();
 
-		if(input != null && !input.equals(""))
-		{
-			TreeNode newNode = dataTree.createNode(input);
-			if(add2Root)
+			if(input != null && !input.equals(""))
 			{
-				dataTree.addNode(newNode, dataTree.getRootNode());
-				dataTree.setSelectedNode(newNode);
+				TreeNode newNode = dataTree.createNode(input);
+				if(add2Root)
+				{
+					dataTree.addNode(newNode, dataTree.getRootNode());
+					dataTree.setSelectedNode(newNode);
+				}
+				else
+				{
+					dataTree.addNode(newNode, getSelectedTreeNode());
+					fxtree.getSelectionModel().getSelectedItem().setExpanded(true);
+				}
 			}
-			else
-			{
-				dataTree.addNode(newNode, getSelectedTreeNode());
-				fxtree.getSelectionModel().getSelectedItem().setExpanded(true);
-			}
-		}
-		
+		} catch (UserCanceledOperationException e) {}
+
 		me.requestFocus();
 	}
 	
@@ -1883,11 +1886,12 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	{
 		TreeNode selectedNode = getSelectedTreeNode();
 		InputDialog id = new InputDialog(this, localeBundle.getString("mainwindow.dialogs.edit_node.text"), localeBundle.getString("mainwindow.dialogs.edit_node.text"), selectedNode.getText(), false);
-		String value = id.getInput();
-		if(!value.equals(""))
-		{
-			selectedNode.setText(value);
-		}
+		try {
+			String value = id.getInput();
+			if(!value.equals("")){
+				selectedNode.setText(value);
+			}
+		} catch (UserCanceledOperationException e) {}
 		me.requestFocus();
 	}
 		

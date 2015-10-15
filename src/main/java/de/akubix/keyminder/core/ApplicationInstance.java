@@ -45,6 +45,7 @@ import de.akubix.keyminder.core.db.StandardTree;
 import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.StorageException;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.Command;
 import de.akubix.keyminder.core.interfaces.CommandOutputProvider;
 import de.akubix.keyminder.core.interfaces.FxAdministrationInterface;
@@ -280,7 +281,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 				File environmrntXMLFile = new File(settings.get("startup.default_environment"));
 				if(environmrntXMLFile.exists()){
 					XMLCore.xml2Map(environmrntXMLFile, Launcher.environment, false);
-					if(Launcher.environment.containsKey("verbose_mode") && de.akubix.keyminder.lib.Tools.isYes(Launcher.environment.get("verbose_mode"))){Launcher.verbose_mode = true;}
+					if(Launcher.environment.containsKey("verbose_mode") && Tools.isYes(Launcher.environment.get("verbose_mode"))){Launcher.verbose_mode = true;}
 				}
 				else
 				{
@@ -1231,7 +1232,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 	 * @param useAsPasswordDialog show as password dialog?
 	 * @return the string entered by the user
 	 */
-	public String requestStringInput(String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog)
+	public String requestStringInput(String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog) throws UserCanceledOperationException
 	{
 		if(isFxUserInterfaceAvailable())
 		{

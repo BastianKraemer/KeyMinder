@@ -36,6 +36,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.lib.XMLCore;
 import javafx.stage.FileChooser;
@@ -359,7 +360,7 @@ public class XMLApplicationProfileParser
 	 * @param varName The name of the variable without ${}
 	 * @return The value of the variable OR "" if there is no value for this variable
 	 */
-	private String getValueOfVariable(String varName)
+	private String getValueOfVariable(String varName) throws IllegalArgumentException
 	{
 		// There are multiple sources for the values of the variables: The variables of this document stored in 'variables' or as part of the node attributes or ...
 		// Hint: Take a look at the order - you can "overwrite" node attributes because they will be first looked up in 'variables'
@@ -384,30 +385,35 @@ public class XMLApplicationProfileParser
 			}
 		}
 
-		if(varName.equals("_openfiledialog_")){
-			if(app.isFxUserInterfaceAvailable()){
-				FxUserInterface fxUI = app.getFxUserInterface();
-				java.io.File f = fxUI.showOpenFileDialog(fxUI.getLocaleBundleString("filebrowser.dialogtitle"), "", null,
-														 new FileChooser.ExtensionFilter[]{
-																new FileChooser.ExtensionFilter(fxUI.getLocaleBundleString("filebrowser.allfiles_selector"), "*.*")});
-				return (f != null) ? f.getAbsolutePath() : "";
+		try{
+			if(varName.equals("_openfiledialog_")){
+				if(app.isFxUserInterfaceAvailable()){
+					FxUserInterface fxUI = app.getFxUserInterface();
+					java.io.File f = fxUI.showOpenFileDialog(fxUI.getLocaleBundleString("filebrowser.dialogtitle"), "", null,
+															 new FileChooser.ExtensionFilter[]{
+																	new FileChooser.ExtensionFilter(fxUI.getLocaleBundleString("filebrowser.allfiles_selector"), "*.*")});
+					return (f != null) ? f.getAbsolutePath() : "";
+				}
+				else{
+					return app.requestStringInput("Please enter a filename", "Please enter a filename:", "", false);
+				}
 			}
-			else{
-				return app.requestStringInput("Please enter a filename", "Please enter a filename:", "", false);
+
+			if(varName.equals("_savefiledialog_")){
+				if(app.isFxUserInterfaceAvailable()){
+					FxUserInterface fxUI = app.getFxUserInterface();
+					java.io.File f = fxUI.showSaveFileDialog(fxUI.getLocaleBundleString("filebrowser.dialogtitle"), "", null,
+															 new FileChooser.ExtensionFilter[]{
+																	new FileChooser.ExtensionFilter(fxUI.getLocaleBundleString("filebrowser.allfiles_selector"), "*.*")});
+					return (f != null) ? f.getAbsolutePath() : "";
+				}
+				else{
+					return app.requestStringInput("Please enter a filename", "Please enter a filename:", "", false);
+				}
 			}
 		}
-
-		if(varName.equals("_savefiledialog_")){
-			if(app.isFxUserInterfaceAvailable()){
-				FxUserInterface fxUI = app.getFxUserInterface();
-				java.io.File f = fxUI.showSaveFileDialog(fxUI.getLocaleBundleString("filebrowser.dialogtitle"), "", null,
-														 new FileChooser.ExtensionFilter[]{
-																new FileChooser.ExtensionFilter(fxUI.getLocaleBundleString("filebrowser.allfiles_selector"), "*.*")});
-				return (f != null) ? f.getAbsolutePath() : "";
-			}
-			else{
-				return app.requestStringInput("Please enter a filename", "Please enter a filename:", "", false);
-			}
+		catch(UserCanceledOperationException e){
+			throw new IllegalArgumentException(e.getMessage());
 		}
 
 		return "";

@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.Launcher;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.Command;
 import de.akubix.keyminder.core.interfaces.CommandOutputProvider;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
@@ -950,43 +951,39 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			addProfile.setOnAction(new EventHandler<ActionEvent>() {
 				@Override
 				public void handle(ActionEvent event) {
-					String input = fxUI.showInputDialog(fxUI.getLocaleBundleString("module.sshtools.addsocksprofile.title"),
-														fxUI.getLocaleBundleString("module.sshtools.addsocksprofile.text"), "", false);
+					try{
+						String input = fxUI.showInputDialog(fxUI.getLocaleBundleString("module.sshtools.addsocksprofile.title"),
+															fxUI.getLocaleBundleString("module.sshtools.addsocksprofile.text"), "", false);
 
-					if(!isEmpty(input))
-					{
-						
-						if(input.matches("[a-zA-Z0-9[_]]*"))
-						{
-							if(!socksProfileIDs_clone.contains(input)){
-								socksProfileIDs_clone.add(input);
-								profileSelection.getItems().add(input);
-								
-								if(profileSelection.getItems().size() == 1)
-								{
-									profileSelection.getSelectionModel().select(0);
+						if(!isEmpty(input)){
+							if(input.matches("[a-zA-Z0-9[_]]*")){
+								if(!socksProfileIDs_clone.contains(input)){
+									socksProfileIDs_clone.add(input);
+									profileSelection.getItems().add(input);
+
+									if(profileSelection.getItems().size() == 1){
+										profileSelection.getSelectionModel().select(0);
+									}
+									else{
+										profileSelection.getSelectionModel().select(profileSelection.getItems().size() - 1);
+									}
+									fileSettings.put("sshtools.socksprofiles", socksProfiles2String(socksProfileIDs_clone));
+									fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".name", input);
+									fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".sshport", "22");
+									fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".customargs", "#putty_sessioname=?");
+									profileSelection.getOnAction().handle(null);
+									profileSelection.autosize();
 								}
-								else
-								{
-									profileSelection.getSelectionModel().select(profileSelection.getItems().size() - 1);
+								else{
+									app.alert(fxUI.getLocaleBundleString("module.sshtools.addsocksprofile.msg_name_already_in_use"));
 								}
-								fileSettings.put("sshtools.socksprofiles", socksProfiles2String(socksProfileIDs_clone));
-								fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".name", input);
-								fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".sshport", "22");
-								fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".customargs", "#putty_sessioname=?");
-								profileSelection.getOnAction().handle(null);
-								profileSelection.autosize();
 							}
-							else
-							{
-								app.alert(fxUI.getLocaleBundleString("module.sshtools.addsocksprofile.msg_name_already_in_use"));
+							else{
+								app.alert(fxUI.getLocaleBundleString("module.sshtools.addsocksprofile.msg_invalid_characters"));
 							}
-						}
-						else
-						{
-							app.alert(fxUI.getLocaleBundleString("module.sshtools.addsocksprofile.msg_invalid_characters"));
 						}
 					}
+					catch(UserCanceledOperationException e){}
 				}
 			});
 

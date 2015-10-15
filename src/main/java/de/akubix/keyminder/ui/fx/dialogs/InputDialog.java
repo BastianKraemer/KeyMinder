@@ -20,6 +20,7 @@ package de.akubix.keyminder.ui.fx.dialogs;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.Launcher;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -46,6 +47,7 @@ public class InputDialog {
 	
 	private Stage inputDialog;
 	private TextField input;
+	private boolean canceled = false;
 	private final int sceneWidth = 400;
 	private final int sceneHeight = 100;
 	public InputDialog(Stage primaryStage, FxUserInterface fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog)
@@ -119,6 +121,7 @@ public class InputDialog {
 			@Override
 			public void handle(ActionEvent event) {
 				input.setText("");
+				canceled = true;
 				inputDialog.close();
 			}
 		});
@@ -151,13 +154,14 @@ public class InputDialog {
 		inputDialog.getIcons().add(new Image(ApplicationInstance.APP_ICON));
 	}
 	
-	public String getInput()
+	public String getInput() throws UserCanceledOperationException
 	{
 		inputDialog.showAndWait();
+		if(this.canceled){throw new UserCanceledOperationException("User has canceled the operation.");}
 		return input.getText();
 	}
 	
-	public static String show(FxUserInterface fxUI, String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog)
+	public static String show(FxUserInterface fxUI, String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog) throws UserCanceledOperationException
 	{
 		InputDialog inputDialog = new InputDialog(fxUI, windowTitle, labelText, defaultValue, useAsPasswordDialog);
 		return inputDialog.getInput();

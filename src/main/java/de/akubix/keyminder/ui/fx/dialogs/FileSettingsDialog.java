@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.lib.gui.StyleSelector;
 import javafx.event.ActionEvent;
@@ -224,40 +225,39 @@ public class FileSettingsDialog {
 					boolean wasEncrypted = app.currentFile.isEncrypted();
 					boolean enable = !wasEncrypted;
 					
-					if(!enable)
-					{
-						String currentPw = InputDialog.show(fxUI, fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.headline"), fxUI.getLocaleBundleString("filesettings.security.enter_current_password"), "", true);
-						enable = app.currentFile.getEncryptionManager().checkPassword(currentPw.toCharArray());
+					if(!enable){
+						try {
+							String currentPw = InputDialog.show(fxUI, fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.headline"), fxUI.getLocaleBundleString("filesettings.security.enter_current_password"), "", true);
+							enable = app.currentFile.getEncryptionManager().checkPassword(currentPw.toCharArray());
+						} catch (UserCanceledOperationException e) {return;}
 					}
 
-					if(enable)
-					{
-						if(app.currentFile.getEncryptionManager() == null){app.currentFile.encryptFile(new de.akubix.keyminder.core.encryption.EncryptionManager(true));}
-						
-						if(app.currentFile.getEncryptionManager().requestPasswordInputWithConfirm(app,
-							fxUI.getLocaleBundleString("filesettings.security.button_changepassword"),
-							fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.text"),
-							fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.conformtext")))
-						{
-							// New password has been set
-							setNotEncryptFile.setDisable(false);
-							setEncryptFile.setText(fxUI.getLocaleBundleString("filesettings.security.button_changepassword"));
-							cipherSelection.getSelectionModel().select(app.currentFile.getEncryptionManager().getCipher().getCipherName());
-							app.saveFile();
-						}
-						else
-						{
-							// Operation canceled
-							if(wasEncrypted)
+					if(enable){
+						if(app.currentFile.getEncryptionManager() == null){app.currentFile.encryptFile(new EncryptionManager(true));}
+						try {
+							if(app.currentFile.getEncryptionManager().requestPasswordInputWithConfirm(app,
+								fxUI.getLocaleBundleString("filesettings.security.button_changepassword"),
+								fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.text"),
+								fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.conformtext")))
 							{
-								// Undo everything -> delete the created encryption manager
-								app.currentFile.disableEncryption();
+								// New password has been set
+								setNotEncryptFile.setDisable(false);
+								setEncryptFile.setText(fxUI.getLocaleBundleString("filesettings.security.button_changepassword"));
+								cipherSelection.getSelectionModel().select(app.currentFile.getEncryptionManager().getCipher().getCipherName());
+								app.saveFile();
 							}
-							fxUI.alert(AlertType.INFORMATION, ApplicationInstance.APP_NAME, fxUI.getLocaleBundleString("filesettings.security.wrong_password_notification_title"), fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.passwords_not_equal"));
-						}
+							else
+							{
+								// Operation canceled
+								if(!wasEncrypted){
+									// Undo everything -> delete the created encryption manager
+									app.currentFile.disableEncryption();
+								}
+								fxUI.alert(AlertType.INFORMATION, ApplicationInstance.APP_NAME, fxUI.getLocaleBundleString("filesettings.security.wrong_password_notification_title"), fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.passwords_not_equal"));
+							}
+						} catch (UserCanceledOperationException e) {} // The user knows that he has canceled the operation.
 					}
-					else
-					{
+					else{
 						fxUI.alert(AlertType.INFORMATION, ApplicationInstance.APP_NAME, fxUI.getLocaleBundleString("filesettings.security.wrong_password_notification_title"), fxUI.getLocaleBundleString("filesettings.security.wrong_password"));
 					}
 					changeElementVisibility.accept(app.currentFile.isEncrypted());
@@ -288,18 +288,18 @@ public class FileSettingsDialog {
 					
 					if(alert.showAndWait().get() == buttonYes)
 					{
-						String currentPw = InputDialog.show(fxUI, fxUI.getLocaleBundleString("filesettings.security.confirm_disable_encryption.title"), fxUI.getLocaleBundleString("filesettings.security.enter_current_password"), "", true);
-						
-						if(app.currentFile.getEncryptionManager().checkPassword(currentPw.toCharArray()))
-						{
-							app.currentFile.disableEncryption();
-							setNotEncryptFile.setDisable(true);
-							setEncryptFile.setText(fxUI.getLocaleBundleString("filesettings.security.button_enable_encryption"));
-						}
-						else
-						{
-							fxUI.alert(AlertType.WARNING, ApplicationInstance.APP_NAME, fxUI.getLocaleBundleString("filesettings.security.wrong_password_notification_title"), fxUI.getLocaleBundleString("filesettings.security.wrong_password"));
-						}
+						try {
+							String currentPw = InputDialog.show(fxUI, fxUI.getLocaleBundleString("filesettings.security.confirm_disable_encryption.title"), fxUI.getLocaleBundleString("filesettings.security.enter_current_password"), "", true);
+
+							if(app.currentFile.getEncryptionManager().checkPassword(currentPw.toCharArray())){
+								app.currentFile.disableEncryption();
+								setNotEncryptFile.setDisable(true);
+								setEncryptFile.setText(fxUI.getLocaleBundleString("filesettings.security.button_enable_encryption"));
+							}
+							else{
+								fxUI.alert(AlertType.WARNING, ApplicationInstance.APP_NAME, fxUI.getLocaleBundleString("filesettings.security.wrong_password_notification_title"), fxUI.getLocaleBundleString("filesettings.security.wrong_password"));
+							}
+						} catch (UserCanceledOperationException e) {}
 					}
 					changeElementVisibility.accept(app.currentFile.isEncrypted());
 				}	 	

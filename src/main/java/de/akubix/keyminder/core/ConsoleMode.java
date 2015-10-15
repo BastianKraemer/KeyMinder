@@ -24,6 +24,7 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.Command;
 import de.akubix.keyminder.core.interfaces.CommandOutputProvider;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
@@ -573,6 +574,7 @@ public class ConsoleMode {
 			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
 				if(instance.currentFile != null)
 				{
+				  try{
 					if(args.length == 1)
 					{
 						if(args[0].toLowerCase().equals("reset"))
@@ -625,6 +627,10 @@ public class ConsoleMode {
 							out.println("Incorrect password. Canceling..."); 
 						}
 					}
+				  }
+				  catch(UserCanceledOperationException e){
+					  out.println("Operation canceled.");
+				  }
 				}
 				return null;
 			}}, "Changes the current file password. To disable encryption use \"passwd reset\"\n" +

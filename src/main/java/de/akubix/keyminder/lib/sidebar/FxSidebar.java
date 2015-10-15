@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
@@ -205,13 +206,16 @@ public class FxSidebar {
 																			 fxUI.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.dialog.edit_email" : "mainwindow.sidebar.hyperlink.dialog.edit_link"),
 																			 defaultText.equals("...") ? "" : defaultText, false);
 
-				String input = id.getInput();
-				if(input != null && !input.equals(""))
-				{
-					node.setAttribute(hashKey, input);
-					setUIValue(input);
-					instance.getFxUserInterface().updateStatus(fxUI.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.messages.email_edited" : "mainwindow.sidebar.hyperlink.messages.link_edited"));
+				try{
+					String input = id.getInput();
+					if(input != null && !input.equals(""))
+					{
+						node.setAttribute(hashKey, input);
+						setUIValue(input);
+						instance.getFxUserInterface().updateStatus(fxUI.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.messages.email_edited" : "mainwindow.sidebar.hyperlink.messages.link_edited"));
+					}
 				}
+				catch(UserCanceledOperationException e){}
 			}
 			
 			@Override

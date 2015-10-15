@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.lib.AESCore;
 
 /**
@@ -44,6 +45,7 @@ public class EncryptionManager {
 	
 	/**
 	 * Create a encryption manager
+	 * Note: This constructor does not set the password. You have to call {@link #requestPasswordInputWithConfirm(de.akubix.keyminder.core.ApplicationInstance, String, String, String)} after this manually.
 	 * @param useDefaultCipher use {@code true} if the default cipher should be used, otherwise the encryption is disabled.
 	 */
 	public EncryptionManager(boolean useDefaultCipher)
@@ -214,29 +216,35 @@ public class EncryptionManager {
 	 * @param labelTextConfirm the label text for confirm
 	 * @return {@code true} if the password has been changed, {@code false} if not
 	 */
-	public boolean requestPasswordInputWithConfirm(de.akubix.keyminder.core.ApplicationInstance instance, String windowTitle, String labelText, String labelTextConfirm)
+	public boolean requestPasswordInputWithConfirm(de.akubix.keyminder.core.ApplicationInstance instance, String windowTitle, String labelText, String labelTextConfirm) throws UserCanceledOperationException
 	{
-		char[] pw = instance.requestStringInput(windowTitle, labelText, "", true).toCharArray();
-		if(pw.length > 0)
-		{
-			char[] pw_confirm = instance.requestStringInput(windowTitle, labelTextConfirm, "", true).toCharArray();
-			if(comparePasswords(pw, pw_confirm))
-			{
-				clearArray(this.password);
-				clearArray(pw_confirm);
-				this.password = pw;
-				
-				if(cipher.getCipherName().equals("None")){cipher = algorithms.get(defaultCipher);}
-				return true;
+		char[] pw = null;
+		try{
+			pw = instance.requestStringInput(windowTitle, labelText, "", true).toCharArray();
+			if(pw.length > 0){
+				char[] pw_confirm = instance.requestStringInput(windowTitle, labelTextConfirm, "", true).toCharArray();
+				if(comparePasswords(pw, pw_confirm)){
+					clearArray(pw_confirm);
+					clearArray(this.password); // clear the current password...
+					this.password = pw; // ...and set the new one
+
+					if(cipher.getCipherName().equals("None")){cipher = algorithms.get(defaultCipher);}
+					return true;
+				}
+				else{
+					clearArray(pw);
+					clearArray(pw_confirm);
+					return false;
+				}
 			}
 			else
 			{
 				return false;
 			}
 		}
-		else
-		{
-			return false;
+		catch(UserCanceledOperationException e){
+			if(pw != null){clearArray(pw);}
+			throw e;
 		}
 	}
 	

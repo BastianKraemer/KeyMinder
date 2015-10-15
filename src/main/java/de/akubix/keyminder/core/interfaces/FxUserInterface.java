@@ -4,13 +4,14 @@ import java.io.File;
 import java.util.ResourceBundle;
 
 import de.akubix.keyminder.core.etc.MenuEntryPosition;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.ui.fx.shadow.FxHotKeyEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.KeyCode;
 import javafx.stage.FileChooser;
 
@@ -50,7 +51,7 @@ public interface FxUserInterface {
 	 * @return "-1" if the user canceled the action, "0" if the changes should be discarded, "1" if the file should be saved
 	 */
 	public int showSaveChangesDialog();
-	public String showInputDialog(String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog);
+	public String showInputDialog(String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog) throws UserCanceledOperationException;
 	public boolean showYesNoDialog(String windowTitle, String headline, String contentText);
 	
 	public File showOpenFileDialog(String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions);

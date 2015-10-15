@@ -25,7 +25,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.CancellationException;
 
 import javax.management.modelmbean.XMLParseException;
 import javax.xml.parsers.ParserConfigurationException;
@@ -44,6 +43,7 @@ import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.StorageExceptionType;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.lib.AESCore;
 import de.akubix.keyminder.lib.XMLCore;
 
@@ -63,7 +63,7 @@ public class KeyMindFileHandler implements StorageHandler {
 		
 		try {
 			return readXMLFrame(xmlFile, filePassword, instance.getTree(), instance);
-		} catch (CancellationException e) {
+		} catch (UserCanceledOperationException e) {
 			throw new StorageException(StorageExceptionType.UserCancelation, e.getMessage());
 		} catch (XMLParseException e) {
 			throw new StorageException(StorageExceptionType.ParserException, e.getMessage());
@@ -77,15 +77,14 @@ public class KeyMindFileHandler implements StorageHandler {
 			XMLCore.saveXMLDocument(file.getFilepath(), createXMLFrame(tree.getRootNode(), file));
 			file.setFileFormatVersion(latestFileFormatVersion);
 		} catch (InvalidKeyException e) {
-			throw new StorageException(de.akubix.keyminder.core.exceptions.StorageExceptionType.UnknownException, e.getMessage());
+			throw new StorageException(StorageExceptionType.UnknownException, e.getMessage());
 		} catch (IOException e) {
-			throw new StorageException(de.akubix.keyminder.core.exceptions.StorageExceptionType.IOException, e.getMessage());
+			throw new StorageException(StorageExceptionType.IOException, e.getMessage());
 		} catch (TransformerException e) {
-			throw new StorageException(de.akubix.keyminder.core.exceptions.StorageExceptionType.ParserException, e.getMessage());
+			throw new StorageException(StorageExceptionType.ParserException, e.getMessage());
 		} catch (XMLParseException e) {
-			throw new StorageException(de.akubix.keyminder.core.exceptions.StorageExceptionType.ParserException, e.getMessage());
+			throw new StorageException(StorageExceptionType.ParserException, e.getMessage());
 		}
-
 	}
 
 	/*
@@ -94,7 +93,7 @@ public class KeyMindFileHandler implements StorageHandler {
 	 * ==============================================================================================================================================
 	 */
 
-	private de.akubix.keyminder.core.FileConfiguration readXMLFrame(File xmlFile, String filepassword, Tree tree, de.akubix.keyminder.core.ApplicationInstance app) throws XMLParseException, CancellationException, StorageException
+	private FileConfiguration readXMLFrame(File xmlFile, String filepassword, Tree tree, ApplicationInstance app) throws XMLParseException, UserCanceledOperationException, StorageException
 	{
 		String fileVersion = latestFileFormatVersion; // Will be overwritten by the value in the file (if available)
 		boolean fileIsEncrypted;
@@ -196,7 +195,7 @@ public class KeyMindFileHandler implements StorageHandler {
 							Node encMethodAttribute = dataNode.getAttributes().getNamedItem("encryption");
 							if(encMethodAttribute != null){cipherName = encMethodAttribute.getNodeValue();}else{throw new StorageException(StorageExceptionType.UnknownEncryptionCipher, "Cannot open file, the used encryption cipher is not mentioned.");}
 							
-							if(!de.akubix.keyminder.core.encryption.EncryptionManager.getCipherAlgorithms().contains(cipherName)){throw new StorageException(StorageExceptionType.UnknownEncryptionCipher, "Encryption with '" + cipherName + "' is not supported on this system.");}
+							if(!EncryptionManager.getCipherAlgorithms().contains(cipherName)){throw new StorageException(StorageExceptionType.UnknownEncryptionCipher, "Encryption with '" + cipherName + "' is not supported on this system.");}
 
 							int attempts = 0;
 							while(attempts < 3)
@@ -210,11 +209,10 @@ public class KeyMindFileHandler implements StorageHandler {
 									if(filepassword.equals(""))
 									{
 										String txt = app.isFxUserInterfaceAvailable() ? app.getFxUserInterface().getLocaleBundleString("decryption.input_password_label") : "Please enter your password:";
-										pw = app.requestStringInput(	ApplicationInstance.APP_NAME, txt,
-																					fileAttributes.containsKey("PasswordHint") ? fileAttributes.get("PasswordHint") : "",
-																					true);
+										pw = app.requestStringInput(ApplicationInstance.APP_NAME, txt, 
+																	fileAttributes.containsKey("PasswordHint") ? fileAttributes.get("PasswordHint") : "", true);
 
-										if(pw.equals("")){throw new CancellationException("The user canceled the operation.");}
+										if(pw.equals("")){throw new UserCanceledOperationException("The user canceled the operation.");}
 									}
 									else
 									{
@@ -226,7 +224,7 @@ public class KeyMindFileHandler implements StorageHandler {
 									Node saltAttribute = dataNode.getAttributes().getNamedItem("salt");
 									if(saltAttribute != null){salt = AESCore.bytesFromBase64String(saltAttribute.getNodeValue());}
 
-									de.akubix.keyminder.core.encryption.EncryptionManager em = new EncryptionManager(cipherName, pw.toCharArray(), aesIV, salt);
+									EncryptionManager em = new EncryptionManager(cipherName, pw.toCharArray(), aesIV, salt);
 
 									Document xmldoc = XMLCore.loadDocumentFromString(em.decrypt(dataNode.getTextContent()));
 
@@ -248,8 +246,7 @@ public class KeyMindFileHandler implements StorageHandler {
 									return new FileConfiguration(xmlFile, fileVersion, fileIsEncrypted, this.fileType, em, fileAttributes, fileSettings);
 
 								} catch (NoSuchAlgorithmException e) {
-									e.printStackTrace();
-									throw new CancellationException("Encryption with '" + cipherName + "' is not supported on this system.");
+									throw new StorageException(StorageExceptionType.UnknownEncryptionCipher, "Encryption with '" + cipherName + "' is not supported on this system.");
 								} catch (InvalidKeyException e) {
 									app.alert(app.isFxUserInterfaceAvailable() ? app.getFxUserInterface().getLocaleBundleString("decryption.wrong_password") : "Wrong password.");
 									
@@ -260,7 +257,7 @@ public class KeyMindFileHandler implements StorageHandler {
 							
 							// The user entered a wrong password three times...
 							app.println("You entered a wrong password three times, canceling...");
-							throw new CancellationException("The user entered a wrong password three times.");
+							throw new UserCanceledOperationException("The user entered a wrong password three times.");
 						}
 					}
 					else
