@@ -524,6 +524,11 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		return Platform.isFxApplicationThread();
 	}
 
+	@Override
+	public void focusMainWindow(){
+		me.requestFocus();
+	}
+
 	public void buildUI(BorderPane root)
 	{
 		

@@ -216,6 +216,8 @@ public class FxSidebar {
 					}
 				}
 				catch(UserCanceledOperationException e){}
+
+				fxUI.focusMainWindow();
 			}
 			
 			@Override
