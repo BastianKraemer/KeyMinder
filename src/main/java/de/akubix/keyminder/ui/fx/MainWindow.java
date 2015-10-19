@@ -544,7 +544,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		menu_File = new Menu(localeBundle.getString("mainwindow.menu.file"));
 		
 		Menu file_new = new Menu(localeBundle.getString("mainwindow.menu.file.new"), ImageSelector.getFxImageView("icon_newfile"));
-		file_new.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new.encrypted_file"), ImageSelector.getIcon("icon_newfile"),
+		file_new.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new.encrypted_file"), ImageSelector.getIcon("icon_new_encrypted_file"),
 											  (event) -> showCreateNewFileDialog(true), false));
 		
 		file_new.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new.regular_file"), ImageSelector.getIcon("icon_newfile"),

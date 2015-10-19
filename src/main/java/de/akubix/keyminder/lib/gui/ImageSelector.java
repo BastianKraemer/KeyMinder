@@ -34,6 +34,7 @@ public class ImageSelector {
 		imageMap.put("icon_info", "/de/akubix/keyminder/images/icons/info.png");
 		
 		imageMap.put("icon_newfile", "/de/akubix/keyminder/images/icons/newfile.png");
+		imageMap.put("icon_new_encrypted_file", "/de/akubix/keyminder/images/icons/newfile_lock.png");
 		imageMap.put("icon_openfile", "/de/akubix/keyminder/images/icons/openfile.png");
 		imageMap.put("icon_save", "/de/akubix/keyminder/images/icons/save.png");
 		imageMap.put("icon_settings", "/de/akubix/keyminder/images/icons/settings.png");
