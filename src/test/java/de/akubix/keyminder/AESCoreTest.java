@@ -3,6 +3,8 @@ package de.akubix.keyminder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.security.NoSuchAlgorithmException;
+
 import org.junit.Test;
 
 import de.akubix.keyminder.lib.AESCore;
@@ -11,7 +13,7 @@ public class AESCoreTest {
 
 	@Test
 	public void test() {
-		try{
+	  try{
 		
 		// Test BASE64
 		final String txt = "VGhpcyBpcyBhIEJBU0U2NCBlbmNvZGVkIFN0cmluZw==";
@@ -32,14 +34,24 @@ public class AESCoreTest {
 		byte[] salt = AESCore.generatePasswordSalt(16);
 		
 		final String encryption_src = "This text will be encrypted using AES";
-		String encrypted_text = AESCore.encryptAES(encryption_src, AESCore.getPBKDF2Hash("my_password", salt), iv);
-
-		assertEquals("Testing AES encryption...", encryption_src, AESCore.decryptAES(encrypted_text, AESCore.getPBKDF2Hash("my_password", salt), iv));
 		
+		try{
+			if(AESCore.isAES256EncryptionAvailable()){
+				String encrypted_text = AESCore.encryptAES(encryption_src, AESCore.getPBKDF2Hash("my_password", salt), iv);	
+				assertEquals("Testing AES-256 encryption...", encryption_src, AESCore.decryptAES(encrypted_text, AESCore.getPBKDF2Hash("my_password", salt), iv));
+			}
+			else{
+				String encrypted_text = AESCore.encryptAES(encryption_src, AESCore.getMD5Hash("my_password"), iv);	
+				assertEquals("Testing AES-128 encryption...", encryption_src, AESCore.decryptAES(encrypted_text, AESCore.getMD5Hash("my_password"), iv));
+			}
 		}
-		catch(Exception ex){
-			fail("AESCore test failed: " + ex.getMessage());
+		catch(NoSuchAlgorithmException e){
+			System.out.println("WARNING: Cannot run AES test. AES is not supported on this System.");
 		}
+	  }
+	  catch(Exception ex){
+		  fail("AESCore test failed: " + ex.getMessage());
+	  }
 	}
 
 }
