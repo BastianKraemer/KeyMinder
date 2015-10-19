@@ -215,6 +215,7 @@ public class EncryptionManager {
 	 * @param labelText the label text
 	 * @param labelTextConfirm the label text for confirm
 	 * @return {@code true} if the password has been changed, {@code false} if not
+	 * @throws UserCanceledOperationException if the user canceled the operation
 	 */
 	public boolean requestPasswordInputWithConfirm(de.akubix.keyminder.core.ApplicationInstance instance, String windowTitle, String labelText, String labelTextConfirm) throws UserCanceledOperationException
 	{

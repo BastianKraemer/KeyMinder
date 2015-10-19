@@ -48,9 +48,10 @@ public interface FxUserInterface {
 
 	/**
 	 * Show a save changes dialog
-	 * @return "-1" if the user canceled the action, "0" if the changes should be discarded, "1" if the file should be saved
+	 * @return {@code true} if the changes should be saved or {@code false} should be discarded
+	 * @throws UserCanceledOperationException if the user has pressed the "Cancel" button
 	 */
-	public int showSaveChangesDialog();
+	public boolean showSaveChangesDialog() throws UserCanceledOperationException;
 	public String showInputDialog(String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog) throws UserCanceledOperationException;
 	public boolean showYesNoDialog(String windowTitle, String headline, String contentText);
 	

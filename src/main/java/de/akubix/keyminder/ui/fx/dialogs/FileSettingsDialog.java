@@ -238,7 +238,7 @@ public class FileSettingsDialog {
 							if(app.currentFile.getEncryptionManager().requestPasswordInputWithConfirm(app,
 								fxUI.getLocaleBundleString("filesettings.security.button_changepassword"),
 								fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.text"),
-								fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.conformtext")))
+								fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.confirmtext")))
 							{
 								// New password has been set
 								setNotEncryptFile.setDisable(false);

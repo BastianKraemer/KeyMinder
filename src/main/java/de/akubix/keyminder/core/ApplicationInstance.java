@@ -488,9 +488,14 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 			{
 				if(isFxUserInterfaceAvailable())
 				{
-					int ret = fxInterface.showSaveChangesDialog();
-					if(ret < 0){return false;}
-					if(ret > 0){if(!saveFile()){return false;}}
+					try {
+						if(fxInterface.showSaveChangesDialog()){
+							// Save the changes
+							if(!saveFile()){return false;}
+						}
+					} catch (UserCanceledOperationException e) {
+						return false;
+					}
 				}
 				else
 				{
@@ -533,10 +538,6 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 
 		if(encryptFileWithDefaultCipher){
 			try {
-				/*mainwindow.createfile.setpassword.headline = Set Password...
-						mainwindow.createfile.setpassword.text = Please enter a password for your new file:
-						mainwindow.createfile.setpassword.confirmtext = Please enter the password again:
-						mainwindow.createfile.setpassword.passwords_not_equal = The entered password doesn't match.*/
 				if(!currentFile.getEncryptionManager().requestPasswordInputWithConfirm(this,
 					isFxUserInterfaceAvailable() ? fxInterface.getLocaleBundleString("mainwindow.createfile.setpassword.headline") : "Set Password...",
 					isFxUserInterfaceAvailable() ? fxInterface.getLocaleBundleString("mainwindow.createfile.setpassword.text") : "Please enter a password for your new file:",
@@ -1253,6 +1254,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 	 * @param defaultValue the default value
 	 * @param useAsPasswordDialog show as password dialog?
 	 * @return the string entered by the user
+	 * @throws UserCanceledOperationException if the user canceled the operation
 	 */
 	public String requestStringInput(String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog) throws UserCanceledOperationException
 	{
@@ -1626,7 +1628,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 					}
 				}
 
-				out.println("Invalid Arguments: Type in 'man file' to get more information.");
+				out.println("Invalid arguments: Type in 'man file' to get more information.");
 				return null;
 			}}, "You can use the file command with the following arguments:\n\n" +
 				"  file create		to create a new file.\n" +

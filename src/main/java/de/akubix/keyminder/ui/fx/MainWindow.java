@@ -304,7 +304,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			me = primaryStage;
 
 			rootPanel = new BorderPane();
-			Scene scene = new Scene(rootPanel, 640, 400);
+			Scene scene = new Scene(rootPanel, 680, 420);
 
 			dataTree = app.getTree();
 
@@ -445,7 +445,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 				
 				@Override
 				public void run() {
-					// Load the default password file)
+					// Load the default password file
 					app.loadDefaultFile();
 					
 					if(fxtree.getRoot().getChildren().size() == 1)
@@ -508,14 +508,12 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 
 	@Override
-	public void setTitle(String title)
-	{
+	public void setTitle(String title){
 		me.setTitle(title);
 	}
 	
 	@Override
-	public void runAsFXThread(Runnable r)
-	{
+	public void runAsFXThread(Runnable r){
 		Platform.runLater(r);
 	}
 
@@ -529,8 +527,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		me.requestFocus();
 	}
 
-	public void buildUI(BorderPane root)
-	{
+	private void buildUI(BorderPane root){
 		
 		/* ===================================================================================
 		 * 	Menubar
@@ -883,7 +880,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		sidebarTabPanel.setStyle("-fx-border-width: 0");
 		sidebarPanel.setCenter(sidebarTabPanel);
 		
-		// Suche
+		// Searching
 		searchBoard = new BorderPane();
 		searchBoard.setId("SearchPanel");
 		searchInput = new TextField("");
@@ -918,7 +915,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		searchBoard.setRight(startSearch);
 		
 		/* ===================================================================================
-		 * 	Statuszeile
+		 * 	Status (bottom panel)
 		 * ===================================================================================
 		 */  
 		
@@ -953,7 +950,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	
 	/*
 	 * ======================================================================================================================================================
-	 * Ende UI Aufbau
+	 * End of part "build ui"
 	 * ======================================================================================================================================================
 	 */
 	
@@ -1213,8 +1210,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 * ======================================================================================================================================================
 	 */
 	
-	@Override
-	public void buildTree()
+	private void buildTree()
 	{
 		treeNodeTranslator.clear();
 		fxtree.getRoot().getChildren().clear();
@@ -1230,14 +1226,6 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			parentNode.getChildren().add(node);
 			addChildNodes2FxTree(node);
 		});
-	}
-	
-	@Override
-	public void updateTree() {
-		TreeItem<TreeNode> node2select = fxtree.getSelectionModel().getSelectedItem();
-		fxtree.getRoot().setExpanded(false);
-		fxtree.getRoot().setExpanded(true);
-		fxtree.getSelectionModel().select(node2select);
 	}
 	
 	private void updateTree(TreeItem<TreeNode> node) {
@@ -1258,8 +1246,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		}
 	}
 	
-	@Override 
-	public void rebuildTreePart(TreeNode parentNode) {
+	private void rebuildTreePart(TreeNode parentNode) {
 		if(parentNode.getId() > 0)
 		{
 			TreeItem<TreeNode> fxTreeNode = treeNodeTranslator.get(parentNode);
@@ -1286,8 +1273,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		});
 	}
 	
-	@Override 
-	public void displayNewTreePart(TreeNode newNode) {
+	private void displayNewTreePart(TreeNode newNode) {
 		
 		TreeItem<TreeNode> node = new TreeItem<TreeNode>(newNode);
 		treeNodeTranslator.put(newNode, node);
@@ -1309,8 +1295,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		return fxtree.getSelectionModel().getSelectedItem();
 	}
 	
-	@Override
-	public TreeNode getSelectedTreeNode(){
+	private TreeNode getSelectedTreeNode(){
 		return fxtree.getSelectionModel().getSelectedItem().getValue();
 	}
 	
@@ -1471,8 +1456,8 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 		return f;
 	}
-	
-	public MenuItem createMenuItem(String text, String iconname, EventHandler<ActionEvent> event, boolean add2TreeDependentItems)
+
+	private MenuItem createMenuItem(String text, String iconname, EventHandler<ActionEvent> event, boolean add2TreeDependentItems)
 	{
 		MenuItem menuItem = new MenuItem(text);
 		menuItem.setOnAction(event);
@@ -1484,7 +1469,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		return menuItem;
 	}
 	
-	public void showLinkNodePanel(TreeNode nodeLinkSource){
+	private void showLinkNodePanel(TreeNode nodeLinkSource){
 		Label l = new Label(String.format(localeBundle.getString("mainwindow.dialogs.link_nodes"), nodeLinkSource.getText()));
 		l.setStyle("-fx-padding: 0 0 0 8");
 		BorderPane panel = new BorderPane(l);
@@ -1503,7 +1488,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 	/*
 	 * ======================================================================================================================================================
-	 * Ab hier Interface "core.interfaces.FXUserInterface"
+	 * Interface "core.interfaces.FXUserInterface"
 	 * ======================================================================================================================================================
 	 */
 	
@@ -1593,6 +1578,14 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		showSidebar(true);
 	}
 
+	/**
+	 * Creates a small button with an image and a tool tip, but without a text.
+	 * @param tooltip the tool tip
+	 * @param icon the icon
+	 * @param size the size (width and height)
+	 * @param onClick the event handler
+	 * @return a button with your preferences
+	 */
 	public static Button createSmallButton(String tooltip, String icon, double size, EventHandler<ActionEvent> onClick)
 	{
 		Button b = new Button("", ImageSelector.getFxImageView((icon)));
@@ -1771,6 +1764,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		if(add2TreeDependentItems){menu.disableProperty().bind(treeDependentElementsDisableProperty);}
 	}
 
+	@Override
 	public String getClipboardText() {
 		if(clipboard.hasString() || clipboard.hasHtml() || clipboard.hasUrl())
 		{
@@ -1779,6 +1773,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		return "";
 	}
 
+	@Override
 	public synchronized void setClipboardText(String text) {
 		
 		if(Platform.isFxApplicationThread()){
@@ -1942,15 +1937,11 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 	
 	@Override
-	/**
-	 * Display a Save-Changes dialog and wait till the user finished the input
-	 * @return TRUE if the changes should be saved, FALSE if not.
-	 **/
-	public int showSaveChangesDialog()
+	public boolean showSaveChangesDialog() throws UserCanceledOperationException
 	{
 		de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result r = de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.show(this);
-		if(r == Result.Cancel){return -1;}
-		return (r == Result.SaveChanges) ? 1 : 0;
+		if(r == Result.Cancel){throw new UserCanceledOperationException("Cancel button was pressed.");}
+		return (r == Result.SaveChanges);
 	}
 	
 	@Override
