@@ -542,18 +542,16 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 		// --- Menu File
 		menu_File = new Menu(localeBundle.getString("mainwindow.menu.file"));
+		
+		Menu file_new = new Menu(localeBundle.getString("mainwindow.menu.file.new"), ImageSelector.getFxImageView("icon_newfile"));
+		file_new.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new.encrypted_file"), ImageSelector.getIcon("icon_newfile"),
+											  (event) -> showCreateNewFileDialog(true), false));
+		
+		file_new.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new.regular_file"), ImageSelector.getIcon("icon_newfile"),
+				  (event) -> showCreateNewFileDialog(false), false));
+		
+		menu_File.getItems().add(file_new);
 
-		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new"), ImageSelector.getIcon("icon_newfile"), new EventHandler<ActionEvent>() {
-							@Override public void handle(ActionEvent e)
-							{
-								if(!app.closeFile()){return;}
-													
-								File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.new_file.title"), "", "", app.storageManager.getFileChooserExtensionFilter());
-								if(f != null)
-								{
-									app.createNewFile(f);
-								}
-							}}, false));
 
 		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.open"),
 												ImageSelector.getIcon("icon_openfile"),
@@ -932,6 +930,16 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		bottomPanel.setRight(notificationArea);
 		bottomPanel.setId("StatusBar");
 		root.setBottom(bottomPanel);
+	}
+	
+	private void showCreateNewFileDialog(boolean encryptFile){
+		if(!app.closeFile()){return;}
+		
+		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.new_file.title"), "", "", app.storageManager.getFileChooserExtensionFilter());
+		if(f != null)
+		{
+			app.createNewFile(f, encryptFile);
+		}
 	}
 	
 	private MenuItem createColorContextMenu(String colorName, String iconKeyWord, String colorHTMLValue)

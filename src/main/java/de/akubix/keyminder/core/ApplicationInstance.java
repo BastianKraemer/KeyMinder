@@ -44,6 +44,7 @@ import javax.management.modelmbean.XMLParseException;
 import de.akubix.keyminder.core.db.StandardTree;
 import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.Command;
@@ -516,19 +517,40 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 		}
 	}
 
-	public boolean createNewFile(File file)
+	public boolean createNewFile(File file, boolean encryptFileWithDefaultCipher)
 	{
-		return createNewFile(file, StorageManager.defaultFileType);
+		return createNewFile(file, StorageManager.defaultFileType, encryptFileWithDefaultCipher);
 	}
 
-	public synchronized boolean createNewFile(File file, String fileTypeIdentifier)
+	public synchronized boolean createNewFile(File file, String fileTypeIdentifier, boolean encryptFileWithDefaultCipher)
 	{
 		if(currentFile != null)
 		{
 			if(!closeFile()){return false;}
 		}
-		
-		currentFile = new FileConfiguration(file, "(not set)", false, fileTypeIdentifier, null, new HashMap<>(), new HashMap<>());		
+
+		currentFile = new FileConfiguration(file, "(not set)", encryptFileWithDefaultCipher, fileTypeIdentifier, encryptFileWithDefaultCipher ? new EncryptionManager(true) : null, new HashMap<>(), new HashMap<>());		
+
+		if(encryptFileWithDefaultCipher){
+			try {
+				/*mainwindow.createfile.setpassword.headline = Set Password...
+						mainwindow.createfile.setpassword.text = Please enter a password for your new file:
+						mainwindow.createfile.setpassword.confirmtext = Please enter the password again:
+						mainwindow.createfile.setpassword.passwords_not_equal = The entered password doesn't match.*/
+				if(!currentFile.getEncryptionManager().requestPasswordInputWithConfirm(this,
+					isFxUserInterfaceAvailable() ? fxInterface.getLocaleBundleString("mainwindow.createfile.setpassword.headline") : "Set Password...",
+					isFxUserInterfaceAvailable() ? fxInterface.getLocaleBundleString("mainwindow.createfile.setpassword.text") : "Please enter a password for your new file:",
+					isFxUserInterfaceAvailable() ? fxInterface.getLocaleBundleString("mainwindow.createfile.setpassword.confirmtext") : "Please enter the password again:"))
+				{
+					alert(isFxUserInterfaceAvailable() ? fxInterface.getLocaleBundleString("mainwindow.createfile.setpassword.passwords_not_equal") : "The entered passwords doesn't match.");
+					return createNewFile(file, fileTypeIdentifier, encryptFileWithDefaultCipher);
+				}
+				
+			} catch (UserCanceledOperationException e) {
+				currentFile.getEncryptionManager().destroy();
+				return false;
+			}
+		}
 
 		TreeNode firstNode = tree.createNode(APP_NAME);
 		tree.addNode(firstNode, tree.getRootNode());
@@ -1486,9 +1508,13 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 						case "new":
 							if(args.length == 2){
 								File f = new File(args[1]);
-								instance.createNewFile(f);
-							}else {
-								println("Usage: file create <filepath>");
+								instance.createNewFile(f, false);
+							}else if(args.length == 3){
+								File f = new File(args[1]);
+								instance.createNewFile(f, (args[2].toLowerCase().equals("-encrypt") || args[2].toLowerCase().equals("--encrypt")));
+							}
+							else{
+								println("Usage: file create [filepath] [-encrypt]");
 							}
 							return null;
 
