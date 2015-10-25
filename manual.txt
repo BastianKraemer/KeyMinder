@@ -71,7 +71,7 @@ All options can be used with "--", "-" or "/".
     ***************************************************
         -console
 
-    Tell Keyminder to be a bit more verbose
+    Tell KeyMinder to be a bit more verbose
     ***************************************
         -verbose
 	
@@ -145,21 +145,20 @@ Note: Don't forget to define the path to PuTTY and WinSCP. You can do this...
     SSH port forwarding
     *******************
 
-At the moment the text area to define port forwarding highly depends on the
-real command line options. To display it more clearly you can use multiple
-lines to define your port forwarding.
+If you want to use port forwarding, you have to use the following pattern:
 
-Here is a short example how to use port forwarding with PuTTY:
+	[source port]:[host name]:[host port].
 
-	-L [source port]:[host name]:[host port]
+To display all forwarding more clearly you have to use multiple lines. It is
+necessary to store one forward in each line. It's also highly recommended to
+avoid having empty lines between your forwarding.
 	
 	Maybe your configuration could look like this:
 
-	-L 80:example.com:80
-	-L 443:example.com:443
-	
-If you want to use another application than PuTTY you will have to adapt this
-arguments.
+	80:example.com:80
+	443:example.com:443
+
+Note: Every line in this text area that starts with "#" will be ignored
 
 
     Start and stop socks profiles
