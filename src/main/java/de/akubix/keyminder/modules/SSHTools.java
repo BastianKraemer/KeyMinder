@@ -970,7 +970,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 									fileSettings.put("sshtools.socksprofiles", socksProfiles2String(socksProfileIDs_clone));
 									fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".name", input);
 									fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".sshport", "22");
-									fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".customargs", "#putty_sessioname=?");
+									fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".customargs", "#putty_sessionname=?");
 									profileSelection.getOnAction().handle(null);
 									profileSelection.autosize();
 								}
