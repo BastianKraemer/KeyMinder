@@ -3,4 +3,5 @@
 .project
 target/
 doc/
+bin/
 
