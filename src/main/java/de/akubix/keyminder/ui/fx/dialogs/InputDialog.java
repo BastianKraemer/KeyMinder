@@ -18,10 +18,10 @@
 */
 package de.akubix.keyminder.ui.fx.dialogs;
 
-import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.Launcher;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
+import de.akubix.keyminder.lib.Tools;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -35,7 +35,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -151,7 +150,7 @@ public class InputDialog {
 		inputDialog.setScene(myScene);
 
 		inputDialog.initModality( Modality.APPLICATION_MODAL );
-		inputDialog.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		Tools.addDefaultIconsToStage(inputDialog);
 	}
 	
 	public String getInput() throws UserCanceledOperationException

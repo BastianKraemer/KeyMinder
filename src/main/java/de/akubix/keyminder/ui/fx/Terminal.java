@@ -22,12 +22,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.lib.Tools;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
@@ -111,7 +111,7 @@ public class Terminal implements de.akubix.keyminder.core.interfaces.CommandOutp
 		terminalwindow.setScene(myScene);
 
 		terminalwindow.setResizable(true);
-		terminalwindow.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		Tools.addDefaultIconsToStage(terminalwindow);
 		terminalwindow.setMinWidth(560);
 		terminalwindow.setMinHeight(240);
 		

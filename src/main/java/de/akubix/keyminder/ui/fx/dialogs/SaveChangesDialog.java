@@ -21,6 +21,7 @@ package de.akubix.keyminder.ui.fx.dialogs;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.Launcher;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
+import de.akubix.keyminder.lib.Tools;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -28,7 +29,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -128,7 +128,7 @@ public class SaveChangesDialog {
 			dialog.setResizable(false); //Workaround, otherwise the window will "jump" a bit over the screen
 		}
 		dialog.initModality( Modality.APPLICATION_MODAL );
-		dialog.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		Tools.addDefaultIconsToStage(dialog);
 	}
 	
 	public Result getInput()

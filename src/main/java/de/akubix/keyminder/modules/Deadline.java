@@ -38,6 +38,7 @@ import de.akubix.keyminder.core.interfaces.Module;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
+import de.akubix.keyminder.lib.Tools;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -56,7 +57,6 @@ import javafx.scene.control.Spinner;
 import javafx.scene.control.SpinnerValueFactory.IntegerSpinnerValueFactory;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
@@ -489,7 +489,7 @@ public class Deadline implements Module {
 		me.initModality( Modality.APPLICATION_MODAL );
 		me.setScene(myScene);
 		me.setResizable(false);
-		me.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		Tools.addDefaultIconsToStage(me);
 		
 		me.showAndWait();
 	}
@@ -545,7 +545,7 @@ public class Deadline implements Module {
 		
 		me.setScene(myScene);
 		me.setResizable(false);
-		me.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		Tools.addDefaultIconsToStage(me);
 		
 		me.show();
 	}

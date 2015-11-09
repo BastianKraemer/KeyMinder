@@ -24,6 +24,7 @@ import java.util.Map;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.ApplicationInstance.ModuleInfo;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
+import de.akubix.keyminder.lib.Tools;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -43,7 +44,6 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
-import javafx.scene.image.Image;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -153,7 +153,7 @@ public class SettingsDialog {
 		//Set position of second window, related to primary window.
 		me.setResizable(false);
 		me.initModality( Modality.APPLICATION_MODAL );
-		me.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		Tools.addDefaultIconsToStage(me);
 		me.showAndWait();
 		
 		return saveSettings;	

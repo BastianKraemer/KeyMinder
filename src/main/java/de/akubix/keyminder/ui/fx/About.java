@@ -20,6 +20,7 @@ package de.akubix.keyminder.ui.fx;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
+import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.lib.gui.ImageSelector;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -29,7 +30,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -94,7 +94,7 @@ public class About {
 		aboutWindow.setScene(myScene);
 
 		aboutWindow.setResizable(false);
-		aboutWindow.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		Tools.addDefaultIconsToStage(aboutWindow);
 
 		aboutWindow.show();
 	}

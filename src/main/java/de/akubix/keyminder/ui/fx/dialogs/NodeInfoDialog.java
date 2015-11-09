@@ -19,6 +19,7 @@
 package de.akubix.keyminder.ui.fx.dialogs;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.lib.Tools;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -112,7 +113,7 @@ public class NodeInfoDialog {
 		me.initModality( Modality.APPLICATION_MODAL );
 		me.setTitle(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.title"));
 	 	me.setResizable(false);
-	 	me.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+	 	Tools.addDefaultIconsToStage(me);
 	 	me.setWidth(400);
 	 	me.setHeight(420);
 	 	

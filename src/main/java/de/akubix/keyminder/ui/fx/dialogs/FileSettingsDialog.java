@@ -27,6 +27,7 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
+import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.lib.gui.StyleSelector;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -45,7 +46,6 @@ import javafx.scene.control.Separator;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -146,7 +146,7 @@ public class FileSettingsDialog {
 		//Set position of second window, related to primary window.
 		me.setResizable(false);
 		me.initModality(Modality.APPLICATION_MODAL);
-		me.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		Tools.addDefaultIconsToStage(me);
 		me.showAndWait();
 		
 		return saveSettings;
@@ -282,7 +282,7 @@ public class FileSettingsDialog {
 					alert.getButtonTypes().setAll(buttonYes, buttonNo, buttonCancel);
 					
 					Stage s = (Stage) alert.getDialogPane().getScene().getWindow();
-					s.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+					Tools.addDefaultIconsToStage(s);
 					s.initOwner(me);
 					StyleSelector.assignDefaultStylesheet(s.getScene());
 					

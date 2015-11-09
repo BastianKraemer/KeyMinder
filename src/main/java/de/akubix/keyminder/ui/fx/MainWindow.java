@@ -33,6 +33,7 @@ import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
 import de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler;
+import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.lib.gui.ImageSelector;
 import de.akubix.keyminder.lib.gui.StyleSelector;
 import de.akubix.keyminder.lib.gui.StyleSelector.WindowSelector;
@@ -438,7 +439,8 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			app.startup();
 			
 			// Show the main window
-			me.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+			Tools.addDefaultIconsToStage(me);
+			
 			me.show();
 			
 			runAsFXThread(new Runnable() {
@@ -1849,7 +1851,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		msg.setHeaderText(headline);
 		msg.setContentText(text);
 		Stage s = (Stage) msg.getDialogPane().getScene().getWindow();
-		s.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		Tools.addDefaultIconsToStage(s);
 		s.initOwner(me);
 		StyleSelector.assignDefaultStylesheet(s.getScene());
 		msg.showAndWait();
@@ -1956,7 +1958,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		alert.setHeaderText(headline);
 		alert.setContentText(contentText);
 		Stage s = (Stage) alert.getDialogPane().getScene().getWindow();
-		s.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		Tools.addDefaultIconsToStage(s);
 		StyleSelector.assignDefaultStylesheet(alert.getDialogPane().getScene());
 		s.initOwner(me);
 		

@@ -22,6 +22,7 @@ import java.time.ZoneId;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.Tree;
+import de.akubix.keyminder.lib.Tools;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -191,7 +192,7 @@ public class FindAndReplaceDialog {
 
 		me.setResizable(false);
 		//me.initModality( Modality.NONE );
-		me.getIcons().add(new Image(ApplicationInstance.APP_ICON));
+		Tools.addDefaultIconsToStage(me);
 		
 		me.setOnCloseRequest(new EventHandler<WindowEvent>() {
 			@Override
