@@ -35,7 +35,6 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -65,20 +64,16 @@ public class FindAndReplaceDialog {
 		me.show();
 	}
 	
-	public void bringToFront()
-	{
+	public void bringToFront(){
 		me.requestFocus();
 	}
 	
-	public static void showInstance(Stage primaryStage, Tree tree, de.akubix.keyminder.core.interfaces.FxUserInterface fxUI)
-	{
-		if(instance == null)
-		{
+	public static synchronized void showInstance(Stage primaryStage, Tree tree, de.akubix.keyminder.core.interfaces.FxUserInterface fxUI){
+		if(instance == null){
 			instance = new FindAndReplaceDialog(primaryStage, tree, fxUI);
 			instance.show();
 		}
-		else
-		{
+		else{
 			instance.bringToFront();
 		}
 	}

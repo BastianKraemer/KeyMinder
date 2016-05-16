@@ -440,7 +440,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			
 			// Show the main window
 			Tools.addDefaultIconsToStage(me);
-			
+
 			me.show();
 			
 			runAsFXThread(new Runnable() {
@@ -1767,7 +1767,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 
 	@Override
-	public String getClipboardText() {
+	public synchronized String getClipboardText() {
 		if(clipboard.hasString() || clipboard.hasHtml() || clipboard.hasUrl())
 		{
 			return clipboard.getString();
@@ -1987,7 +1987,9 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	public void removeNotificationItem(Node item)
 	{
 		notificationArea.getChildren().remove(item);
-		if(assignedNotificationsItems.contains(item)){assignedNotificationsItems.remove(assignedNotificationsItems);}
+		if(assignedNotificationsItems.contains(item)){
+			assignedNotificationsItems.remove(item);
+		}
 	}
 
 	@Override
@@ -2006,7 +2008,9 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	public void removeTreePanel(Node item)
 	{
 		panelStack.getChildren().remove(item);
-		if(assignedNotificationsItems.contains(item)){assignedNotificationsItems.remove(assignedNotificationsItems);}
+		if(assignedNotificationsItems.contains(item)){
+			assignedNotificationsItems.remove(item);
+		}
 	}
 
 	@Override

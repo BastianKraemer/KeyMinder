@@ -85,7 +85,7 @@ public class StandardNode implements TreeNode{
 	
 	// ===== Attribute text
 	@Override
-	public String getText() {
+	public synchronized String getText() {
 		return this.text;
 	}
 
@@ -102,7 +102,7 @@ public class StandardNode implements TreeNode{
 
 	// ===== Attribute color
 	@Override
-	public String getColor() {
+	public synchronized String getColor() {
 		return this.color;
 	}
 
@@ -127,7 +127,7 @@ public class StandardNode implements TreeNode{
 	}
 	
 	@Override
-	public String getAttribute(String name)
+	public synchronized String getAttribute(String name)
 	{
 		return attributes.containsKey(name) ? attributes.get(name) : "";
 	}
@@ -206,7 +206,7 @@ public class StandardNode implements TreeNode{
 	}
 	
 	@Override
-	public TreeNode getParentNode()
+	public synchronized TreeNode getParentNode()
 	{
 		if(parentNodeID >= 0)
 		{

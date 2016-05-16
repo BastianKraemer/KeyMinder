@@ -74,6 +74,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 	/* Static configurations variables */
 	
 	public static String APP_VERSION = "0.2-SNAPSHOT";
+
 	public static final String APP_ICON_16 = "/de/akubix/keyminder/images/app/AppIcon16.png";
 	public static final String APP_ICON_32 = "/de/akubix/keyminder/images/app/AppIcon32.png";
 	public static final String APP_ICON_256 = "/de/akubix/keyminder/images/app/AppIcon256.png";
@@ -751,7 +752,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 		}
 	}
 
-	public TreeNode getFavoriteNode(byte favoriteNumber)
+	public synchronized TreeNode getFavoriteNode(byte favoriteNumber)
 	{
 		if(currentFile != null && favoriteNumber <= 9 && favoriteNumber >= 0){
 			if(favoriteNodes[favoriteNumber] > 0){
@@ -801,6 +802,10 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 								moduleList.add(fileName.substring(0, fileName.length() - 6));
 							}
 						}
+					}
+					catch (NullPointerException e) {
+						println("ERROR: Generation of module list failed (URISyntaxException).");
+						e.printStackTrace();
 					}
 					catch (URISyntaxException e) {
 						println("ERROR: Generation of module list failed (URISyntaxException).");

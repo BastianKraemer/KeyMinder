@@ -268,7 +268,7 @@ public class Deadline implements Module {
 				if(!(warningDifferenceInDays > 0))
 				{
 					setWarnDiffDefaultValues();
-					instance.log(String.format("Error in module Deadline: Warn time must be greater than zero. Using default value (%d days)", value, warningDifferenceInDays));
+					instance.log(String.format("Error in module Deadline: Warn time must be greater than zero. Using default value (%d days)", warningDifferenceInDays));
 				}
 				else
 				{

@@ -38,10 +38,10 @@ import de.akubix.keyminder.core.interfaces.CommandOutputProvider;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.core.interfaces.events.BooleanEventHandler;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
-import de.akubix.keyminder.core.interfaces.events.SettingsEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
+import de.akubix.keyminder.core.interfaces.events.SettingsEventHandler;
 import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.lib.sidebar.FxSidebar;
 import de.akubix.keyminder.modules.sshtools.AppStarter;
@@ -83,7 +83,7 @@ import javafx.stage.DirectoryChooser;
 @de.akubix.keyminder.core.interfaces.ModuleProperties(
 	name="SSH-Tools",
 	description = "Adds a sidebar to " + ApplicationInstance.APP_NAME + ", which allows you to store the configuration of a 'ssh connection' in a single node." +
-				  "You also will be able to launch these configurations with \"PuTTY\" or another custom application by using the context menu.\n\nThis module is for advanced users.",		
+				  "You also will be able to launch these configurations with \"PuTTY\" or another custom application by using the context menu.\n\nThis module is for advanced users.",
 	version = ".",
 	dependencies = "KeyClip;Sidebar",
 	author="Bastian Kraemer")
@@ -91,17 +91,17 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 
 	private ApplicationInstance app;
 	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI = null;
-	
+
 	private String defaultUsername, defaultPassword;
-	
+
 	private List<String> socksProfileIDs = new ArrayList<String>();
 	private Map<String, Process> runningSocksProfiles = new HashMap<>();
 	private Map<String, CheckMenuItem> socksMenuItems = new HashMap<>();
-	
+
 	private Menu socksMenu;
 	private List<AppStarter> appStarterList = new ArrayList<>();
 	private AppStarter socksAppStarter = null;
-	
+
 	private static final String SETTINGS_KEY_SOCKS_ACTION = "sshtools.actionprofile_socks"; //Contains the path to the XML application profile for "Socks"
 	private static final String SETTINGS_KEY_APP_PROFILES_PATH = "sshtools.app_profile_path";
 	@Override
@@ -112,10 +112,10 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		if(Launcher.environment.get("os").equals("Linux") && !System.getProperty("user.name").equals("root")){
 			instance.log("Warning (SSH-Tools): Privileged ports can only be forwarded by root. " + ApplicationInstance.APP_NAME + " won't be able to forward ports lower than 1024.");
 		}
-	
+
 		if(!checkProfileSettings(SETTINGS_KEY_SOCKS_ACTION)){app.setSettingsValue(SETTINGS_KEY_SOCKS_ACTION, "default:putty_socks");}
 		if(!checkProfileSettings(SETTINGS_KEY_APP_PROFILES_PATH)){app.setSettingsValue(SETTINGS_KEY_APP_PROFILES_PATH, "./sshtools");}
-		
+
 		provideSocksCommand();
 
 		if(app.isFxUserInterfaceAvailable())
@@ -132,27 +132,27 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			);
 			sidebar.addLabel(fxUI.getLocaleBundleString("module.sshtools.ssh_host"));
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextbox("ssh_host"), "ssh_host");
-			
+
 			sidebar.addLabel(fxUI.getLocaleBundleString("module.sshtools.ssh_port"));
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextbox("ssh_port"), "ssh_port");
-			
+
 			sidebar.addLabel(fxUI.getLocaleBundleString("module.sshtools.ssh_portforwarding"));
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextarea("ssh_portforwarding"), "ssh_portforwarding");
 			sidebar.addSeperator();
-			
+
 			sidebar.addLabel(fxUI.getLocaleBundleString("module.sshtools.ssh_user"));
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextbox("ssh_user"), "ssh_user");
-			
+
 			sidebar.addLabel(fxUI.getLocaleBundleString("module.sshtools.ssh_password"));
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarPasswordbox("ssh_password"), "ssh_password");
 			sidebar.addSeperator();
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarCheckbox("ssh_x11", "Use X11"), "ssh_x11");
-			
+
 			// Menu to start new Socks Connections
 
 			socksMenu = new Menu(fxUI.getLocaleBundleString("module.sshtools.menu_socks"));
 			fxUI.addMenu(socksMenu, true);
-				
+
 			// Add etc hosts menu item
 
 			if(Launcher.environment.containsKey("module.sshtools.etchosts")){
@@ -165,7 +165,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 							de.akubix.keyminder.lib.Tools.runProcess(java.util.Arrays.asList(cmd));
 						}
 						else{
-							fxUI.alert(String.format("Cannot execute file '%s': File does not exist.", cmd[0]));	
+							fxUI.alert(String.format("Cannot execute file '%s': File does not exist.", cmd[0]));
 						}
 					}
 					catch(Exception ex)
@@ -179,15 +179,15 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 
 		// add event handlers
 		handleCreation();
-		
+
 		// create socks application starter
 		createSocksAppStarter();
 		app.addEventHandler(DefaultEvent.OnSettingsChanged, () -> createSocksAppStarter());
-		
+
 		// create default application starter
 		loadAllApplicationStarter();
 	}
-	
+
 	private void loadAllApplicationStarter(){
 
 		loadDefaultApplicationStarter("PuTTY", "sshtools.enable_putty", "default:putty");
@@ -195,34 +195,36 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 
 		File dir = new File(app.getSettingsValue(SETTINGS_KEY_APP_PROFILES_PATH));
 		if(dir.exists()){
-			File [] files = dir.listFiles(new java.io.FilenameFilter() {
+			File[] files = dir.listFiles(new java.io.FilenameFilter() {
 				@Override
 				public boolean accept(File dir, String name) {
 					return name.endsWith(".xml");
 				}
 			});
 
-			for(File xmlFile : files){
-				try{
-					AppStarter as = new AppStarter(app, this, () -> {
-						try {
-							return XMLCore.loadDocumentFromFile(xmlFile);
-						} catch (Exception e) {
-							return null; 
+			if(files != null){
+				for(File xmlFile : files){
+					try{
+						AppStarter as = new AppStarter(app, this, () -> {
+							try {
+								return XMLCore.loadDocumentFromFile(xmlFile);
+							} catch (Exception e) {
+								return null;
+							}
+						});
+						if(Launcher.verbose_mode){
+							app.printf(" - Loading application profile from file '%s'...\n", xmlFile);
 						}
-					});
-					if(Launcher.verbose_mode){
-						app.printf(" - Loading application profile from file '%s'...\n", xmlFile);
+						appStarterList.add(as);
 					}
-					appStarterList.add(as);
-				}
-				catch(IllegalArgumentException ex){
-					app.log(String.format("SSH-Tools: Cannot load AppStarter: %s\nXML-File: %s", ex.getMessage(), xmlFile.getAbsolutePath()));
+					catch(IllegalArgumentException ex){
+						app.log(String.format("SSH-Tools: Cannot load AppStarter: %s\nXML-File: %s", ex.getMessage(), xmlFile.getAbsolutePath()));
+					}
 				}
 			}
 		}
 	}
-	
+
 	private void loadDefaultApplicationStarter(String name, String settings_value, String inputStreamSrc){
 		try{
 			if(app.getSettingsValueAsBoolean(settings_value, false)){
@@ -259,14 +261,14 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			}
 		}
 	}
-	
+
 	private boolean checkProfileSettings(String key)
 	{
 		if(app.settingsContainsKey(key))
 		{
-			if(!app.getSettingsValue(key).equals("")){return true;}	
+			if(!app.getSettingsValue(key).equals("")){return true;}
 		}
-		
+
 		return false;
 	}
 
@@ -289,7 +291,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			case "default:putty_socks":
 				in = this.getClass().getResourceAsStream("sshtools/putty_runsocksprofile.xml");
 				break;
-				
+
 			case "default:plink_socks":
 				in = this.getClass().getResourceAsStream("sshtools/plink_runsocksprofile.xml");
 				break;
@@ -311,20 +313,20 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			throw new FileNotFoundException(String.format("Cannot find ressource '%s' in Jar-File.", path));
 		}
 	}
-	
+
 	private void handleCreation()
 	{
 		DefaultEventHandler handler = () -> reloadSocksConfig();
 
 		// If a file has been opened
 		app.addEventHandler(DefaultEvent.OnFileOpened, handler);
-		
+
 		// If the current file has been closed
 		app.addEventHandler(DefaultEvent.OnFileClosed, handler);
-		
+
 		// If the file settings has been changed
 		app.addEventHandler(DefaultEvent.OnFileSettingsChanged, handler);
-		
+
 		app.addEventHandler(BooleanEvent.DONTAllowFileClosing, new BooleanEventHandler() {
 			@Override
 			public boolean eventFired() {
@@ -359,7 +361,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 				}
 				return false;
 			}});
-		
+
 		// This will only be executed if the JavaFX user interface is available
 		if(fxUI != null)
 		{
@@ -376,10 +378,10 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 					onFileSettingsDialogOpened(tabControl, settings);
 				}
 			});
-			
+
 		}
 	}
-	
+
 	private void provideSocksCommand()
 	{
 		app.provideNewCommand("socks", new Command() {
@@ -430,7 +432,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 	private void reloadSocksConfig()
 	{
 		socksProfileIDs.clear();
-	
+
 		defaultUsername = app.getFileSettingsValue("sshtools.defaultusername");
 		defaultPassword = app.getFileSettingsValue("sshtools.defaultpassword");
 
@@ -440,7 +442,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		{
 			socksMenu.getItems().clear();
 			socksMenuItems.clear();
-			
+
 			if(socksProfileIDs.size() > 0)
 			{
 				appStarterList.forEach((as) -> as.clearSocksItems());
@@ -450,7 +452,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 					appStarterList.forEach((as) -> as.createUsingSocksItem(profileId, text2display));
 
 					CheckMenuItem socksMainMenuProfileItem = new CheckMenuItem(text2display);
-				
+
 					socksMainMenuProfileItem.setOnAction(new EventHandler<ActionEvent>() {
 						@Override
 						public void handle(ActionEvent event) {
@@ -493,12 +495,12 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 	public String startApplication(AppStarter appStarter, boolean ignorePortForwarding, String socksProfileId){
 		return startApplication(appStarter, app.getTree().getSelectedNode(), ignorePortForwarding, socksProfileId);
 	}
-	
+
 	public String startApplication(AppStarter appStarter, TreeNode node, boolean ignorePortForwarding, String socksProfileId)
 	{
 		Map<String, String> var = createVariablePreset(socksProfileId, node);
-		if(ignorePortForwarding){var.put("ssh_portforwarding", "");} // Variables will be first looked up in the documents variable map, so the value of the node attribute wont be used 
-		
+		if(ignorePortForwarding){var.put("ssh_portforwarding", "");} // Variables will be first looked up in the documents variable map, so the value of the node attribute wont be used
+
 		try
 		{
 			List<String> args = appStarter.getCommandLineArgs(var, (socksProfileId == null) ? null : "using_socks", node);
@@ -533,12 +535,12 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			return e.getMessage();
 		}
 	}
-	
+
 	/* =============================================================================================================================================== */
-	
+
 	private Map<String, String> createVariablePreset(String socksProfileId, TreeNode treeNode){
 		Map<String, String> variablePreset = new HashMap<>();
-		
+
 		//Socks profile variables
 		if(socksProfileId != null && !socksProfileId.equals("")){
 			variablePreset.put("socks_ssh_user", getSocksProfileValues(socksProfileId, "user", defaultUsername));
@@ -546,7 +548,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			variablePreset.put("socks_ssh_host", app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".host"));
 			variablePreset.put("socks_ssh_port", app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".sshport"));
 			variablePreset.put("socks_proxyport", app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".socksport"));
-			
+
 			for(String line: app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".customargs").split("\n")){
 				if(!line.matches("^( |\t)*\\#.*")){
 					String[] splitstr = line.split("=", 2);
@@ -554,7 +556,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 				}
 			}
 		}
-		
+
 		// "Overwrite" the ${ssh_portforwarding} variable to exclude lines that begins with a '#'
 		if(treeNode != null){
 			String value = treeNode.getAttribute("ssh_portforwarding");
@@ -571,10 +573,10 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 				variablePreset.put("ssh_portforwarding", strbuilder.toString());
 			}
 		}
-		
+
 		return variablePreset;
 	}
-	
+
 	/**
 	 * Start a socks profile using the selected "XML application profile"
 	 * @param socksProfileId
@@ -585,7 +587,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		if(socksAppStarter == null){app.log("ERROR: Cannot start Profile - no application definied. Please update your settings."); return false;}
 
 		if(!runningSocksProfiles.containsKey(socksProfileId) && socksProfileIDs.contains(socksProfileId))
-		{			
+		{
 			try	{
 				String sshpw = getSocksProfileValues(socksProfileId, "password", defaultPassword);
 				List<String> cmd = socksAppStarter.getCommandLineArgs(createVariablePreset(socksProfileId, null), null, app.getTree().getSelectedNode());
@@ -596,14 +598,14 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 					{
 						Process p = de.akubix.keyminder.lib.Tools.runProcess(cmd);
 						runningSocksProfiles.put(socksProfileId, p);
-						
+
 						if(fxUI != null){
 							appStarterList.forEach((as) -> as.enableSocksItem(socksProfileId, true));
 							socksMenuItems.get(socksProfileId).setSelected(true);
 							fxUI.updateStatus(String.format(fxUI.getLocaleBundleString("module.sshtools.message.process_successfully_started"), cmd.get(0)));
 						}
 						return true;
-					
+
 					} catch (IOException e) {
 						app.log("ERROR: Start of socks profile caused IOException.\n" + e.getMessage());
 						return false;
@@ -635,7 +637,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Stop a socks profile
 	 * @param socksProfileID
@@ -658,7 +660,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 					}
 				}
 			}
-			
+
 			successfullyStopped = true;
 			runningSocksProfiles.remove(socksProfileID);
 			fxUI.updateStatus(String.format(fxUI.getLocaleBundleString("module.sshtools.message.socks_process_terminated")));
@@ -667,13 +669,13 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		{
 			successfullyStopped = true;
 		}
-		
+
 		if(successfullyStopped && fxUI != null){
 			socksMenuItems.get(socksProfileID).setSelected(false);
 			appStarterList.forEach((as) -> as.enableSocksItem(socksProfileID, false));
 		}
 	}
-	
+
 	private String getSocksProfileValues(String profileID, String value, String defaultValue)
 	{
 		String val = app.getFileSettingsValue("sshtools.socksprofile:" + profileID + "." + value);
@@ -686,13 +688,13 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			return val;
 		}
 	}
-	
+
 	private boolean isEmpty(String str)
 	{
 		if(str == null || str.equals("")){return true;}
 		return false;
 	}
-	
+
 	// Important note: One entry of array 'radioButtonUserData' has to be ""
 	private VBox createApplicationProfileSettingsArea(Map<String, String> generalSettings, String mapHashKey, String title, String[] radioButtonText, String[] radioButtonUserData)
 	{
@@ -752,6 +754,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		customProfileTextfield.setDisable(disableTextField);
 
 		toogleGroup.selectedToggleProperty().addListener(new ChangeListener<Toggle>(){
+			@Override
 			public void changed(ObservableValue<? extends Toggle> ov, Toggle old_toggle, Toggle new_toggle) {
 				if (toogleGroup.getSelectedToggle() != null) {
 					String val = toogleGroup.getSelectedToggle().getUserData().toString();
@@ -785,20 +788,20 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 	 * @param generalSettings
 	 */
 	private void onSettingsDialogOpened(TabPane tabControl, Map<String, String> generalSettings) {
-	
+
 		Tab mytab = new Tab(fxUI.getLocaleBundleString("module.sshtools.settings.tabtitle"));
 		mytab.setClosable(false);
 
 		Label title = new Label(fxUI.getLocaleBundleString("module.sshtools.settings.headline"));
 		title.getStyleClass().add("h2");
-		
+
 		/* =========================== path configuration ====================================== */
-		
+
 		VBox pathConfig = new VBox(4);
 		pathConfig.setPadding(new Insets(4, 8, 0, 8));
 		pathConfig.setMaxWidth(de.akubix.keyminder.ui.fx.dialogs.SettingsDialog.size_x);
 		pathConfig.setMinWidth(de.akubix.keyminder.ui.fx.dialogs.SettingsDialog.size_x);
-				
+
 		pathConfig.getChildren().addAll(title,
 				new Label(fxUI.getLocaleBundleString("module.sshtools.settings.puttypath")), createFileInputDialog(generalSettings, "sshtools.puttypath", fxUI),
 				new Label(fxUI.getLocaleBundleString("module.sshtools.settings.plinkpath")), createFileInputDialog(generalSettings, "sshtools.plinkpath", fxUI),
@@ -816,35 +819,35 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 				dc.setTitle(fxUI.getLocaleBundleString("module.sshtools.settings.directorychooser.appprofilepath"));
 				File f = new File(pathInput.getText());
 				if(f.exists()){dc.setInitialDirectory(f);}
-				
-				File folder = dc.showDialog(tabControl.getParent().getScene().getWindow());		
+
+				File folder = dc.showDialog(tabControl.getParent().getScene().getWindow());
 				if(folder != null){
 					pathInput.setText(folder.getAbsolutePath());
 					pathInput.fireEvent(new KeyEvent(pathInput, null, KeyEvent.KEY_RELEASED, ".", "", KeyCode.ACCEPT, false, false, false, false)); // The text field listes to the "KeyEvent.KEY_RELEASED" event to recognize changes
 				}
 		});
 		HBox.setHgrow(pathInput, Priority.ALWAYS);
-		
+
 		appProfilesPathContainer.getChildren().addAll(pathInput, browseButton);
 		pathConfig.getChildren().addAll(new Label(fxUI.getLocaleBundleString("module.sshtools.settings.applicationprofilepath")), appProfilesPathContainer);
 
 		final TitledPane pathConfiguration = new TitledPane(fxUI.getLocaleBundleString("module.sshtools.settings.part_pathconfig"), pathConfig);
-		
+
 		/* =========================== feature configuration ====================================== */
 
 		Label featureHeadline = new Label(fxUI.getLocaleBundleString("module.sshtools.settings.features.headline"));
 		featureHeadline.getStyleClass().add("h2");
-		
+
 		CheckBox enablePuTTY = createCheckBox(fxUI.getLocaleBundleString("module.sshtools.settings.features.enable_putty"), "sshtools.enable_putty", generalSettings, false);
 		CheckBox enableWinSCP = createCheckBox(fxUI.getLocaleBundleString("module.sshtools.settings.features.enable_winscp"), "sshtools.enable_winscp", generalSettings, false);
 		CheckBox showConfirmDialogCheckBox = createCheckBox(fxUI.getLocaleBundleString("module.sshtools.settings.always_confirm_cmdargs"), "sshtools.showConfirmDialog", generalSettings, true);
-		
+
 		VBox vbox = new VBox(4);
 		Label info = new Label(fxUI.getLocaleBundleString("module.sshtools.settings.features.info"));
 		info.setWrapText(true);
-		
+
 		info.setStyle("-fx-padding: 8; -fx-border-color: -fx-accent;");
-		
+
 		vbox.getChildren().addAll(featureHeadline, enablePuTTY, enableWinSCP, showConfirmDialogCheckBox, info);
 
 		VBox.setMargin(enablePuTTY, new Insets(4, 0, 0, 16));
@@ -853,33 +856,33 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		VBox.setMargin(info, new Insets(16, 0, 0, 0));
 		final TitledPane features = new TitledPane(fxUI.getLocaleBundleString("module.sshtools.settings.part_features"), vbox);
 
-		/* =========================== socks configuration ====================================== */			
+		/* =========================== socks configuration ====================================== */
 
 		final TitledPane socksConnections = new TitledPane(fxUI.getLocaleBundleString("module.sshtools.settings.part_socks"),
 					createApplicationProfileSettingsArea(generalSettings, SETTINGS_KEY_SOCKS_ACTION,
 														 fxUI.getLocaleBundleString("module.sshtools.settings.socks_action"),
 														 new String[]{"PuTTY", "PuTTY plink", fxUI.getLocaleBundleString("module.sshtools.settings.custom_execution_profile")},
 														 new String[]{"default:putty_socks", "default:plink_socks", ""}));
-		
-		/* =========================== build "Accordion" ====================================== */	
-		
+
+		/* =========================== build "Accordion" ====================================== */
+
 		final Accordion accordion = new Accordion();
-		
+
 		accordion.getPanes().addAll(features, pathConfiguration, socksConnections);
 		accordion.setExpandedPane(features);
-		
+
 		mytab.setContent(accordion);
-		
+
 		tabControl.getTabs().add(mytab);
 	}
-	
+
 	private CheckBox createCheckBox(String text, String settingsKey, Map<String, String> settingsReference, boolean defaultValue){
 		CheckBox cb = new CheckBox(text);
 		cb.setOnAction((event) -> settingsReference.put(settingsKey, Boolean.toString(cb.isSelected())));
 		cb.setSelected(app.getSettingsValueAsBoolean(settingsKey, defaultValue));
 		return cb;
 	}
-	
+
 	/**
 	 * Create a file input dialog that stores the value in the settings hash
 	 * @param generalSettings
@@ -890,7 +893,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 	private javafx.scene.Node createFileInputDialog(Map<String, String> generalSettings, String settingsKey, FxUserInterface fxUI){
 		TextField textField = new TextField(app.getSettingsValue(settingsKey));
 		textField.addEventFilter(KeyEvent.KEY_RELEASED, (event) -> generalSettings.put(settingsKey, textField.getText()));
-		
+
 		return de.akubix.keyminder.lib.Tools.createFxFileInputField(textField, fxUI);
 	}
 
@@ -907,14 +910,14 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 
 			VBox vbox = new VBox(4);
 			vbox.setPadding(new Insets(4, 8, 0, 8));
-			
+
 			Label title = new Label(fxUI.getLocaleBundleString("module.sshtools.filesettings.headline"));
 			title.getStyleClass().add("h2");
-			
+
 			ScrollPane scrollPane = new ScrollPane(vbox);
 			scrollPane.setHbarPolicy(ScrollBarPolicy.NEVER);
 			scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
-			
+
 			vbox.setMaxWidth(de.akubix.keyminder.ui.fx.dialogs.FileSettingsDialog.size_x);
 			vbox.setMinWidth(de.akubix.keyminder.ui.fx.dialogs.FileSettingsDialog.size_x);
 
@@ -926,7 +929,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 				}});
 
 			defaultUserInput.setText(app.getFileSettingsValue("sshtools.defaultusername"));
-			
+
 			BorderPane defaultPwInput = de.akubix.keyminder.lib.Tools.createFxPasswordField(new EventHandler<KeyEvent>() {
 				@Override
 				public void handle(KeyEvent event) {
@@ -994,7 +997,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			removeProfile.setOnAction(new EventHandler<ActionEvent>() {
 				@Override
 				public void handle(ActionEvent event) {
-					
+
 					if(profileSelection.getValue() != null)
 					{
 						if(app.requestYesNoDialog(fxUI.getLocaleBundleString("module.sshtools.removesocksprofile.title"),
@@ -1025,7 +1028,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 							if(profileSelection.getItems().size() >= 1){profileSelection.getSelectionModel().select(0);}
 							profileSelection.autosize();
 						}
-					}	
+					}
 				}});
 
 			hbox.getChildren().addAll( profileSelection, addProfile, removeProfile);
@@ -1036,7 +1039,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			socksConfigGroupBoxContent.getChildren().addAll(de.akubix.keyminder.lib.Tools.createFxLabelWithStyleClass(fxUI.getLocaleBundleString("module.sshtools.socksconfig.headline"), "h3"), hbox);
 
 			// Define all text fields for a Socks-Profile
-			
+
 			socksProfileTextfields.put("name",		addSettingsDialogTextField(socksConfigGroupBoxContent, profileSelection, fxUI.getLocaleBundleString("module.sshtools.socksconfig.profilename"), fileSettings, ".name", false));
 
 			HBox hostAndPortContainer = new HBox(4);
@@ -1044,33 +1047,33 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			socksProfileTextfields.put("sshport",	addSettingsDialogTextField(hostAndPortContainer, profileSelection, fxUI.getLocaleBundleString("module.sshtools.socksconfig.sshport"), fileSettings, ".sshport", false));
 			HBox.setHgrow(hostAndPortContainer.getChildren().get(0), Priority.ALWAYS);
 			socksConfigGroupBoxContent.getChildren().add(hostAndPortContainer);
-			
+
 			socksProfileTextfields.put("socksport",	addSettingsDialogTextField(socksConfigGroupBoxContent, profileSelection, fxUI.getLocaleBundleString("module.sshtools.socksconfig.socks_port_for_dynamic_forwarding"), fileSettings, ".socksport", false));
-			
+
 			HBox userAndPasswordContainer = new HBox(4);
 			socksProfileTextfields.put("user",		addSettingsDialogTextField(userAndPasswordContainer, profileSelection, fxUI.getLocaleBundleString("module.sshtools.socksconfig.username"), fileSettings, ".user", false));
 			socksProfileTextfields.put("password",	addSettingsDialogTextField(userAndPasswordContainer, profileSelection, fxUI.getLocaleBundleString("module.sshtools.socksconfig.password"), fileSettings, ".password", true));
 			HBox.setHgrow(userAndPasswordContainer.getChildren().get(0), Priority.SOMETIMES);
 			HBox.setHgrow(userAndPasswordContainer.getChildren().get(1), Priority.SOMETIMES);
-			
+
 			socksConfigGroupBoxContent.getChildren().add(new Separator(Orientation.HORIZONTAL));
-			
+
 			TextArea textarea = new TextArea();
 			textarea.setMaxHeight(64);
 			textarea.setOnKeyReleased((event) -> fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".customargs", textarea.getText()));
-			
+
 			socksProfileTextfields.put("customargs", new TextFieldAdapter() {
 				@Override
 				public void setText(String text) {textarea.setText(text);}
-				
+
 				@Override
 				public void setEditable(boolean value) {textarea.setEditable(value);}
-				
+
 				@Override
 				public String getText() {return textarea.getText();}
 			});
 			socksConfigGroupBoxContent.getChildren().addAll(userAndPasswordContainer, new Label(fxUI.getLocaleBundleString("module.sshtools.socksconfig.customsocksargs")), textarea);
-			
+
 			// -----------------------------------
 
 			VBox defaultParamsConfigBoxContent = new VBox(4);
@@ -1080,7 +1083,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 																defaultPwInput);
 
 			// ...and append them to a TitledPane
-			
+
 			TitledPane socksConfigBox = new TitledPane(fxUI.getLocaleBundleString("module.sshtools.filesettings.part_socksconfig"), socksConfigGroupBoxContent);
 			TitledPane defaultParamsConfigBox = new TitledPane(fxUI.getLocaleBundleString("module.sshtools.filesettings.part_default_values"), defaultParamsConfigBoxContent);
 			defaultParamsConfigBox.setExpanded(false);
@@ -1088,7 +1091,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			vbox.getChildren().addAll(title, socksConfigBox, defaultParamsConfigBox);
 
 			// Combo box event handling
-			
+
 			profileSelection.setOnAction(new EventHandler<ActionEvent>() {
 				@Override
 				public void handle(ActionEvent event) {
@@ -1103,8 +1106,8 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 							}
 							else
 							{
-								socksProfileTextfields.get(key).setText("");	
-							}				
+								socksProfileTextfields.get(key).setText("");
+							}
 						}
 					}
 					else
@@ -1119,14 +1122,14 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			});
 			profileSelection.getSelectionModel().select(0);
 			profileSelection.fireEvent(new ActionEvent());
-			
+
 			mytab.setContent(scrollPane);
 
 			tabControl.getTabs().add(mytab);
 	}
 
 	// Some helper methods
-	
+
 	private TextFieldAdapter addSettingsDialogTextField(Pane container, ComboBox<String> profileSelection, String title, Map<String, String> settingsReference, String hashKey, boolean useAsPassowrdField)
 	{
 		VBox vbox = new VBox(2);
@@ -1139,7 +1142,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		container.getChildren().add(vbox);
 		return t;
 	}
-	
+
 	private String socksProfiles2String(List<String> list)
 	{
 		if(list.size() == 0){return "";}
@@ -1148,7 +1151,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		{
 			ret.append("," + list.get(i));
 		}
-		
+
 		return ret.toString();
 	}
 
@@ -1166,14 +1169,14 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 				sb.append("\"" + part + "\" ");}else{sb.append(part + " ");
 			}
 		}
-		
+
 		if(!confirmed){
 			if(fxUI == null){
 				confirmed = app.requestYesNoDialog("Confirm command line arguments", "Please confirm these ommandline arguments:\n\n" + sb.toString());
 			}
 			else{
 				confirmed = app.requestYesNoDialog(fxUI.getLocaleBundleString("module.sshtools.confirmargs.title"),
-																 String.format(fxUI.getLocaleBundleString("module.sshtools.confirmargs.text"), sb.toString()));	
+																 String.format(fxUI.getLocaleBundleString("module.sshtools.confirmargs.text"), sb.toString()));
 			}
 		}
 		return confirmed;
@@ -1204,14 +1207,17 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 				}
 		}
 
+		@Override
 		public String getText(){return t1.getText();}
 
+		@Override
 		public void setText(String text)
 		{
 			t1.setText(text);
 			if(t2 != null){t2.setText(text);}
 		}
 
+		@Override
 		public void setEditable(boolean value)
 		{
 			t1.setEditable(value);

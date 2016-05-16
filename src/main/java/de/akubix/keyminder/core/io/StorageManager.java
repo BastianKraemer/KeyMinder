@@ -117,7 +117,7 @@ public class StorageManager {
 
 		for(int i = 0; i < fileExtensions.length; i++)
 		{
-			if(!extensionTranslator.containsKey(extensionTranslator)){
+			if(!extensionTranslator.containsKey(fileExtensions[i].extension.toLowerCase())){
 				extensionTranslator.put(fileExtensions[i].extension.toLowerCase(), identifier);
 				knownFileExtensions.add(new FileChooser.ExtensionFilter(fileExtensions[i].description, "*" + fileExtensions[i].extension));
 			}

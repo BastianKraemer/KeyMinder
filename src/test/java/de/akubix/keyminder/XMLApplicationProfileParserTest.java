@@ -59,7 +59,7 @@ public class XMLApplicationProfileParserTest {
 
 		ApplicationInstance app = new ApplicationInstance();
 		StandardTree tree = new StandardTree(app);
-		Launcher.verbose_mode = false;
+		Launcher.setVerboseMode(false);
 		TreeNode node = tree.createNode("Test");
 		Map<String, String> var = new HashMap<>();
 		node.setAttribute("ssh_host", "localhost");

@@ -83,6 +83,10 @@ public class Launcher {
 		}
 	}
 
+	public static void setVerboseMode(boolean value){
+		verbose_mode = value;
+	}
+
 	private static void parseCommandlineArgs(String[] args)
 	{
 		try	{
@@ -116,7 +120,7 @@ public class Launcher {
 								break;
 
 							case "console":
-								environment.put("console_mode", "true");					
+								environment.put("console_mode", "true");
 								break;
 
 							case "silent":
@@ -152,7 +156,7 @@ public class Launcher {
 								environment.put("module." + args[i+1].toLowerCase(), args[i+2]);
 								i += 2;
 								break;
-								
+
 							case "help":
 								System.out.println(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " command line options:\n\n" +
 												   "KeyMinder.jar [-open <file> [-pw <password>]\n" +
