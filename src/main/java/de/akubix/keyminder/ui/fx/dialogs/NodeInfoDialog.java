@@ -75,37 +75,36 @@ public class NodeInfoDialog {
 	public class Record {
 		private SimpleStringProperty attributeName;
 		private SimpleStringProperty attributeValue;
-		 
+
 		Record(String name, String value){
 			this.attributeName = new SimpleStringProperty(name);
 			this.attributeValue = new SimpleStringProperty(value);
 		}
-		 
+
 		public String getAttributeName() {
 			return attributeName.get();
 		}
-		 
+
 		public String getAttributeValue() {
 			return attributeValue.get();
 		}
-		 
+
 		public void setAttributeName(String name) {
 			attributeName.set(name);
 		}
-		 
+
 		public void setAttributeValue(String value) {
 			attributeValue.set(value);
-		}	
+		}
 	}
- 
+
 	private TableView<Record> tableView = new TableView<>();
-	
+
 	/**
 	 * Displays the dialog on the screen
 	 * @param owner Another JavaFX window which will be the owner of this dialog
 	 */
-	public void show(Stage owner)
-	{
+	public void show(Stage owner){
 		Stage me = new Stage();
 		me.initOwner(owner);
 		me.initModality( Modality.APPLICATION_MODAL );
@@ -114,10 +113,10 @@ public class NodeInfoDialog {
 	 	Tools.addDefaultIconsToStage(me);
 	 	me.setWidth(400);
 	 	me.setHeight(420);
-	 	
+
 		BorderPane root = new BorderPane();
 		//root.setPadding(new Insets(4, 4, 4, 4));
-		
+
 	 	Scene myScene = new Scene(root);
 		me.setScene(myScene);
 	 	de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
@@ -125,16 +124,17 @@ public class NodeInfoDialog {
 		tableView.setEditable(true);
 		Callback<TableColumn<Record, String>, TableCell<Record, String>> cellFactory =
 		new Callback<TableColumn<Record, String>, TableCell<Record, String>>() {
+			@Override
 			public TableCell<Record, String> call(TableColumn<Record, String> p) {
 				return new EditingCell();
 			}};
-	 
+
 		TableColumn<Record, String> columnAttribName = new TableColumn<>(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.attributenamecolumn"));
 		columnAttribName.setCellValueFactory(new PropertyValueFactory<Record,String>("attributeName"));
 
 		TableColumn<Record, String> columnAttribValue = new TableColumn<>(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.attributevaluecolumn"));
 		columnAttribValue.setCellValueFactory(new PropertyValueFactory<Record,String>("attributeValue"));
-	 
+
 		// Add for Editable Cell of Value field
 		columnAttribValue.setCellFactory(cellFactory);
 		columnAttribValue.setOnEditCommit(new EventHandler<TableColumn.CellEditEvent<Record, String>>() {
@@ -142,7 +142,7 @@ public class NodeInfoDialog {
 											((Record) t.getTableView().getItems().get(t.getTablePosition().getRow())).setAttributeValue(t.getNewValue());
 											attributesHasBeenChanged = true;
 										}});
-	 
+
 		//Add for Editable Cell of Attribute Name
 		columnAttribName.setCellFactory(cellFactory);
 		columnAttribName.setOnEditCommit(new EventHandler<TableColumn.CellEditEvent<Record, String>>() {
@@ -231,7 +231,7 @@ public class NodeInfoDialog {
 
 		me.showAndWait();
 	}
-  
+
 	private HBox createVerticalNodeList(Label leftLabel, Label rightLabel){
 		HBox hbox = new HBox(4);
 		leftLabel.setMinWidth(150);
@@ -239,8 +239,7 @@ public class NodeInfoDialog {
 		return hbox;
 	}
 
-	private String getTimeFromAttribte(TreeNode node, String attribName)
-	{
+	private String getTimeFromAttribte(TreeNode node, String attribName){
 		if(node.hasAttribute(attribName)){
 			return de.akubix.keyminder.lib.Tools.getTimeFromEpochMilli(node.getAttribute(attribName), false, "-");
 		}
@@ -249,24 +248,22 @@ public class NodeInfoDialog {
 		}
 	}
 
-	private ObservableList<Record> getAttributesFromNode(TreeNode node)
-	{
+	private ObservableList<Record> getAttributesFromNode(TreeNode node){
 		ObservableList<Record> attribList = FXCollections.observableArrayList();
 		for(String key: node.listAttributes())
 		{
-			attribList.add(new Record(key,node.getAttribute(key)));	
+			attribList.add(new Record(key,node.getAttribute(key)));
 		}
-		
+
 		return attribList;
 	}
 
-	private void WriteAttributesToNode(TreeNode node, ObservableList<Record> attribList)
-	{
+	private void WriteAttributesToNode(TreeNode node, ObservableList<Record> attribList){
 		synchronized(node.getTree()){
 			synchronized(node){
 				node.getTree().beginUpdate();
 				node.getUnrestrictedAccess().clearAttributes(false);
-				
+
 				for(Record entry: attribList){
 					node.setAttribute(entry.getAttributeName(), entry.getAttributeValue());
 				}
@@ -275,8 +272,7 @@ public class NodeInfoDialog {
 		}
 	}
 
-	private Pane createLinkedNodeDataRow(TreeNode linkedNode, Pane container)
-	{
+	private Pane createLinkedNodeDataRow(TreeNode linkedNode, Pane container){
 		Hyperlink link = new Hyperlink(linkedNode.getText());
 		link.setMinHeight(24);
 		link.setOnAction((event) -> {linkedNode.getTree().setSelectedNode(linkedNode); link.setVisited(false);});
@@ -293,7 +289,7 @@ public class NodeInfoDialog {
 	class EditingCell extends TableCell<Record, String> {
 		private TextField textField;
 		public EditingCell() {}
-		 
+
 		@Override
 		public void startEdit() {
 			super.startEdit();
@@ -310,7 +306,7 @@ public class NodeInfoDialog {
 			setText(String.valueOf(getItem()));
 			setContentDisplay(ContentDisplay.TEXT_ONLY);
 		}
-	 
+
 		@Override
 		public void updateItem(String item, boolean empty) {
 			super.updateItem(item, empty);
@@ -336,7 +332,6 @@ public class NodeInfoDialog {
 			textField = new TextField(getString());
 			textField.setMinWidth(this.getWidth() - this.getGraphicTextGap()*2);
 			textField.setOnKeyPressed(new EventHandler<KeyEvent>() {
-			 
 				@Override
 				public void handle(KeyEvent t) {
 					if(t.getCode() == KeyCode.ENTER){
@@ -346,7 +341,7 @@ public class NodeInfoDialog {
 					}
 				}});
 		}
-		 
+
 		private String getString() {
 			return getItem() == null ? "" : getItem().toString();
 		}

@@ -26,7 +26,7 @@ import java.util.function.Consumer;
 
 /**
  * This class is part of the database an contains all data of a single node.
- * 
+ *
  * @see TreeNode
  * @see StandardTree
  * @see Tree
@@ -76,13 +76,12 @@ public class StandardNode implements TreeNode{
 			attributes.put(de.akubix.keyminder.core.ApplicationInstance.NODE_ATTRIBUTE_MODIFICATION_DATE, Long.toString(System.currentTimeMillis()));
 		}
 	}
-	
+
 	@Override
-	public int getId()
-	{
+	public int getId(){
 		return nodeID;
 	}
-	
+
 	// ===== Attribute text
 	@Override
 	public synchronized String getText() {
@@ -93,7 +92,7 @@ public class StandardNode implements TreeNode{
 	public synchronized TreeNode setText(String newText) {
 		myTree.undoManager.recordTextChange(this, this.text);
 		this.text = newText;
-		
+
 		updateModificationDate();
 		myTree.fireEditedEventForTreeNode(this);
 		myTree.setTreeChangedStatus(true);
@@ -107,8 +106,7 @@ public class StandardNode implements TreeNode{
 	}
 
 	@Override
-	public synchronized TreeNode setColor(String newColor)
-	{
+	public synchronized TreeNode setColor(String newColor){
 		myTree.undoManager.recordColorChange(this, this.color);
 		this.color = newColor;
 		updateModificationDate();
@@ -117,24 +115,21 @@ public class StandardNode implements TreeNode{
 
 		return this;
 	}
-	
+
 	// ===== Specific String Attributes
-	
+
 	@Override
-	public boolean hasAttribute(String name)
-	{
+	public boolean hasAttribute(String name){
 		return attributes.containsKey(name);
 	}
-	
+
 	@Override
-	public synchronized String getAttribute(String name)
-	{
+	public synchronized String getAttribute(String name){
 		return attributes.containsKey(name) ? attributes.get(name) : "";
 	}
-	
+
 	@Override
-	public synchronized void setAttribute(String name, String value)
-	{
+	public synchronized void setAttribute(String name, String value){
 		if(!(name.equals("") || name.toLowerCase().equals("id")))
 		{
 			if(attributes.containsKey(name)){
@@ -143,16 +138,15 @@ public class StandardNode implements TreeNode{
 			else{
 				myTree.undoManager.recordAttributeAdded(this, name);
 			}
-			
+
 			attributes.put(name, value);
 			updateModificationDate();
 			myTree.setTreeChangedStatus(true);
 		}
 	}
-	
+
 	@Override
-	public synchronized void removeAttribute(String name)
-	{
+	public synchronized void removeAttribute(String name){
 		if(attributes.containsKey(name)){
 			myTree.undoManager.recordAttributeChange(this, name, attributes.get(name));
 			attributes.remove(name);
@@ -162,65 +156,54 @@ public class StandardNode implements TreeNode{
 	}
 
 	@Override
-	public Set<String> listAttributes()
-	{
+	public Set<String> listAttributes(){
 		return attributes.keySet();
 	}
-	
+
 	@Override
-	public synchronized TreeNode[] getChildNodes()
-	{
+	public synchronized TreeNode[] getChildNodes(){
 		TreeNode[] childnodeArray = new StandardNode[childNodes.size()];
-		for(int i = 0; i < childNodes.size(); i++)
-		{
+		for(int i = 0; i < childNodes.size(); i++){
 			childnodeArray[i] = myTree.getNodeById(childNodes.get(i));
 		}
 		return childnodeArray;
 	}
-	
-	public synchronized void forEachChildNode(Consumer<? super TreeNode> lambda)
-	{
+
+	@Override
+	public synchronized void forEachChildNode(Consumer<? super TreeNode> lambda){
 		childNodes.forEach((id) -> lambda.accept(myTree.getNodeById(id)));
 	}
 
 	@Override
-	public TreeNode getChildNodeByIndex(int index) throws IndexOutOfBoundsException
-	{
+	public TreeNode getChildNodeByIndex(int index) throws IndexOutOfBoundsException	{
 			return myTree.getNodeById(childNodes.get(index));
 	}
-	
+
 	@Override
-	public int countChildNodes()
-	{
+	public int countChildNodes(){
 		return childNodes.size();
 	}
-	
-	public synchronized boolean setParentNode(int id)
-	{
-		if(parentNodeID == -1)
-		{
+
+	public synchronized boolean setParentNode(int id){
+		if(parentNodeID == -1){
 			parentNodeID = id;
 			return true;
 		}
 		return false;
 	}
-	
+
 	@Override
-	public synchronized TreeNode getParentNode()
-	{
-		if(parentNodeID >= 0)
-		{
+	public synchronized TreeNode getParentNode(){
+		if(parentNodeID >= 0){
 			return myTree.getNodeById(parentNodeID);
 		}
-		else
-		{
+		else{
 			return null;
 		}
 	}
-	
+
 	@Override
-	public StandardNode getUnrestrictedAccess()
-	{
+	public StandardNode getUnrestrictedAccess(){
 		return this;
 	}
 
@@ -228,15 +211,12 @@ public class StandardNode implements TreeNode{
 	public Tree getTree() {
 		return (Tree) myTree;
 	}
-	
+
 	@Override
-	public synchronized int getIndex()
-	{
-		if(nodeID != 0)
-		{
+	public synchronized int getIndex(){
+		if(nodeID != 0){
 			int index = 0;
-			for(int childnodeID: getParentNode().getUnrestrictedAccess().childNodes)
-			{
+			for(int childnodeID: getParentNode().getUnrestrictedAccess().childNodes){
 				if(childnodeID == nodeID){return index;}
 				index++;
 			}
@@ -244,13 +224,12 @@ public class StandardNode implements TreeNode{
 
 		return 0;
 	}
-	
+
 	public java.util.Collection<String> getAttributeValueSet(){
 		return attributes.values();
 	}
-	
-	public synchronized void clearAttributes(boolean doAutoCommitForUndo)
-	{
+
+	public synchronized void clearAttributes(boolean doAutoCommitForUndo){
 		myTree.undoManager.captureMulitpleChanges();
 		attributes.keySet().forEach((key) -> myTree.undoManager.recordAttributeChange(this, key, attributes.get(key)));
 		if(doAutoCommitForUndo){myTree.undoManager.commitChanges();}
@@ -258,8 +237,7 @@ public class StandardNode implements TreeNode{
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString(){
 		return this.text;
 	}
 }

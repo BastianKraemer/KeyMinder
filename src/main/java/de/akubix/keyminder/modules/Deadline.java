@@ -82,8 +82,7 @@ public class Deadline implements Module {
 	private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
 	@Override
-	public void onStartup(ApplicationInstance instance) throws ModuleStartupException
-	{
+	public void onStartup(ApplicationInstance instance) throws ModuleStartupException {
 		app = instance;
 
 		// Initiate a node check if a new file is opened
@@ -109,7 +108,7 @@ public class Deadline implements Module {
 				}
 				return false;
 			});
-		
+
 		if(instance.isFxUserInterfaceAvailable()){
 			instance.getFxUserInterface().addMenuEntry(
 					de.akubix.keyminder.lib.Tools.createFxMenuItem(instance.getFxUserInterface().getLocaleBundleString("module.deadline.menu_set_expiration_date"),
@@ -123,7 +122,7 @@ public class Deadline implements Module {
 							(ActionEvent ae) -> showExpiredNodesList()),
 							MenuEntryPosition.TOOLS, true);
 		}
-		
+
 		// Load the values for "warningDifferenceInDays" and" warningDifferenceInDays" and update them if the settings are updated.
 		loadWarnDiffFromSettings(instance);
 		instance.addEventHandler(DefaultEvent.OnSettingsChanged, () -> loadWarnDiffFromSettings(instance));
@@ -234,7 +233,7 @@ public class Deadline implements Module {
 				}
 				return null;
 			}, "Converts a number of milliseconds since 1.1.1970 to a real date");
-		
+
 		// This command is useful if you take a look at the node attributes
 		app.provideNewCommand("date2epoch", (CommandOutputProvider out, ApplicationInstance myInstance, String[] args) -> {
 			if(args.length == 1){
@@ -254,29 +253,23 @@ public class Deadline implements Module {
 
 	/* =========================================================== load settings e.g. default values =============================================================== */
 
-	private void loadWarnDiffFromSettings(ApplicationInstance instance)
-	{
+	private void loadWarnDiffFromSettings(ApplicationInstance instance){
 		String value = instance.getSettingsValue(warningDifferenceSettingsValue);
-		if(value.equals(""))
-		{
+		if(value.equals("")){
 			setWarnDiffDefaultValues();
 		}
-		else
-		{
+		else{
 			try{
 				warningDifferenceInDays = Integer.parseInt(value);
-				if(!(warningDifferenceInDays > 0))
-				{
+				if(!(warningDifferenceInDays > 0)){
 					setWarnDiffDefaultValues();
 					instance.log(String.format("Error in module Deadline: Warn time must be greater than zero. Using default value (%d days)", warningDifferenceInDays));
 				}
-				else
-				{
+				else{
 					warningDifferenceInMilliseconds = ((long) warningDifferenceInDays) * 24 * 60 * 60 * 1000;
 				}
 			}
-			catch(NumberFormatException nuFormatEx)
-			{
+			catch(NumberFormatException nuFormatEx){
 				setWarnDiffDefaultValues();
 				instance.log(String.format("Error in module Deadline: Cannot convert %s to long. Using default value (%d days)", value, warningDifferenceInDays));
 			}
@@ -294,15 +287,14 @@ public class Deadline implements Module {
 		public final boolean isExpired;
 		public final String date;
 		public final int nodeId;
-		
-		public ExpiredNodeData(boolean alreadyExpired, String expiresOn, int nodeId)
-		{
+
+		public ExpiredNodeData(boolean alreadyExpired, String expiresOn, int nodeId){
 			this.isExpired = alreadyExpired;
 			this.date = expiresOn;
 			this.nodeId = nodeId;
 		}
 	}
-	
+
 	Thread backgroundWorker = null;
 	private void runCheckAsThread(boolean forceConsoleOutput){
 		if(backgroundWorker == null || !backgroundWorker.isAlive()){
@@ -311,19 +303,16 @@ public class Deadline implements Module {
 		}
 	}
 
-	private void checkForExpiredNodes(boolean forceConsoleOutput)
-	{
+	private void checkForExpiredNodes(boolean forceConsoleOutput){
 		List<ExpiredNodeData> expiredNodes = new ArrayList<>();
 		List<ExpiredNodeData> nearlyExpiredNodes = new ArrayList<>();
 		if(de.akubix.keyminder.core.Launcher.verbose_mode || forceConsoleOutput){app.println("Checking for expired nodes...");}
 		checkForExpiredNodes(app.getTree(), Instant.now().getEpochSecond() * 1000, expiredNodes, nearlyExpiredNodes, de.akubix.keyminder.core.Launcher.verbose_mode);
-		
+
 		if(de.akubix.keyminder.core.Launcher.verbose_mode || forceConsoleOutput){app.println(String.format("Check completed - %d expired node(s) found, %d node(s) will expire during the next %d days.", expiredNodes.size(), nearlyExpiredNodes.size(), warningDifferenceInDays));}
-			
-		if(expiredNodes.size() > 0 || nearlyExpiredNodes.size() > 0)
-		{
-			if(app.isFxUserInterfaceAvailable() && !forceConsoleOutput)
-			{
+
+		if(expiredNodes.size() > 0 || nearlyExpiredNodes.size() > 0){
+			if(app.isFxUserInterfaceAvailable() && !forceConsoleOutput){
 				Runnable run = () -> {
 					Button notification = new Button("", de.akubix.keyminder.lib.gui.ImageSelector.getFxImageView(("icon_warning")));
 					notification.setMinWidth(24);
@@ -351,54 +340,45 @@ public class Deadline implements Module {
 				};
 				app.getFxUserInterface().runAsFXThread(run);
 			}
-			else
-			{
+			else{
 				if(expiredNodes.size() > 0){printExpireNodeList(expiredNodes, true);}
 				if(nearlyExpiredNodes.size() > 0){printExpireNodeList(nearlyExpiredNodes, false);}
 			}
 		}
 	}
-	
-	private void checkForExpiredNodes(Tree tree, long now, List<ExpiredNodeData> expiredNodes, List<ExpiredNodeData> nearlyExpiredNodes, boolean enableLiveLog)
-	{
+
+	private void checkForExpiredNodes(Tree tree, long now, List<ExpiredNodeData> expiredNodes, List<ExpiredNodeData> nearlyExpiredNodes, boolean enableLiveLog){
 		tree.allNodes((TreeNode node) -> {
 			if(Thread.interrupted()){return;}
-			if(node.hasAttribute(nodeExpirationAttribute))
-			{	
-				try
-				{
+			if(node.hasAttribute(nodeExpirationAttribute)){
+				try{
 					long value = Long.parseLong(node.getAttribute(nodeExpirationAttribute));
 					long diff = value - now;
-					if(diff < 0)
-					{
+					if(diff < 0){
 						// has been expired
 						if(enableLiveLog){app.println("\t- Node '" + node.getText() + "' ist expired");}
 						expiredNodes.add(new ExpiredNodeData(true, Instant.ofEpochMilli(value).atZone(ZoneId.systemDefault()).toLocalDate().format(dateTimeFormatter), node.getId()));
-					} else if(diff < warningDifferenceInMilliseconds)
-					{
+					}
+					else if(diff < warningDifferenceInMilliseconds){
 						// Warning
 						if(enableLiveLog){app.println(String.format("\t- Node '" + node.getText() + "' will expire during the next %d days.", warningDifferenceInDays));}
 						nearlyExpiredNodes.add(new ExpiredNodeData(false, Instant.ofEpochMilli(value).atZone(ZoneId.systemDefault()).toLocalDate().format(dateTimeFormatter), node.getId()));
 					}
 				}
-				catch(NumberFormatException nuFormatEx)
-				{
+				catch(NumberFormatException nuFormatEx){
 					if(de.akubix.keyminder.core.Launcher.verbose_mode){app.println("Module \"Expiration\": Unable to parse expiration date of node '" + node.getText() + "'");}
 				}
 			}
 		});
 	}
 
-	private void printExpireNodeList(List<ExpiredNodeData> list, boolean printExpiredNodes)
-	{
+	private void printExpireNodeList(List<ExpiredNodeData> list, boolean printExpiredNodes){
 		Tree t = app.getTree();
 		app.println(
 				String.format("\n" + (printExpiredNodes ? "Already expired nodes:" : "Nodes that will expire during the next %d days:") + "\n"
 							+ "----------------------------------------------------------------------", warningDifferenceInDays));
-		for(ExpiredNodeData x: list)
-		{
-			if(x.isExpired == printExpiredNodes)
-			{
+		for(ExpiredNodeData x: list){
+			if(x.isExpired == printExpiredNodes){
 				TreeNode n = t.getNodeById(x.nodeId);
 				if(n != null){
 					app.println(String.format("%s\t%s (%s)", x.date, n.getText(), t.getNodePath(n, "/")));
@@ -408,30 +388,28 @@ public class Deadline implements Module {
 	}
 
 	/* =============================================================== UI - set expiration date =================================================================== */
-	
-	private void showSetExpireDateWindow(TreeNode node)
-	{
+
+	private void showSetExpireDateWindow(TreeNode node){
 		Stage me = new Stage();
 		me.setTitle(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " - " + app.getFxUserInterface().getLocaleBundleString("module.deadline.dialog.title"));
-		
+
 		BorderPane root = new BorderPane();
-		
+
 		Label title = new Label(app.getFxUserInterface().getLocaleBundleString("module.deadline.dialog.select_expiration_date"));
 		Pane top = new Pane(title);
 		top.getStyleClass().add("header");
 		root.setTop(top);
 
 		VBox vbox = new VBox(4);
-		
+
 		CheckBox activate = new CheckBox(app.getFxUserInterface().getLocaleBundleString("module.deadline.dialog.enable_expiration_date"));
 		activate.setSelected(true);
-		
+
 		// Date-Picker
 		DatePicker datePicker = new DatePicker();
 		datePicker.setMinWidth(290);
 		vbox.setPadding(new Insets(4,0,0,0));
-		if(node.hasAttribute(nodeExpirationAttribute))
-		{	
+		if(node.hasAttribute(nodeExpirationAttribute)){
 			try{
 				datePicker.setValue(Instant.ofEpochMilli(Long.parseLong(node.getAttribute(nodeExpirationAttribute))).atZone(ZoneId.systemDefault()).toLocalDate());
 			}
@@ -440,75 +418,71 @@ public class Deadline implements Module {
 				return;
 			}
 		}
-		else
-		{
+		else{
 			datePicker.setValue(LocalDate.now());
 		}
-		
+
 		activate.setOnAction((ActionEvent ae) -> {datePicker.setDisable(!activate.isSelected());});
-		
+
 		vbox.getChildren().addAll(datePicker, activate);
 
 		BorderPane.setMargin(vbox, new Insets(4,10,0,10));
 		root.setCenter(vbox);
-			
+
 		HBox bottom = new HBox(4);
-		
+
 		Button acceptButton = new Button(app.getFxUserInterface().getLocaleBundleString("module.deadline.dialog.button_accept"));
 		acceptButton.setOnAction((ActionEvent ae) -> {
-			if(activate.isSelected())
-			{
+			if(activate.isSelected()){
 				node.setAttribute(nodeExpirationAttribute, Long.toString(datePicker.getValue().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().getEpochSecond() * 1000));
 			}
-			else
-			{
+			else{
 				if(node.hasAttribute(nodeExpirationAttribute)){
 					node.removeAttribute(nodeExpirationAttribute);
 				}
 			}
 			me.close();
 		});
-		
+
 		Button cancelButton = new Button(app.getFxUserInterface().getLocaleBundleString("cancel"));
 		cancelButton.setOnAction((ActionEvent ae) -> me.close());
-		
+
 		acceptButton.setMinWidth(130);
 		cancelButton.setMinWidth(130);
-		
+
 		bottom.setAlignment(Pos.CENTER);
 		bottom.getChildren().addAll(acceptButton, cancelButton);
 
 		acceptButton.setDefaultButton(true);
-		 
+
 		root.setBottom(bottom);
 		BorderPane.setMargin(bottom, new Insets(0,10,10,10));
 
 		Scene myScene = new Scene(root, 300, 120);
 		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
-		
+
 		me.initModality( Modality.APPLICATION_MODAL );
 		me.setScene(myScene);
 		me.setResizable(false);
 		Tools.addDefaultIconsToStage(me);
-		
+
 		me.showAndWait();
 	}
-	
+
 	/* =============================================================== UI - list expired nodes =================================================================== */
-	
+
 	private static double windowWidth = 300;
-	private void showExpiredNodesList()
-	{
+	private void showExpiredNodesList(){
 		// Generate a new list with all expired nodes
 		List<ExpiredNodeData> expiredNodesList = new ArrayList<>();
 		List<ExpiredNodeData> nearlyExpiredNodesList = new ArrayList<>();
 		checkForExpiredNodes(app.getTree(), Instant.now().getEpochSecond() * 1000, expiredNodesList, nearlyExpiredNodesList, false);
-				
+
 		Stage me = new Stage();
 		me.setTitle(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " - " + app.getFxUserInterface().getLocaleBundleString("module.deadline.uireport.title"));
-		
+
 		BorderPane root = new BorderPane();
-		
+
 		Label title = new Label(app.getFxUserInterface().getLocaleBundleString("module.deadline.uireport.headline"));
 		Pane top = new Pane(title);
 		top.getStyleClass().add("header");
@@ -521,7 +495,7 @@ public class Deadline implements Module {
 		Consumer<? super ExpiredNodeData> c = (x) -> {Pane p = createExpiredNodeDataRow(x);	if(p != null){(x.isExpired ? expired : nearlyExpired).getChildren().add(p);}};
 		expiredNodesList.forEach(c);
 		nearlyExpiredNodesList.forEach(c);
-		
+
 		vbox.getChildren().addAll(	de.akubix.keyminder.lib.Tools.createFxLabelWithStyleClass(app.getFxUserInterface().getLocaleBundleString("module.deadline.uireport.label_expired"), "h2"),
 									createScrollPane(expired), new Separator(Orientation.HORIZONTAL),
 									de.akubix.keyminder.lib.Tools.createFxLabelWithStyleClass(app.getFxUserInterface().getLocaleBundleString("module.deadline.uireport.label_nearly_expired"), "h2"),
@@ -529,49 +503,47 @@ public class Deadline implements Module {
 
 		BorderPane.setMargin(vbox, new Insets(4,10,0,10));
 		root.setCenter(vbox);
-			
+
 		Button okButton = new Button(app.getFxUserInterface().getLocaleBundleString("okay"));
 		okButton.setOnAction((ActionEvent ae) -> me.close());
-		
+
 		okButton.setDefaultButton(true);
 		okButton.setMinWidth(200);
 		root.setBottom(okButton);
-		
+
 		BorderPane.setAlignment(okButton, Pos.CENTER);
 		BorderPane.setMargin(okButton, new Insets(4));
-		
+
 		Scene myScene = new Scene(root, windowWidth, 320);
 		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
-		
+
 		me.setScene(myScene);
 		me.setResizable(false);
 		Tools.addDefaultIconsToStage(me);
-		
+
 		me.show();
 	}
-	
-	private Pane createExpiredNodeDataRow(ExpiredNodeData d)
-	{
+
+	private Pane createExpiredNodeDataRow(ExpiredNodeData d){
 		HBox hbox = new HBox(4);
 		TreeNode node = app.getTree().getNodeById(d.nodeId);
 		if(node == null){return null;}
 		Label dateLabel = new Label(d.date);
 		dateLabel.setMinWidth(80);
 		dateLabel.setMinHeight(24);
-		
+
 		Hyperlink link = new Hyperlink(node.getText());
 		link.setMinHeight(24);
 		link.setOnAction((event) -> {app.getTree().setSelectedNode(node); link.setVisited(false);});
 		hbox.getChildren().addAll(dateLabel, link);
 		return hbox;
 	}
-	
-	private ScrollPane createScrollPane(Node item)
-	{
+
+	private ScrollPane createScrollPane(Node item){
 		ScrollPane scrollPane = new ScrollPane(item);
 		scrollPane.setHbarPolicy(ScrollBarPolicy.NEVER);
 		scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
-		
+
 		scrollPane.setMaxWidth(windowWidth - 6);
 		scrollPane.setMinWidth(windowWidth - 6);
 		scrollPane.setMinHeight(100);

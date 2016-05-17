@@ -41,29 +41,26 @@ public class SaveChangesDialog {
 	private Result result = Result.Cancel;
 	private final int sceneWidth = 400;
 	private final int sceneHeight = 106;
-	public SaveChangesDialog(Stage primaryStage, FxUserInterface fxUI)
-	{
+	public SaveChangesDialog(Stage primaryStage, FxUserInterface fxUI){
 		createScene(fxUI);
 		dialog.setX(primaryStage.getX() + (primaryStage.getWidth() / 2) - sceneWidth / 2);
 		dialog.setY(primaryStage.getY() + (primaryStage.getHeight() / 2) - (sceneHeight / 2) - 32);
 		dialog.initOwner(primaryStage);
 	}
-	
-	public SaveChangesDialog(FxUserInterface fxUI)
-	{
+
+	public SaveChangesDialog(FxUserInterface fxUI){
 		createScene(fxUI);
 		dialog.centerOnScreen();
 	}
 
-	private void createScene(FxUserInterface fxUI)
-	{
+	private void createScene(FxUserInterface fxUI){
 		BorderPane root = new BorderPane();
-		
+
 		Label title = new Label(fxUI.getLocaleBundleString("dialogs.savechanges.headline"));
 		Pane top = new Pane(title);
 		top.getStyleClass().add("header");
 		root.setTop(top);
-		 
+
 		VBox vbox = new VBox(2);
 		Label content = new Label(fxUI.getLocaleBundleString("dialogs.savechanges.contenttext"));
 		content.setWrapText(true);
@@ -71,9 +68,9 @@ public class SaveChangesDialog {
 		vbox.getChildren().add(content);
 		vbox.setPadding(new Insets(6,4,8,10));
 		root.setCenter(vbox);
-		
+
 		HBox bottom = new HBox(4);
-		
+
 		Button save = new Button(fxUI.getLocaleBundleString("dialogs.savechanges.button_save"));
 		save.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -104,7 +101,7 @@ public class SaveChangesDialog {
 		save.setMinWidth(120);
 		discard.setMinWidth(120);
 		cancel.setMinWidth(100);
-		
+
 		bottom.setAlignment(Pos.CENTER_RIGHT);
 		bottom.getChildren().add(save);
 		bottom.getChildren().add(discard);
@@ -112,13 +109,13 @@ public class SaveChangesDialog {
 
 		cancel.setCancelButton(true);
 		save.setDefaultButton(true);
-		 
-		root.setBottom(bottom); 
+
+		root.setBottom(bottom);
 		BorderPane.setMargin(bottom, new Insets(0,10,10,10));
 
 		Scene myScene = new Scene(root, sceneWidth, sceneHeight);
 		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
-		
+
 		dialog = new Stage();
 		dialog.setTitle(ApplicationInstance.APP_NAME + fxUI.getLocaleBundleString("dialogs.savechanges.title"));
 		dialog.centerOnScreen();
@@ -130,19 +127,17 @@ public class SaveChangesDialog {
 		dialog.initModality( Modality.APPLICATION_MODAL );
 		Tools.addDefaultIconsToStage(dialog);
 	}
-	
-	public Result getInput()
-	{
+
+	public Result getInput(){
 		dialog.showAndWait();
 		return result;
 	}
-	
-	public static Result show(FxUserInterface fxUI)
-	{
+
+	public static Result show(FxUserInterface fxUI){
 		SaveChangesDialog dialog = new SaveChangesDialog(fxUI);
 		return dialog.getInput();
 	}
-	
+
 	public enum Result {
 		SaveChanges, DiscardChanges, Cancel
 	}

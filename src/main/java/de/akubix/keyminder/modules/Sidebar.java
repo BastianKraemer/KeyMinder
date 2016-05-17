@@ -25,7 +25,7 @@ import javafx.event.EventHandler;
 
 @de.akubix.keyminder.core.interfaces.ModuleProperties(
 		name="Sidebar",
-		description = "This module allows you to store usernames, passwords any many other informations in a single node.",		
+		description = "This module allows you to store usernames, passwords any many other informations in a single node.",
 		version = ".",
 		dependencies = "KeyClip",
 		author="Bastian Kraemer")
@@ -33,14 +33,14 @@ public class Sidebar implements de.akubix.keyminder.core.interfaces.Module {
 
 	private de.akubix.keyminder.core.ApplicationInstance app;
 	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI;
-	
+
 	@Override
 	public void onStartup(de.akubix.keyminder.core.ApplicationInstance instance) throws de.akubix.keyminder.core.exceptions.ModuleStartupException{
-	
+
 		if(!instance.isFxUserInterfaceAvailable()){throw new de.akubix.keyminder.core.exceptions.ModuleStartupException("JavaFX Interface not available", ModuleStartupException.ModuleErrorLevel.FxUserInterfaceNotAvailable);}
 		this.app = instance;
 		this.fxUI = instance.getFxUserInterface();
-		
+
 		FxSidebar sidebar;
 		sidebar = new FxSidebar(app, fxUI.getLocaleBundleString("module.sidebar.tabtitle"), true, new EventHandler<ActionEvent>() {
 			@Override

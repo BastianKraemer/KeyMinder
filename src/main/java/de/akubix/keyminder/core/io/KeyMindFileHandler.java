@@ -51,16 +51,14 @@ public class KeyMindFileHandler implements StorageHandler {
 
 	private static String latestFileFormatVersion = "1.1.0";
 	private String fileType;
-	public KeyMindFileHandler(String forFileType)
-	{
+	public KeyMindFileHandler(String forFileType){
 		this.fileType = forFileType;
 	}
-	
+
 	@Override
-	public FileConfiguration open(File xmlFile, String filePassword, Tree tree, ApplicationInstance instance) throws StorageException
-	{
+	public FileConfiguration open(File xmlFile, String filePassword, Tree tree, ApplicationInstance instance) throws StorageException {
 		if(!xmlFile.exists()){throw new StorageException(StorageExceptionType.FileNotFound, "File not Found.");}
-		
+
 		try {
 			return readXMLFrame(xmlFile, filePassword, instance.getTree(), instance);
 		} catch (UserCanceledOperationException e) {
@@ -71,8 +69,7 @@ public class KeyMindFileHandler implements StorageHandler {
 	}
 
 	@Override
-	public void save(FileConfiguration file, Tree tree, ApplicationInstance instance)  throws StorageException
-	{
+	public void save(FileConfiguration file, Tree tree, ApplicationInstance instance) throws StorageException {
 		try {
 			XMLCore.saveXMLDocument(file.getFilepath(), createXMLFrame(tree.getRootNode(), file));
 			file.setFileFormatVersion(latestFileFormatVersion);
@@ -93,42 +90,36 @@ public class KeyMindFileHandler implements StorageHandler {
 	 * ==============================================================================================================================================
 	 */
 
-	private FileConfiguration readXMLFrame(File xmlFile, String filepassword, Tree tree, ApplicationInstance app) throws XMLParseException, UserCanceledOperationException, StorageException
-	{
+	private FileConfiguration readXMLFrame(File xmlFile, String filepassword, Tree tree, ApplicationInstance app) throws XMLParseException, UserCanceledOperationException, StorageException {
 		String fileVersion = latestFileFormatVersion; // Will be overwritten by the value in the file (if available)
 		boolean fileIsEncrypted;
 		Map<String, String> fileAttributes = new HashMap<>();
 		Map<String, String> fileSettings = new HashMap<>();
-		
+
 		try {
 			Document document = XMLCore.loadDocumentFromFile(xmlFile);
-			
+
 			// Read the version from the XML root node
 			Map<String, String> rootAttribs = XMLCore.xmlAttributes2Hash(document.getDocumentElement());
-			if(rootAttribs.containsKey("version"))
-			{
+			if(rootAttribs.containsKey("version")){
 				if(!rootAttribs.get("version").matches("1.[0-1]($|.(.*))")){throw new StorageException(StorageExceptionType.UnsupportedVersion, "Document Version not supported.");}
 			}
 
-			if(document.getDocumentElement().getChildNodes().getLength() >= 2)
-			{
+			if(document.getDocumentElement().getChildNodes().getLength() >= 2){
 				int nodeCount = 0;
 				org.w3c.dom.Node headNode = null;
 				org.w3c.dom.Node dataNode = null;
-				
+
 				for(int i = 0; i < document.getDocumentElement().getChildNodes().getLength(); i++)
 				{
 					org.w3c.dom.Node currentNode = document.getDocumentElement().getChildNodes().item(i);
-					if(currentNode.getNodeType() == Node.ELEMENT_NODE)
-					{
-						if(nodeCount == 0)
-						{
+					if(currentNode.getNodeType() == Node.ELEMENT_NODE){
+						if(nodeCount == 0){
 							// This is the first node, which is NOT a TextNode
 							headNode = currentNode;
 							nodeCount++;
 						}
-						else
-						{
+						else{
 							// This is the second node, which is NOT a TextNode
 							// A correct KeyMind-XML File does not have more nodes (this case is not handled, all other nodes will be ignored)
 							dataNode = currentNode;
@@ -136,38 +127,30 @@ public class KeyMindFileHandler implements StorageHandler {
 						}
 					}
 				}
-				
+
 				//if((headNode.getNodeName().toLowerCase().equals("head") || headNode.getNodeName().toLowerCase().equals("configuration")) && (dataNodeName.equals("keystore") || dataNodeName.equals("data")))
-				if(headNode.getNodeName().toLowerCase().equals("configuration") && dataNode.getNodeName().toLowerCase().equals("data"))
-				{
+				if(headNode.getNodeName().toLowerCase().equals("configuration") && dataNode.getNodeName().toLowerCase().equals("data")){
 					// Read file attributes
 					 XMLCore.xml2Map(headNode, "", fileAttributes);
-					
+
 					// Load the node data from the XML file
 					int dateNodeChildCount = dataNode.getChildNodes().getLength();
-					if(dateNodeChildCount > 0)
-					{
+					if(dateNodeChildCount > 0){
 						int textNodeSkipper = 0;
-						if(dataNode.getChildNodes().getLength() > 1)
-						{
-							for(textNodeSkipper = 0; textNodeSkipper < dateNodeChildCount; textNodeSkipper++)
-							{
-								if(dataNode.getChildNodes().item(textNodeSkipper).getNodeType() == Node.ELEMENT_NODE)
-								{
+						if(dataNode.getChildNodes().getLength() > 1){
+							for(textNodeSkipper = 0; textNodeSkipper < dateNodeChildCount; textNodeSkipper++){
+								if(dataNode.getChildNodes().item(textNodeSkipper).getNodeType() == Node.ELEMENT_NODE){
 									break;
 								}
 							}
 						}
 
-						if(dataNode.getChildNodes().item(textNodeSkipper).getNodeType() == Node.ELEMENT_NODE)
-						{
+						if(dataNode.getChildNodes().item(textNodeSkipper).getNodeType() == Node.ELEMENT_NODE){
 							// File is not encrypted
 							fileIsEncrypted = false;
-							
-							for(int i = 0; i < dataNode.getChildNodes().getLength(); i++)
-							{
-								switch(dataNode.getChildNodes().item(i).getNodeName())
-								{
+
+							for(int i = 0; i < dataNode.getChildNodes().getLength(); i++){
+								switch(dataNode.getChildNodes().item(i).getNodeName()){
 									case "settings":
 										XMLCore.xml2Map(dataNode.getChildNodes().item(i), "", fileSettings);
 										break;
@@ -177,49 +160,51 @@ public class KeyMindFileHandler implements StorageHandler {
 										break;
 								}
 							}
-							
+
 							// unencrypted file has been successfully opened
 							return new FileConfiguration(xmlFile, fileVersion, fileIsEncrypted, this.fileType, null, fileAttributes, fileSettings);
 						}
-						else
-						{
+						else{
 							// File is encrypted
 							if(dataNode.getTextContent().trim().equals("")){throw new XMLParseException("XML-File is empty");}
-							
+
 							Node ivAttribute = dataNode.getAttributes().getNamedItem("iv");
 							if(ivAttribute == null){throw new XMLParseException("IV of encrypted file is not available.");}
 							byte[] aesIV = AESCore.bytesFromBase64String(ivAttribute.getNodeValue());
-							
+
 							String cipherName = "";
 
 							Node encMethodAttribute = dataNode.getAttributes().getNamedItem("encryption");
-							if(encMethodAttribute != null){cipherName = encMethodAttribute.getNodeValue();}else{throw new StorageException(StorageExceptionType.UnknownEncryptionCipher, "Cannot open file, the used encryption cipher is not mentioned.");}
-							
-							if(!EncryptionManager.getCipherAlgorithms().contains(cipherName)){throw new StorageException(StorageExceptionType.UnknownEncryptionCipher, "Encryption with '" + cipherName + "' is not supported on this system.");}
+							if(encMethodAttribute != null){
+								cipherName = encMethodAttribute.getNodeValue();}
+							else{
+								throw new StorageException(StorageExceptionType.UnknownEncryptionCipher, "Cannot open file, the used encryption cipher is not mentioned.");
+							}
+
+							if(!EncryptionManager.getCipherAlgorithms().contains(cipherName)){
+								throw new StorageException(StorageExceptionType.UnknownEncryptionCipher, "Encryption with '" + cipherName + "' is not supported on this system.");
+							}
 
 							int attempts = 0;
-							while(attempts < 3)
-							{
+							while(attempts < 3){
 								attempts++;
 								try {
 									// Decrypt data...
 									fileIsEncrypted = true;
-									
+
 									String pw;
-									if(filepassword.equals(""))
-									{
+									if(filepassword.equals("")){
 										String txt = app.isFxUserInterfaceAvailable() ? app.getFxUserInterface().getLocaleBundleString("decryption.input_password_label") : "Please enter your password:";
-										pw = app.requestStringInput(ApplicationInstance.APP_NAME, txt, 
+										pw = app.requestStringInput(ApplicationInstance.APP_NAME, txt,
 																	fileAttributes.containsKey("PasswordHint") ? fileAttributes.get("PasswordHint") : "", true);
 
 										if(pw.equals("")){throw new UserCanceledOperationException("The user canceled the operation.");}
 									}
-									else
-									{
+									else{
 										pw = filepassword;
 										filepassword = "";
 									}
-									
+
 									byte[] salt = new byte[0];
 									Node saltAttribute = dataNode.getAttributes().getNamedItem("salt");
 									if(saltAttribute != null){salt = AESCore.bytesFromBase64String(saltAttribute.getNodeValue());}
@@ -228,10 +213,8 @@ public class KeyMindFileHandler implements StorageHandler {
 
 									Document xmldoc = XMLCore.loadDocumentFromString(em.decrypt(dataNode.getTextContent()));
 
-									for(int i = 0; i < xmldoc.getDocumentElement().getChildNodes().getLength(); i++)
-									{
-										switch(xmldoc.getDocumentElement().getChildNodes().item(i).getNodeName())
-										{
+									for(int i = 0; i < xmldoc.getDocumentElement().getChildNodes().getLength(); i++){
+										switch(xmldoc.getDocumentElement().getChildNodes().item(i).getNodeName()){
 											case "settings":
 												XMLCore.xml2Map(xmldoc.getDocumentElement().getChildNodes().item(i), "", fileSettings);
 												break;
@@ -249,35 +232,32 @@ public class KeyMindFileHandler implements StorageHandler {
 									throw new StorageException(StorageExceptionType.UnknownEncryptionCipher, "Encryption with '" + cipherName + "' is not supported on this system.");
 								} catch (InvalidKeyException e) {
 									app.alert(app.isFxUserInterfaceAvailable() ? app.getFxUserInterface().getLocaleBundleString("decryption.wrong_password") : "Wrong password.");
-									
+
 								} catch (DOMException e) {
 									throw new XMLParseException(e.getMessage());
 								}
 							}
-							
+
 							// The user entered a wrong password three times...
 							app.println("You entered a wrong password three times, canceling...");
 							throw new UserCanceledOperationException("The user entered a wrong password three times.");
 						}
 					}
-					else
-					{
+					else{
 						throw new XMLParseException("Completly empty file.");
 					}
 				}
-				else
-				{
+				else{
 					throw new XMLParseException("Unsupported XML-File format.");
 				}
 			}
-			else
-			{
+			else{
 				throw new XMLParseException("Unsupported XML-File format.");
 			}
 
 		} catch (SAXException e) {
 			throw new XMLParseException("SAXException, unable to parse XMLDoc");
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new XMLParseException("IOException, unable to parse XMLDoc");
@@ -287,44 +267,36 @@ public class KeyMindFileHandler implements StorageHandler {
 			throw new XMLParseException("ParserConfigurationException, unable to parse XMLDoc");
 		}
 	}
-	
-	private static void addChildNodes(org.w3c.dom.Node parentXMLNode, TreeNode parentTreeNode)
-	{
+
+	private static void addChildNodes(org.w3c.dom.Node parentXMLNode, TreeNode parentTreeNode){
 		addChildNodes(parentXMLNode, parentTreeNode, 0);
 	}
-	
-	private static void addChildNodes(org.w3c.dom.Node parentXMLNode, TreeNode parentTreeNode, int startindex)
-	{
-		for(int i = startindex; i < parentXMLNode.getChildNodes().getLength(); i++)
-		{
+
+	private static void addChildNodes(org.w3c.dom.Node parentXMLNode, TreeNode parentTreeNode, int startindex){
+		for(int i = startindex; i < parentXMLNode.getChildNodes().getLength(); i++){
 			org.w3c.dom.Node childXMLNode = parentXMLNode.getChildNodes().item(i);
-			
-			if(childXMLNode.getNodeType() == Node.ELEMENT_NODE)
-			{
+
+			if(childXMLNode.getNodeType() == Node.ELEMENT_NODE){
 				StandardNode newTreenode = createTreeNode(childXMLNode, parentTreeNode.getTree());
 				parentTreeNode.getTree().addNode(newTreenode, parentTreeNode);
 
-				if(childXMLNode.getChildNodes().getLength() > 0)
-				{
+				if(childXMLNode.getChildNodes().getLength() > 0){
 					addChildNodes(childXMLNode, newTreenode);
 				}
 			}
 		}
 	}
 
-	private static StandardNode createTreeNode(org.w3c.dom.Node xmlNode, Tree tree)
-	{
+	private static StandardNode createTreeNode(org.w3c.dom.Node xmlNode, Tree tree){
 		Map<String, String> attribs = new HashMap<String, String>();
 		String text = "";
 		String color = "";
 		int id = 0;
-		for(int i = 0; i < xmlNode.getAttributes().getLength(); i++)
-		{
+		for(int i = 0; i < xmlNode.getAttributes().getLength(); i++){
 			String name = xmlNode.getAttributes().item(i).getNodeName();
 			String value = xmlNode.getAttributes().item(i).getNodeValue();
 
-			switch(name)
-			{
+			switch(name){
 				case "id":
 					try{
 						id = Integer.parseInt(value);
@@ -356,46 +328,41 @@ public class KeyMindFileHandler implements StorageHandler {
 	 * ==============================================================================================================================================
 	 */
 
-	private static Document createXMLFrame(TreeNode rootNode, FileConfiguration fileConfig) throws XMLParseException, InvalidKeyException
-	{
-		try
-		{
+	private static Document createXMLFrame(TreeNode rootNode, FileConfiguration fileConfig) throws XMLParseException, InvalidKeyException{
+		try {
 			Document xmldoc = XMLCore.createEmptyXMLDocument("KeyMind");
 
 			org.w3c.dom.Attr versionAttrib = xmldoc.createAttribute("version");
 			versionAttrib.setNodeValue(latestFileFormatVersion);
 			xmldoc.getDocumentElement().getAttributes().setNamedItem(versionAttrib);
-			
+
 			org.w3c.dom.Node configNode = xmldoc.createElement("configuration");
 			org.w3c.dom.Node dataNode = xmldoc.createElement("data");
-			
+
 			XMLCore.map2FlatXMLNodes(configNode, fileConfig.fileAttributes);
 
 			xmldoc.getDocumentElement().appendChild(configNode);
 			xmldoc.getDocumentElement().appendChild(dataNode);
-		
-			if(fileConfig.isEncrypted())
-			{
+
+			if(fileConfig.isEncrypted()){
 				Document subxmldoc = XMLCore.createEmptyXMLDocument("root");
 
 				org.w3c.dom.Node settingsNode = subxmldoc.createElement("settings");
 				org.w3c.dom.Node treeNode = subxmldoc.createElement("tree");
-				
+
 				XMLCore.convertHashToXMLNodes(settingsNode, fileConfig.fileSettings);
 				appendChildNodesToXMLFile(subxmldoc, treeNode, rootNode);
-				
+
 				subxmldoc.getDocumentElement().appendChild(settingsNode);
 				subxmldoc.getDocumentElement().appendChild(treeNode);
-				
-				try
-				{
+
+				try{
 					dataNode.setTextContent(fileConfig.getEncryptionManager().encrypt(XMLCore.transfromXMLDocumentToString(subxmldoc)));
 
 					org.w3c.dom.Attr ivAttrib = xmldoc.createAttribute("iv");
 					org.w3c.dom.Attr cipherName = xmldoc.createAttribute("encryption");
 
-					if(fileConfig.getEncryptionManager().getCipher().areSaltedHashesSupported())
-					{
+					if(fileConfig.getEncryptionManager().getCipher().areSaltedHashesSupported()){
 						org.w3c.dom.Attr saltAttribute = xmldoc.createAttribute("salt");
 						saltAttribute.setNodeValue(fileConfig.getEncryptionManager().getPasswordSaltAsBase64());
 						dataNode.getAttributes().setNamedItem(saltAttribute);
@@ -412,53 +379,47 @@ public class KeyMindFileHandler implements StorageHandler {
 					throw new InvalidKeyException(e.getMessage());
 				}
 			}
-			else
-			{
+			else{
 				org.w3c.dom.Node settingsNode = xmldoc.createElement("settings");
 				org.w3c.dom.Node treeNode = xmldoc.createElement("tree");
-				
+
 				XMLCore.convertHashToXMLNodes(settingsNode, fileConfig.fileSettings);
 				appendChildNodesToXMLFile(xmldoc, treeNode, rootNode);
-				
+
 				dataNode.appendChild(settingsNode);
 				dataNode.appendChild(treeNode);
 			}
-			
+
 			return xmldoc;
-		
+
 		} catch (ParserConfigurationException | DOMException | TransformerException e) {
 			throw new XMLParseException(e.getMessage());
 		}
 	}
-	
-	private static void appendChildNodesToXMLFile(Document xmldoc, org.w3c.dom.Node parentXMLNode, TreeNode parentTreeNode)
-	{
-		for(int i = 0; i < parentTreeNode.countChildNodes(); i++)
-		{
+
+	private static void appendChildNodesToXMLFile(Document xmldoc, org.w3c.dom.Node parentXMLNode, TreeNode parentTreeNode){
+		for(int i = 0; i < parentTreeNode.countChildNodes(); i++){
 			TreeNode childNode = parentTreeNode.getChildNodeByIndex(i);
-		
+
 			org.w3c.dom.Node xmlNode = xmldoc.createElement("Node");
-			
+
 			org.w3c.dom.Attr attrib = xmldoc.createAttribute("text");
 			attrib.setNodeValue(childNode.getText());
 			xmlNode.getAttributes().setNamedItem(attrib);
-			
+
 			attrib = xmldoc.createAttribute("id");
 			attrib.setNodeValue(Integer.toString(childNode.getId()));
 			xmlNode.getAttributes().setNamedItem(attrib);
 
-			if(childNode.getColor() != null)
-			{
+			if(childNode.getColor() != null){
 				attrib = xmldoc.createAttribute("color");
 				attrib.setNodeValue(childNode.getColor());
 				xmlNode.getAttributes().setNamedItem(attrib);
 			}
-			
-			for(String key: childNode.listAttributes())
-			{
+
+			for(String key: childNode.listAttributes()){
 				String value = childNode.getAttribute(key);
-				if(value != null)
-				{
+				if(value != null){
 					if(!value.equals("")){
 						org.w3c.dom.Attr attribute = xmldoc.createAttribute(key);
 						attribute.setNodeValue(value);
@@ -466,12 +427,11 @@ public class KeyMindFileHandler implements StorageHandler {
 					}
 				}
 			}
-			
-			if(childNode.countChildNodes() > 0)
-			{
+
+			if(childNode.countChildNodes() > 0){
 				appendChildNodesToXMLFile(xmldoc, xmlNode, childNode);
 			}
-			
+
 			parentXMLNode.appendChild(xmlNode);
 		}
 	}

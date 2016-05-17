@@ -55,14 +55,14 @@ public class SettingsDialog {
 
 	public static final double size_x = 450;
 	public static final double size_y = 450;
-	
+
 	private Stage me;
 	private de.akubix.keyminder.core.ApplicationInstance app;
 	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI;
 	private Map<String, String> settingscopy;
-	
+
 	private Map<String, String> originalGeneralSettingsReference;
-	
+
 	public SettingsDialog(Stage primaryStage, ApplicationInstance instance)
 	{
 		this.app = instance;
@@ -70,16 +70,15 @@ public class SettingsDialog {
 		this.originalGeneralSettingsReference = app.settings;
 		this.settingscopy = new HashMap<String, String>();
 		de.akubix.keyminder.lib.Tools.hashCopy(originalGeneralSettingsReference, settingscopy);
-		
+
 		me = new Stage();
 		me.setTitle(ApplicationInstance.APP_NAME + " - " + fxUI.getLocaleBundleString("settings.title"));
 		me.initOwner(primaryStage);
 	}
-	
+
 	private boolean saveSettings = false;
-	
-	public boolean show()
-	{
+
+	public boolean show(){
 		BorderPane root = new BorderPane();
 
 		TabPane tabs = new TabPane();
@@ -88,18 +87,18 @@ public class SettingsDialog {
 		tabs.getTabs().addAll(createGeneralSettingsTab(), createModuleSettingsTab());
 
 		app.fireEvent(SettingsEvent.OnSettingsDialogOpened, tabs, settingscopy);
-		
+
 		root.setCenter(tabs);
 
 		HBox bottom = new HBox(4);
-				
+
 		Button ok = new Button(fxUI.getLocaleBundleString("settings.button_save"));
 		ok.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-		 
+
 				de.akubix.keyminder.lib.Tools.hashCopy(settingscopy, originalGeneralSettingsReference);
-				
+
 				//Check if the user enabled or disabled some modules
 				for(String moduleName: moduleList.keySet())
 				{
@@ -116,14 +115,14 @@ public class SettingsDialog {
 						}
 					}
 				}
-				
+
 				app.settingsHasBeenUpdated();
-				
+
 				saveSettings = true;
 				me.close();
 			}
 		});
-		
+
 		Button cancel = new Button(fxUI.getLocaleBundleString("cancel"));
 		cancel.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -132,74 +131,74 @@ public class SettingsDialog {
 				me.close();
 			}
 		});
-		
+
 		ok.setMinWidth(120);
 		cancel.setMinWidth(120);
-		
+
 		bottom.setAlignment(Pos.CENTER_RIGHT);
 		bottom.getChildren().addAll(ok, cancel);
 
 		cancel.setCancelButton(true);
 		ok.setDefaultButton(true);
-		 
-		root.setBottom(bottom); 
+
+		root.setBottom(bottom);
 		BorderPane.setMargin(bottom, new Insets(8,8,8,8));
 
 		Scene myScene = new Scene(root, size_x, size_y);
 		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
-		
+
 		me.setScene(myScene);
-		 
+
 		//Set position of second window, related to primary window.
 		me.setResizable(false);
 		me.initModality( Modality.APPLICATION_MODAL );
 		Tools.addDefaultIconsToStage(me);
 		me.showAndWait();
-		
-		return saveSettings;	
+
+		return saveSettings;
 	}
-	
-	private Separator createSeperator()
-	{
+
+	private Separator createSeperator(){
 		Separator s = new Separator(Orientation.HORIZONTAL);
 		s.setStyle("-fx-padding: 8 0 8 0");
 		return s;
 	}
 
-	private Tab createGeneralSettingsTab()
-	{
+	private Tab createGeneralSettingsTab(){
 		Tab settings_general = new Tab(fxUI.getLocaleBundleString("settings.tabs.general.title"));
 		settings_general.setClosable(false);
-		
+
 		VBox vbox = new VBox(4);
 		vbox.setPadding(new Insets(4, 8, 0, 8));
 		vbox.setStyle("-fx-min-width: " + size_x + "; -fx-max-width: -fx-min-width");
 		Label title = new Label(fxUI.getLocaleBundleString("settings.tabs.general.headline"));
 		title.getStyleClass().add("h2");
-		
+
 		TextField defaultFile = new TextField("");
 		if(settingscopy.containsKey(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_DEFAULT_FILE))
 		{
 			defaultFile.setText(settingscopy.get(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_DEFAULT_FILE));
 		}
-		
+
 		defaultFile.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 			@Override
 			public void handle(KeyEvent event) {
 				settingscopy.put(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_DEFAULT_FILE, defaultFile.getText());
 			}});
-	
+
 		final CheckBox windowTitleFilename = new CheckBox("settings.general.show_current_file_in_window_title");
 		windowTitleFilename.setSelected(app.getSettingsValueAsBoolean("windowtitle.showfilename", true));
 		windowTitleFilename.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
 			public void changed(ObservableValue<? extends Boolean> ov, Boolean oldValue, Boolean newValue) {
 				settingscopy.put("windowtitle.showfilename", (newValue == true ? "yes" : "no"));
 			}
 		});
-		
+
 		final CheckBox windowTitleVersion = new CheckBox(fxUI.getLocaleBundleString("settings.general.show_version_in_window_title"));
 		windowTitleVersion.setSelected(app.getSettingsValueAsBoolean("windowtitle.showversion", false));
 		windowTitleVersion.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
 			public void changed(ObservableValue<? extends Boolean> ov, Boolean oldValue, Boolean newValue) {
 				settingscopy.put("windowtitle.showversion", (newValue == true ? "yes" : "no"));
 			}
@@ -207,6 +206,7 @@ public class SettingsDialog {
 		final CheckBox useFavorites = new CheckBox(fxUI.getLocaleBundleString("settings.general.enable_favorites"));
 		useFavorites.setSelected(app.getSettingsValueAsBoolean("nodes.disable_favorites", true));
 		useFavorites.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
 			public void changed(ObservableValue<? extends Boolean> ov, Boolean oldValue, Boolean newValue) {
 				settingscopy.put("nodes.disable_favorites", (newValue == true ? "no" : "yes"));
 			}
@@ -215,6 +215,7 @@ public class SettingsDialog {
 		final CheckBox hideEmptySidebar = new CheckBox(fxUI.getLocaleBundleString("settings.general.hide_sidebar_if_empty"));
 		hideEmptySidebar.setSelected(app.getSettingsValueAsBoolean("sidebar.autohide", true));
 		hideEmptySidebar.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
 			public void changed(ObservableValue<? extends Boolean> ov, Boolean oldValue, Boolean newValue) {
 				if(newValue){settingscopy.remove("sidebar.autohide");}else{settingscopy.put("sidebar.autohide", "yes");}
 			}
@@ -241,83 +242,80 @@ public class SettingsDialog {
 		browserFileInputField.setDisable(!useOtherBrowserValue);
 
 		useOtherWebBrowserCheckBox.selectedProperty().addListener(new ChangeListener<Boolean>() {
+			@Override
 			public void changed(ObservableValue<? extends Boolean> ov, Boolean oldValue, Boolean newValue) {
 				if(newValue){settingscopy.put(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_USE_OTHER_WEB_BROWSER, "yes");}else{settingscopy.remove(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_USE_OTHER_WEB_BROWSER);}
 				browserFileInputField.setDisable(!newValue);
 			}
 		});
-		
+
 		vbox.getChildren().addAll(title, new Label(fxUI.getLocaleBundleString("settings.general.label_defaultfile")), de.akubix.keyminder.lib.Tools.createFxFileInputField(defaultFile, fxUI),
 								  createSeperator(), windowTitleFilename, windowTitleVersion, useFavorites, hideEmptySidebar,
 								  createSeperator(), useOtherWebBrowserCheckBox, browserFileInputField);
-		
+
 		ScrollPane scrollPane = new ScrollPane(vbox);
 		scrollPane.setHbarPolicy(ScrollBarPolicy.NEVER);
 		scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
 
 		settings_general.setContent(scrollPane);
-		
+
 		return settings_general;
 	}
-	
+
 	private Map<String, CheckBox> moduleList = new HashMap<>();
-	private Tab createModuleSettingsTab()
-	{
+	private Tab createModuleSettingsTab(){
 		Tab settings_modules = new Tab(fxUI.getLocaleBundleString("settings.tabs.modules.title"));
 		settings_modules.setClosable(false);
 		BorderPane pane = new BorderPane();
 		pane.setPadding(new Insets(4, 8, 0, 8));
-		
+
 		Label title = new Label(fxUI.getLocaleBundleString("settings.tabs.modules.headline"));
 		title.getStyleClass().add("h2");
 
 		VBox vbox = new VBox(4);
 		vbox.getChildren().addAll(title, new Label(fxUI.getLocaleBundleString("settings.modules.infolabel")));
 		pane.setTop(vbox);
-		
+
 		VBox list = new VBox(6);
-			list.setPadding(new Insets(4));
-		for(String moduleName: de.akubix.keyminder.lib.Tools.asSortedList(app.getModules()))
-		{
+		list.setPadding(new Insets(4));
+		for(String moduleName: de.akubix.keyminder.lib.Tools.asSortedList(app.getModules())){
 			ModuleInfo moduleInfo = app.getModuleInfo(moduleName);
 			CheckBox cb;
-			if(moduleInfo.properties != null)
-			{
+			if(moduleInfo.properties != null){
 				cb = new CheckBox(!moduleInfo.properties.name().equals("") ? moduleInfo.properties.name() : moduleName);
 				cb.setTooltip(new Tooltip(String.format(fxUI.getLocaleBundleString("settings.modules.moduleinfo_author") + ": %s\n" +
-											  			fxUI.getLocaleBundleString("settings.modules.moduleinfo_version") + "%s\n\n%s",
-											  			moduleInfo.properties.author(),
-											  			moduleInfo.properties.version().equals(".") ? de.akubix.keyminder.core.ApplicationInstance.APP_VERSION : moduleInfo.properties.version(),
-											  			de.akubix.keyminder.lib.Tools.forceLineBreak(moduleInfo.properties.description(), 60))));
+														fxUI.getLocaleBundleString("settings.modules.moduleinfo_version") + "%s\n\n%s",
+														moduleInfo.properties.author(),
+														moduleInfo.properties.version().equals(".") ? de.akubix.keyminder.core.ApplicationInstance.APP_VERSION : moduleInfo.properties.version(),
+														de.akubix.keyminder.lib.Tools.forceLineBreak(moduleInfo.properties.description(), 60))));
 			}
-			else
-			{
+			else{
 				cb = new CheckBox(moduleName);
 			}
-			
+
 			if(moduleInfo.isEnabled && !moduleInfo.isStarted()){cb.setText(cb.getText() + " (!)");}
 			if(!moduleInfo.isEnabled && moduleInfo.isStarted()){cb.setText(cb.getText() + " (*)");}
-			
+
 			cb.setSelected(moduleInfo.isEnabled);
 			cb.setMaxWidth(size_x - 18);
 			cb.setMinWidth(size_x - 18);
 			moduleList.put(moduleName, cb);
 			list.getChildren().addAll(cb, new Separator(Orientation.HORIZONTAL));
 		}
-		
+
 		ScrollPane scrollPane = new ScrollPane(list);
 		scrollPane.setHbarPolicy(ScrollBarPolicy.NEVER);
 		scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
-		
+
 		scrollPane.setMaxWidth(size_x - 6);
 		scrollPane.setMinWidth(size_x - 6);
-		
+
 		pane.setCenter(scrollPane);
 		Label l = new Label(fxUI.getLocaleBundleString("settings.modules.restart_hint"));
 		l.setStyle("-fx-font-size: 10px; -fx-padding: 2px 0px 1px 1px;");
 		pane.setBottom(l);
 		settings_modules.setContent(pane);
-		
+
 		return settings_modules;
 	}
 }

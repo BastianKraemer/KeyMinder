@@ -31,8 +31,7 @@ public class StorageManager {
 
 	public static final String defaultFileType = "xml/keymindfile";
 
-	public StorageManager()
-	{
+	public StorageManager(){
 		addStorageHandler(defaultFileType, (String idetifier) -> {return new KeyMindFileHandler(idetifier);}, new FileExtension(".keymind", "KeyMinder XML File (*.keymind)"),
 																					 new FileExtension(".xml", "XML-File (*.xml)"));
 	}
@@ -48,8 +47,7 @@ public class StorageManager {
 	 * @param valueIfExtensionIsUnknwon the return value if the file extension is not known
 	 * @return the identifier of a {@link StorageHandler} or 'valueIfExtensionIsUnknwon' if the extension is not known
 	 */
-	public String getIdentifierByExtension(String extension, String valueIfExtensionIsUnknwon)
-	{
+	public String getIdentifierByExtension(String extension, String valueIfExtensionIsUnknwon){
 		return extensionTranslator.getOrDefault(extension, valueIfExtensionIsUnknwon);
 	}
 
@@ -58,8 +56,7 @@ public class StorageManager {
 	 * @param fileTypeIdentifier the file type identifier
 	 * @return {@code true} if there is a storage handler for the file type, {@code false} if not
 	 */
-	public boolean hasStorageHandler(String fileTypeIdentifier)
-	{
+	public boolean hasStorageHandler(String fileTypeIdentifier){
 		return fileTypes.containsKey(fileTypeIdentifier.toLowerCase());
 	}
 
@@ -69,10 +66,11 @@ public class StorageManager {
 	 * @return the storage handler
 	 * @throws IllegalArgumentException if the file type identifier does not exist
 	 */
-	public StorageHandler getStorageHandler(String fileTypeIdentifier) throws IllegalArgumentException
-	{
+	public StorageHandler getStorageHandler(String fileTypeIdentifier) throws IllegalArgumentException {
 		fileTypeIdentifier = fileTypeIdentifier.toLowerCase();
-		if(!fileTypes.containsKey(fileTypeIdentifier)){throw new IllegalArgumentException(String.format("Cannot find storage hander with id \"%s\".", fileTypeIdentifier));}
+		if(!fileTypes.containsKey(fileTypeIdentifier)){
+			throw new IllegalArgumentException(String.format("Cannot find storage hander with id \"%s\".", fileTypeIdentifier));
+		}
 		return fileTypes.get(fileTypeIdentifier).getInstance(fileTypeIdentifier);
 	}
 
@@ -82,8 +80,7 @@ public class StorageManager {
 	 * @param fileTypeIdentifier the file type identifier
 	 * @return the {@link StorageHandler} of your file type or the default {@link StorageHandler} if the file type does not exist
 	 */
-	public StorageHandler getStorageHandlerIfAvailable(String fileTypeIdentifier)
-	{
+	public StorageHandler getStorageHandlerIfAvailable(String fileTypeIdentifier){
 		fileTypeIdentifier = fileTypeIdentifier.toLowerCase();
 		if(!fileTypes.containsKey(fileTypeIdentifier)){fileTypeIdentifier = defaultFileType;}
 		return fileTypes.get(fileTypeIdentifier).getInstance(fileTypeIdentifier);
@@ -95,8 +92,7 @@ public class StorageManager {
 	 * @return the {@link StorageHandler} for this file type
 	 * @throws IllegalArgumentException if the extension is not known
 	 */
-	public StorageHandler getStorageHandlerByExtension(String fileExtension) throws IllegalArgumentException
-	{
+	public StorageHandler getStorageHandlerByExtension(String fileExtension) throws IllegalArgumentException{
 		fileExtension = fileExtension.toLowerCase();
 		if(!extensionTranslator.containsKey(fileExtension)){throw new IllegalArgumentException("Cannot find any storage hander that is assigned with this extension");}
 		return getStorageHandler(extensionTranslator.get(fileExtension));
@@ -109,14 +105,12 @@ public class StorageManager {
 	 * @param fileExtensions A list of all file extension that could be used with this StorageHandler
 	 * @throws IllegalArgumentException if the identifier is already in use
 	 */
-	public void addStorageHandler(String identifier, StorageHandlerInstanceFabric instanceFabric, FileExtension... fileExtensions) throws IllegalArgumentException
-	{
+	public void addStorageHandler(String identifier, StorageHandlerInstanceFabric instanceFabric, FileExtension... fileExtensions) throws IllegalArgumentException{
 		identifier = identifier.toLowerCase();
 		if(fileTypes.containsKey(identifier)){throw new IllegalArgumentException(String.format("Storage Handler with identifier \"%s\" does already exist.", identifier));}
 		fileTypes.put(identifier, instanceFabric);
 
-		for(int i = 0; i < fileExtensions.length; i++)
-		{
+		for(int i = 0; i < fileExtensions.length; i++){
 			if(!extensionTranslator.containsKey(fileExtensions[i].extension.toLowerCase())){
 				extensionTranslator.put(fileExtensions[i].extension.toLowerCase(), identifier);
 				knownFileExtensions.add(new FileChooser.ExtensionFilter(fileExtensions[i].description, "*" + fileExtensions[i].extension));
@@ -130,8 +124,7 @@ public class StorageManager {
 	 * @see FileChooser
 	 * @see FileChooser.ExtensionFilter
 	 */
-	public FileChooser.ExtensionFilter[] getFileChooserExtensionFilter()
-	{
+	public FileChooser.ExtensionFilter[] getFileChooserExtensionFilter(){
 		FileChooser.ExtensionFilter[] arr = new FileChooser.ExtensionFilter[knownFileExtensions.size() + 1];
 		knownFileExtensions.toArray(arr);
 		arr[knownFileExtensions.size()] = new FileChooser.ExtensionFilter("Alle Dateien (*.*)", "*.*");
@@ -142,8 +135,7 @@ public class StorageManager {
 	 * You can use a lambda expression to walk through all known file types
 	 * @param lambda the lambda expression
 	 */
-	public void forEachFileType(Consumer<? super String> lambda)
-	{
+	public void forEachFileType(Consumer<? super String> lambda){
 		fileTypes.keySet().forEach(lambda);
 	}
 
@@ -151,23 +143,19 @@ public class StorageManager {
 	 * You can use a lambda expression to walk through all known file extensions an their assigned file types
 	 * @param lambda the lambda expression
 	 */
-	public void forEachKnownExtension(BiConsumer<? super String, ? super String> lambda)
-	{
+	public void forEachKnownExtension(BiConsumer<? super String, ? super String> lambda){
 		extensionTranslator.forEach(lambda);
 	}
 }
 
-class FileExtension
-{
+class FileExtension {
 	public final String extension, description;
-	public FileExtension(String extension, String description)
-	{
+	public FileExtension(String extension, String description) {
 		this.extension = extension.startsWith(".") ? extension : "." + extension;
 		this.description = description;
 	}
 }
 
-interface StorageHandlerInstanceFabric
-{
+interface StorageHandlerInstanceFabric {
 	public StorageHandler getInstance(String fileTypeIdentifier);
 }

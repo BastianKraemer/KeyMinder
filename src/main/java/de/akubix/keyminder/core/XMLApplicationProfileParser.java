@@ -75,8 +75,7 @@ public class XMLApplicationProfileParser
 	 * @return An instance of the {@link XMLApplicationProfileParser}
 	 * @throws IllegalArgumentException if the XML input stream couldn't be parsed
 	 */
-	public static XMLApplicationProfileParser createInstance(ApplicationInstance app, InputStream applicationProfileXMLInputStream, Map<String, String> variables) throws IllegalArgumentException
-	{
+	public static XMLApplicationProfileParser createInstance(ApplicationInstance app, InputStream applicationProfileXMLInputStream, Map<String, String> variables) throws IllegalArgumentException {
 		if(applicationProfileXMLInputStream == null){throw new IllegalArgumentException("Error: input stream of XML application profile is 'null'.");}
 
 		try {
@@ -94,8 +93,7 @@ public class XMLApplicationProfileParser
 	 * @return An instance of the {@link XMLApplicationProfileParser}
 	 * @throws IllegalArgumentException if the XML string couldn't be parsed
 	 */
-	public static XMLApplicationProfileParser createInstance(ApplicationInstance app, String applicationProfileXMLString, Map<String, String> variables) throws IllegalArgumentException
-	{
+	public static XMLApplicationProfileParser createInstance(ApplicationInstance app, String applicationProfileXMLString, Map<String, String> variables) throws IllegalArgumentException {
 		try {
 			return new XMLApplicationProfileParser(app, XMLCore.loadDocumentFromString(applicationProfileXMLString), variables);
 		} catch (ParserConfigurationException | SAXException | IOException e) {
@@ -110,8 +108,7 @@ public class XMLApplicationProfileParser
 	 * @return the list of parameters for your profile (including the application path as first argument)
 	 * @throws IllegalArgumentException if the XML document doesn't contain a application profile with the give identifier
 	 */
-	public List<String> generateCommandLineParameters(String configurationIdentifier, TreeNode treeNode) throws IllegalArgumentException
-	{	
+	public List<String> generateCommandLineParameters(String configurationIdentifier, TreeNode treeNode) throws IllegalArgumentException {
 		this.treeNode = treeNode;
 
 		//Verify that the profile is compatible with this parser
@@ -123,13 +120,10 @@ public class XMLApplicationProfileParser
 		}
 
 		org.w3c.dom.Node rootNode = xmldoc.getDocumentElement();
-		for(int i = 0; i < rootNode.getChildNodes().getLength(); i++)
-		{
+		for(int i = 0; i < rootNode.getChildNodes().getLength(); i++){
 			org.w3c.dom.Node childNode = rootNode.getChildNodes().item(i);
-			if(childNode.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE)
-			{
-				if(childNode.getNodeName().matches("(?i)configuration"))
-				{
+			if(childNode.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE){
+				if(childNode.getNodeName().matches("(?i)configuration")){
 					org.w3c.dom.Node attrib = childNode.getAttributes().getNamedItem("id");
 					if(attrib != null){
 						if(attrib.getNodeValue().equals(configurationIdentifier)){
@@ -138,25 +132,24 @@ public class XMLApplicationProfileParser
 							this.profileRootNode = childNode;
 							org.w3c.dom.Node execAttrib = this.profileRootNode.getAttributes().getNamedItem("execute");
 							if(execAttrib == null || execAttrib.getNodeValue().equals("")){throw new IllegalArgumentException("The application profile does not contain an executable that should be started.");}
-							if(Launcher.verbose_mode){app.println(String.format("Generating command line parameters for application '%s'...", execAttrib.getNodeValue()));}			
-							
+							if(Launcher.verbose_mode){app.println(String.format("Generating command line parameters for application '%s'...", execAttrib.getNodeValue()));}
+
 							String exec = replaceVariablesInString(execAttrib.getNodeValue());
 							if(exec.equals("")){throw new IllegalArgumentException(String.format("Executable is not defined: '%s' is empty.", execAttrib.getNodeValue()));}
 							commandLineArguments.add(replaceVariablesInString(execAttrib.getNodeValue()));
-							
+
 							parseChildNodes(this.profileRootNode);
 
 							return commandLineArguments; //The method above will fill this list
 						}
 					}
 				}
-				else
-				{
+				else{
 					variables.put(childNode.getNodeName(), childNode.getNodeValue());
 				}
 			}
 		}
-		
+
 		throw new IllegalArgumentException(String.format("The application profile does not contain a configuration that matches the identifier '%s'.", configurationIdentifier));
 	}
 
@@ -166,14 +159,11 @@ public class XMLApplicationProfileParser
 	 * Note: The requirements will be checked when the first "<option>" or "<action>" tag is reached, so you can also require self defined variables
 	 * @throws IllegalArgumentException if at least one requirement of this profile are not fulfilled
 	 */
-	private void checkRequirements() throws IllegalArgumentException
-	{
+	private void checkRequirements() throws IllegalArgumentException {
 		requirementsChecked = true;
 		org.w3c.dom.Node attrib = profileRootNode.getAttributes().getNamedItem("require");
-		if(attrib != null)
-		{
-			for(String str: attrib.getNodeValue().split(";\\ |;"))
-			{
+		if(attrib != null){
+			for(String str: attrib.getNodeValue().split(";\\ |;")){
 				if(replaceVariablesInString(str).equals("")){
 					throw new IllegalArgumentException(String.format("Cannot run application profile: Variable %s is empty or does not exist", str));
 				}
@@ -182,34 +172,33 @@ public class XMLApplicationProfileParser
 	}
 
 	private String parseNextXMLNode(org.w3c.dom.Node xmlNode){
-		
 		switch (xmlNode.getNodeName().toLowerCase()) {
-		case "var":
-			parseVarTag(xmlNode);
-			break;
+			case "var":
+				parseVarTag(xmlNode);
+				break;
 
-		case "if":
-			return parseIfTag(xmlNode);
+			case "if":
+				return parseIfTag(xmlNode);
 
-		case "option":
-			parseOptionTag(xmlNode);
-			break;
+			case "option":
+				parseOptionTag(xmlNode);
+				break;
 
-		case "action":
-			parseActionTag(xmlNode);
-			break;
+			case "action":
+				parseActionTag(xmlNode);
+				break;
 
-		case "split":
-			return parseSplitTag(xmlNode);
+			case "split":
+				return parseSplitTag(xmlNode);
 
-		case "append":
-			return parseChildNodes(xmlNode);
-			
-		case "exit":
-			throw new IllegalArgumentException(String.format("Operation has been canceled: %s", replaceVariablesInString(parseChildNodes(xmlNode))));
+			case "append":
+				return parseChildNodes(xmlNode);
 
-		default:
-			throw new IllegalArgumentException(String.format("Cannot parse XML application profile: Unknown tag '%s'", xmlNode.getNodeName()));
+			case "exit":
+				throw new IllegalArgumentException(String.format("Operation has been canceled: %s", replaceVariablesInString(parseChildNodes(xmlNode))));
+
+			default:
+				throw new IllegalArgumentException(String.format("Cannot parse XML application profile: Unknown tag '%s'", xmlNode.getNodeName()));
 		}
 
 		return "";
@@ -279,7 +268,7 @@ public class XMLApplicationProfileParser
 			return (elseAttrib == null) ? "" : elseAttrib.getNodeValue();
 		}
 	}
-	
+
 	private String parseIfEquals(org.w3c.dom.Node xmlNode, boolean checkNotEquals) throws IllegalArgumentException{
 		org.w3c.dom.Node equalsAttrib = xmlNode.getAttributes().getNamedItem(checkNotEquals ? "not_equals" : "equals");
 
@@ -291,7 +280,7 @@ public class XMLApplicationProfileParser
 		String right = splitStr[1].trim();
 		if(left.matches("^'.*'$")){left = left.substring(1, left.length() - 1);}
 		if(right.matches("^'.*'$")){right = right.substring(1, right.length() - 1);}
-		
+
 		if(replaceVariablesInString(left).equals(replaceVariablesInString(right)) ^ checkNotEquals){
 			return parseChildNodes(xmlNode);
 		}
@@ -341,27 +330,25 @@ public class XMLApplicationProfileParser
 	 * @param source The String the variables should be replaced in
 	 * @return The String with all replaced variables (if possible)
 	 */
-	private String replaceVariablesInString(String source)
-	{
+	private String replaceVariablesInString(String source){
 		// Regular expression to allow all characters in variables except "$"
 		//	-> \\$\\{[^\\$]*\\}
 		// Regular expression to allow only A-Z, a-z and 0-9 for variable names
 		// 	-> \\$\\{[a-zA-Z0-9]*\\}
-		
+
 		for(MatchResult match : allMatches(Pattern.compile("\\$\\{[^\\$]*\\}"), source))
 		{
 			source = source.replace(match.group(), getValueOfVariable(match.group().substring(2, match.group().length() - 1)));
 		}
 		return source;
 	}
-	
+
 	/**
 	 * Returns the value of the variable
 	 * @param varName The name of the variable without ${}
 	 * @return The value of the variable OR "" if there is no value for this variable
 	 */
-	private String getValueOfVariable(String varName) throws IllegalArgumentException
-	{
+	private String getValueOfVariable(String varName) throws IllegalArgumentException{
 		// There are multiple sources for the values of the variables: The variables of this document stored in 'variables' or as part of the node attributes or ...
 		// Hint: Take a look at the order - you can "overwrite" node attributes because they will be first looked up in 'variables'
 		if(variables.containsKey(varName)){return variables.get(varName);}
@@ -369,13 +356,13 @@ public class XMLApplicationProfileParser
 		if(app.fileSettingsContainsKey(varName)){return app.getFileSettingsValue(varName);}
 		if(app.settingsContainsKey(varName)){return app.getSettingsValue(varName);}
 		if(treeNode != null){if(varName.toLowerCase().equals("text")){return treeNode.getText();}}
-		
+
 		/* Some "special function variables":
 		 * ${_clipboard_} will return the current clip board value
 		 * ${_openfiledialog_} will open a file dialog and return the file name
 		 * ${_openfiledialog_} will open a file dialog and return the file name
 		 */
-		
+
 		if(varName.equals("_clipboard_")){
 			if(app.isFxUserInterfaceAvailable()){
 				return app.getFxUserInterface().getClipboardText();
@@ -419,7 +406,7 @@ public class XMLApplicationProfileParser
 		return "";
 	}
 
-	private String parseSplitTag(org.w3c.dom.Node xmlNode) throws IllegalArgumentException{
+	private String parseSplitTag(org.w3c.dom.Node xmlNode) throws IllegalArgumentException {
 		org.w3c.dom.Node srcAttrib = xmlNode.getAttributes().getNamedItem("src");
 		org.w3c.dom.Node delimiterAttrib = xmlNode.getAttributes().getNamedItem("delimiter");
 		org.w3c.dom.Node variableAttrib = xmlNode.getAttributes().getNamedItem("var");
@@ -438,25 +425,26 @@ public class XMLApplicationProfileParser
 		return ret.toString();
 	}
 
-	/* The following code was written by StackOverflow (stackoverflow.com) user Mike Samuel and is licensed under CC BY-SA 3.0 
+	/* The following code was written by StackOverflow (stackoverflow.com) user Mike Samuel and is licensed under CC BY-SA 3.0
 	 * "Creative Commons Attribution-ShareAlike 3.0 Unported", http://creativecommons.org/licenses/by-sa/3.0/)
 	 *
 	 * Source: http://stackoverflow.com/questions/6020384/create-array-of-regex-matches
 	 * The code has not been modified.
 	 */
-	
+
 	private static Iterable<MatchResult> allMatches(final Pattern p, final CharSequence input)
 	{
-		return new Iterable<MatchResult>()
-		{
+		return new Iterable<MatchResult>() {
+			@Override
 			public Iterator<MatchResult> iterator() {
-				return new Iterator<MatchResult>() 
+				return new Iterator<MatchResult>()
 				{
 					// Use a matcher internally.
 					final Matcher matcher = p.matcher(input);
 					// Keep a match around that supports any interleaving of hasNext/next calls.
 					MatchResult pending;
-	
+
+					@Override
 					public boolean hasNext() {
 					  // Lazily fill pending, and avoid calling find() multiple times if the
 					  // clients call hasNext() repeatedly before sampling via next().
@@ -465,7 +453,8 @@ public class XMLApplicationProfileParser
 					  }
 					  return pending != null;
 					}
-	
+
+					@Override
 					public MatchResult next() {
 					  // Fill pending if necessary (as when clients call next() without
 					  // checking hasNext()), throw if not possible.
@@ -475,8 +464,9 @@ public class XMLApplicationProfileParser
 						pending = null;
 						return next;
 					}
-	
+
 					/** Required to satisfy the interface, but unsupported. */
+					@Override
 					public void remove() { throw new UnsupportedOperationException(); }
 				};
 			}

@@ -51,10 +51,8 @@ public class Launcher {
 
 		// Test available encryption methods - and print a warning if there is only AES-128 available
 		try {
-			if(!de.akubix.keyminder.lib.AESCore.isAES256EncryptionAvailable())
-			{
-				if(!environment.containsKey("silent_mode"))
-				{
+			if(!de.akubix.keyminder.lib.AESCore.isAES256EncryptionAvailable()){
+				if(!environment.containsKey("silent_mode")){
 					System.out.println("Important security warning: AES-256 Encryption is NOT supported on this system.\nUsing fallback to AES-128, which provides less security.\n\n"
 									 + "Please upgrade your Java installation using the \"Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files\" "
 									 + "if you want to enable AES-256 encryption.");
@@ -70,13 +68,11 @@ public class Launcher {
 
 		// Provide all icons by keywords
 		ImageSelector.buildIndex();
-		if(!environment.containsKey("console_mode"))
-		{
+		if(!environment.containsKey("console_mode")){
 			// Load the JavaFX UserInterface (It has to call "instance.startup()" when it is ready).
 			de.akubix.keyminder.ui.fx.MainWindow.init(args, instance);
 		}
-		else
-		{
+		else{
 			// Don't start the JavaFX UserInterface use the "ConsoleMode" instead (It has to call "instance.startup()" when it is ready).
 			de.akubix.keyminder.core.ConsoleMode console = new de.akubix.keyminder.core.ConsoleMode(instance);
 			console.start();
@@ -87,20 +83,15 @@ public class Launcher {
 		verbose_mode = value;
 	}
 
-	private static void parseCommandlineArgs(String[] args)
-	{
+	private static void parseCommandlineArgs(String[] args){
 		try	{
-
-			for(int i = 0; i < args.length; i++)
-			{
-				if(args[i].startsWith("-") || args[i].startsWith("--") || args[i].startsWith("/"))
-				{
+			for(int i = 0; i < args.length; i++){
+				if(args[i].startsWith("-") || args[i].startsWith("--") || args[i].startsWith("/")){
 					String arg;
 					if(args[i].startsWith("--")){arg = args[i].substring(2);}else{arg = args[i].substring(1);}
 
 					// Es handelt sich um einen Parameter
-						switch(arg.toLowerCase())
-						{
+						switch(arg.toLowerCase()){
 							case "open":
 							case "openfile":
 								environment.put("cmd.file", args[i+1]);
@@ -175,32 +166,25 @@ public class Launcher {
 								System.exit(1);
 						}
 				}
-				else
-				{
-					if(i + 1 < args.length)
-					{
-						if(environment.containsKey("cmd.file"))
-						{
-							if(environment.containsKey("cmd.password"))
-							{
+				else{
+					if(i + 1 < args.length){
+						if(environment.containsKey("cmd.file")){
+							if(environment.containsKey("cmd.password")){
 								System.out.println("Error while parsing commandline arguments: '" + args[i] + "' is not a parameter.");
 								System.exit(0);
 							}
-							else
-							{
+							else{
 								environment.put("cmd.password", args[i+1]);
 							}
 						}
-						else
-						{
+						else{
 							environment.put("cmd.file", args[i+1]);
 						}
 					}
 				}
 			}
 		}
-		catch(IndexOutOfBoundsException ex)
-		{
+		catch(IndexOutOfBoundsException ex){
 			System.out.println("Error while parsing commandline arguments.");
 			System.exit(1);
 		}

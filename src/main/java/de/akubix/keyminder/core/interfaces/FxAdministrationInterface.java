@@ -12,7 +12,7 @@ public interface FxAdministrationInterface extends FxUserInterface{
 	 * @param title the window title
 	 */
 	public void setTitle(String title);
-	
+
 	/**
 	 * This method is called when a file is opened and very similar to the {@link de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent#OnFileOpened} event.
 	 * The only difference is, that this method is called before all event handlers.

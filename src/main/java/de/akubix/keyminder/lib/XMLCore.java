@@ -62,8 +62,7 @@ public class XMLCore{
 	 * @return the new XML document
 	 * @throws ParserConfigurationException (Should never occur)
 	 */
-	public static Document createEmptyXMLDocument(String rootNodeText) throws ParserConfigurationException
-	{
+	public static Document createEmptyXMLDocument(String rootNodeText) throws ParserConfigurationException {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder;
 
@@ -86,26 +85,25 @@ public class XMLCore{
 	 * @throws SAXException if the XML document could not be parsed
 	 * @throws IOException if there is any IO error
 	 */
-	public static Document loadDocumentFromFile(File xmlFile) throws ParserConfigurationException, SAXException, IOException
-	{
+	public static Document loadDocumentFromFile(File xmlFile) throws ParserConfigurationException, SAXException, IOException {
 		FileInputStream fileInputStream = null;
 		try {
 			fileInputStream = new FileInputStream(xmlFile);
-		
+
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder;
-			
+
 			builder = factory.newDocumentBuilder();
 			Document doc = builder.parse(fileInputStream);
 			fileInputStream.close();
 			return doc;
-			
+
 		} catch (ParserConfigurationException | IOException | SAXException e) {
-			
+
 			try {
 				if(fileInputStream != null){fileInputStream.close();} //try to close the stream
 			} catch (IOException ioex) {}
-			
+
 			throw e;
 		}
 	}
@@ -147,8 +145,7 @@ public class XMLCore{
 	 * @throws SAXException if the XML document could not be parsed
 	 * @throws IOException if there is any IO error
 	 */
-	public static Document loadDocumentFromString(String xml) throws ParserConfigurationException, SAXException, IOException
-	{
+	public static Document loadDocumentFromString(String xml) throws ParserConfigurationException, SAXException, IOException {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 
 		factory.setNamespaceAware(true);
@@ -168,8 +165,7 @@ public class XMLCore{
 	 * @throws TransformerException if the XML file can't be saved
 	 * @throws IOException if there is any IO error
 	 */
-	public static void saveXMLDocument(File xmlfile, Document xmldoc) throws TransformerException, IOException
-	{
+	public static void saveXMLDocument(File xmlfile, Document xmldoc) throws TransformerException, IOException {
 		// Use a Transformer for output
 		TransformerFactory tFactory =TransformerFactory.newInstance();
 		Transformer transformer = tFactory.newTransformer();
@@ -187,15 +183,14 @@ public class XMLCore{
 
 		outputStream.close();
 	}
-	
+
 	/**
 	 * Converts an XML-Document to a String
 	 * @param xmldoc The document, that should be converted
 	 * @return XML-Document as String
 	 * @throws TransformerException if the XML file can't be saved
 	 */
-	public static String transfromXMLDocumentToString(Document xmldoc) throws TransformerException
-	{
+	public static String transfromXMLDocumentToString(Document xmldoc) throws TransformerException {
 		DOMSource domSource = new DOMSource(xmldoc);
 		TransformerFactory tf = TransformerFactory.newInstance();
 		Transformer transformer = tf.newTransformer();
@@ -213,17 +208,15 @@ public class XMLCore{
 	/* Working with XML documents or nodes
 	 * ==========================================================================================================================================================================
 	 */
-	
+
 	/**
 	 * Returns a HashMap containing all XML Attributes of this node as value key pair
 	 * @param xmlnode the XML node for this operations
 	 * @return the Map with all attributes
 	 */
-	public static Map<String, String> xmlAttributes2Hash(org.w3c.dom.Node xmlnode)
-	{
+	public static Map<String, String> xmlAttributes2Hash(org.w3c.dom.Node xmlnode) {
 		Map<String, String> attribs = new HashMap<String, String>();
-		for(int i = 0; i < xmlnode.getAttributes().getLength(); i++)
-		{
+		for(int i = 0; i < xmlnode.getAttributes().getLength(); i++){
 			attribs.put(xmlnode.getAttributes().item(i).getNodeName(), xmlnode.getAttributes().item(i).getNodeValue());
 		}
 		return attribs;
@@ -231,15 +224,14 @@ public class XMLCore{
 
 	/**
 	 * CHecks if a node has real child nodes and not just something like a {@link Node#TEXT_NODE}
-	 * @param xmlnode the xml node that will be checked
+	 * @param xmlnode the XML node that will be checked
 	 * @return {@code true} it´has child nodes, {@code false} if not
 	 */
-	public static boolean hasChildNodes(org.w3c.dom.Node xmlnode)
-	{
+	public static boolean hasChildNodes(org.w3c.dom.Node xmlnode){
 		for(int i = 0; i < xmlnode.getChildNodes().getLength(); i++){
 			if(xmlnode.getChildNodes().item(i).getNodeType() == Node.ELEMENT_NODE){return true;}
 		}
-		
+
 		return false;
 	}
 
@@ -254,8 +246,7 @@ public class XMLCore{
 	 * @param rootElementName the name for the XML root element
 	 * @throws TransformerException if somthing went wrong
 	 */
-	public static void map2FlatXML(File xmlfile, Map<String, String> hash, String rootElementName) throws TransformerException
-	{
+	public static void map2FlatXML(File xmlfile, Map<String, String> hash, String rootElementName) throws TransformerException {
 		try {
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
@@ -277,10 +268,8 @@ public class XMLCore{
 	 * @param parentXMLNode the parent XML node
 	 * @param source the data source
 	 */
-	public static void map2FlatXMLNodes(org.w3c.dom.Node parentXMLNode, Map<String, String> source)
-	{
-		for(String key: source.keySet())
-		{
+	public static void map2FlatXMLNodes(org.w3c.dom.Node parentXMLNode, Map<String, String> source){
+		for(String key: source.keySet()){
 			String val = source.get(key);
 			if(!val.equals("")){
 				org.w3c.dom.Node xmlNode = parentXMLNode.getOwnerDocument().createElement(key);
@@ -296,10 +285,8 @@ public class XMLCore{
 	 * @param rootElementName the name of the root element
 	 * @return the new XML document
 	 */
-	public static Document convertMapToXMLDocument(Map<String, String> source, String rootElementName)
-	{
-		try
-		{
+	public static Document convertMapToXMLDocument(Map<String, String> source, String rootElementName){
+		try{
 			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
 
@@ -320,8 +307,7 @@ public class XMLCore{
 	 * @param source the data source
 	 * @param rootElementName the name of the root element
 	 */
-	public static void saveMapAsXMLFile(File xmlfile, Map<String, String> source, String rootElementName)
-	{
+	public static void saveMapAsXMLFile(File xmlfile, Map<String, String> source, String rootElementName){
 		try {
 			saveXMLDocument(xmlfile, convertMapToXMLDocument(source, rootElementName));
 		} catch (TransformerException | IOException e) {
@@ -334,17 +320,14 @@ public class XMLCore{
 	 * @param parentXMLNode the parent XML node
 	 * @param source the data source
 	 */
-	public static void convertHashToXMLNodes(org.w3c.dom.Node parentXMLNode, Map<String, String> source)
-	{
+	public static void convertHashToXMLNodes(org.w3c.dom.Node parentXMLNode, Map<String, String> source){
 		Map<String, org.w3c.dom.Node> nodeMap = new HashMap<>();
 
-		for(String key: source.keySet())
-		{
+		for(String key: source.keySet()){
 			String[] splitstr = key.split("\\.");
 			StringBuilder prefix = new StringBuilder("");
 			org.w3c.dom.Node xmlNode = parentXMLNode;
-			for(String part: splitstr)
-			{
+			for(String part: splitstr){
 				xmlNode = hash2XML_getHashNode(nodeMap, prefix.toString(), part, xmlNode);
 				prefix.append(part + ".");
 			}
@@ -355,23 +338,19 @@ public class XMLCore{
 
 	private static org.w3c.dom.Node hash2XML_getHashNode(Map<String, org.w3c.dom.Node> nodeMap, String prefix, String nodename, org.w3c.dom.Node parentXMLNode)
 	{
-		if(nodeMap.containsKey(prefix + nodename + "."))
-		{
+		if(nodeMap.containsKey(prefix + nodename + ".")){
 			return nodeMap.get(prefix + nodename + ".");
 		}
-		else
-		{
+		else{
 			org.w3c.dom.Node xmlnode;
-			if(nodename.contains(":"))
-			{
+			if(nodename.contains(":")){
 				String[] splitstr = nodename.split(":", 2);
 				xmlnode = parentXMLNode.getOwnerDocument().createElement(splitstr[0]);
 				org.w3c.dom.Attr attrib = parentXMLNode.getOwnerDocument().createAttribute("name");
 				attrib.setNodeValue(splitstr[1]);
 				xmlnode.getAttributes().setNamedItem(attrib);
 			}
-			else
-			{
+			else{
 				xmlnode = parentXMLNode.getOwnerDocument().createElement(nodename);
 			}
 
@@ -392,25 +371,20 @@ public class XMLCore{
 	 * @param enableOverwrite use {@code true} if you want to enable overwriting of values
 	 * @throws XMLParseException if something went wrong
 	 */
-	public static void xml2Map(File xmlFile, Map<String, String> targetMap, boolean enableOverwrite) throws XMLParseException
-	{
+	public static void xml2Map(File xmlFile, Map<String, String> targetMap, boolean enableOverwrite) throws XMLParseException {
 		xml2Map(xmlFile, targetMap, enableOverwrite ? (hash, key, value) -> hash.put(key, value) : (hash, key, value) -> hash.putIfAbsent(key, value));
 	}
 
-	private static void xml2Map(File xmlFile, Map<String, String> targetMap, HashStorageFunction<String> storefunction) throws XMLParseException
-	{
-		if(xmlFile.exists())
-		{
-			try
-			{
+	private static void xml2Map(File xmlFile, Map<String, String> targetMap, HashStorageFunction<String> storefunction) throws XMLParseException {
+		if(xmlFile.exists()){
+			try{
 				FileInputStream xmlInputStream = new FileInputStream(xmlFile);
-				try
-				{
+				try{
 					DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 					DocumentBuilder builder;
 
 					builder = factory.newDocumentBuilder();
-					Document document = builder.parse(xmlInputStream);	
+					Document document = builder.parse(xmlInputStream);
 
 					xml2Map(document.getDocumentElement(), "", targetMap, storefunction);
 
@@ -433,8 +407,7 @@ public class XMLCore{
 	 * @param prefix this prefix will be added to all map entries
 	 * @param targetHash the Map the information will be stored in
 	 */
-	public static void xml2Map(org.w3c.dom.Node parentXMLNode, String prefix, Map<String, String> targetHash)
-	{
+	public static void xml2Map(org.w3c.dom.Node parentXMLNode, String prefix, Map<String, String> targetHash){
 			xml2Map(parentXMLNode, prefix, targetHash, (hash, key, value) -> hash.put(key, value));
 	}
 
@@ -445,31 +418,24 @@ public class XMLCore{
 	 * @param targetHash the Map the information will be stored in
 	 * @param enableOverwrite use {@code true} if you want to enable overwriting of values
 	 */
-	public static void xml2Map(org.w3c.dom.Node parentXMLNode, String prefix, Map<String, String> targetHash, boolean enableOverwrite)
-	{
-			xml2Map(parentXMLNode, prefix , targetHash,  enableOverwrite ? (hash, key, value) -> hash.put(key, value) : (hash, key, value) -> hash.putIfAbsent(key, value));	
+	public static void xml2Map(org.w3c.dom.Node parentXMLNode, String prefix, Map<String, String> targetHash, boolean enableOverwrite){
+			xml2Map(parentXMLNode, prefix , targetHash,  enableOverwrite ? (hash, key, value) -> hash.put(key, value) : (hash, key, value) -> hash.putIfAbsent(key, value));
 	}
 
-	private static void xml2Map(org.w3c.dom.Node parentXMLNode, String prefix, Map<String, String> targetHash, HashStorageFunction<String> storefunction)
-	{
-		for(int i = 0; i < parentXMLNode.getChildNodes().getLength(); i++)
-		{	
+	private static void xml2Map(org.w3c.dom.Node parentXMLNode, String prefix, Map<String, String> targetHash, HashStorageFunction<String> storefunction){
+		for(int i = 0; i < parentXMLNode.getChildNodes().getLength(); i++){
 			Node currentNode = parentXMLNode.getChildNodes().item(i);
-			if(currentNode.getNodeType() == Node.ELEMENT_NODE)
-			{
-				if(hasChildNodes(currentNode))
-				{
+			if(currentNode.getNodeType() == Node.ELEMENT_NODE){
+				if(hasChildNodes(currentNode)){
 					org.w3c.dom.Node attrib = currentNode.getAttributes().getNamedItem("name");
 					if(attrib != null){
 						xml2Map(currentNode, prefix + currentNode.getNodeName() + ":" + attrib.getNodeValue() + ".", targetHash, storefunction);
 					}
-					else
-					{
+					else{
 						xml2Map(currentNode, prefix + currentNode.getNodeName() + ".", targetHash, storefunction);
 					}
 				}
-				else
-				{
+				else{
 					org.w3c.dom.Node attrib = currentNode.getAttributes().getNamedItem("name");
 					storefunction.store(targetHash,
 										(attrib == null) ? prefix + currentNode.getNodeName() : prefix + currentNode.getNodeName() + ":" + attrib.getNodeValue(),

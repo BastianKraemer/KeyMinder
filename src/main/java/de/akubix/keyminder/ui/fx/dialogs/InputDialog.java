@@ -43,39 +43,34 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 public class InputDialog {
-	
+
 	private Stage inputDialog;
 	private TextField input;
 	private boolean canceled = false;
 	private final int sceneWidth = 400;
 	private final int sceneHeight = 100;
-	public InputDialog(Stage primaryStage, FxUserInterface fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog)
-	{
+	public InputDialog(Stage primaryStage, FxUserInterface fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog){
 		createScene(fxUI, windowTitle, labelText, defaultValueOrPasswordHint, useAsPasswordDialog);
 		inputDialog.initOwner(primaryStage);
 		inputDialog.setX(primaryStage.getX() + (primaryStage.getWidth() / 2) - sceneWidth / 2);
 		inputDialog.setY(primaryStage.getY() + (primaryStage.getHeight() / 2) - (sceneHeight / 2) - 32);
 	}
-	
-	public InputDialog(FxUserInterface fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog)
-	{
+
+	public InputDialog(FxUserInterface fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog){
 		createScene(fxUI, windowTitle, labelText, defaultValueOrPasswordHint, useAsPasswordDialog);
 		inputDialog.centerOnScreen();
 	}
 
-	private void createScene(FxUserInterface fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog)
-	{
+	private void createScene(FxUserInterface fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog){
 		BorderPane root = new BorderPane();
-		
+
 		Label title = new Label(labelText);
 		BorderPane top = new BorderPane(title);
 		top.getStyleClass().add("header");
 		root.setTop(top);
 		BorderPane.setAlignment(title, Pos.CENTER_LEFT);
-		if(useAsPasswordDialog)
-		{
-			if(!defaultValueOrPasswordHint.equals(""))
-			{
+		if(useAsPasswordDialog){
+			if(!defaultValueOrPasswordHint.equals("")){
 				Tooltip tooltip = new Tooltip(fxUI.getLocaleBundleString("dialogs.inputdialog.passwordhint") + ":\n" + defaultValueOrPasswordHint);
 				Label l = new Label();
 				l.setGraphic(new ImageView(de.akubix.keyminder.lib.gui.ImageSelector.getIcon("icon_help_white")));
@@ -97,8 +92,7 @@ public class InputDialog {
 			}
 			input = new PasswordField();
 		}
-		else
-		{
+		else{
 			input = new TextField(defaultValueOrPasswordHint);
 		}
 
@@ -106,7 +100,7 @@ public class InputDialog {
 		root.setCenter(input);
 
 		HBox bottom = new HBox(4);
-		
+
 		Button ok = new Button(fxUI.getLocaleBundleString("okay"));
 		ok.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -124,44 +118,42 @@ public class InputDialog {
 				inputDialog.close();
 			}
 		});
-		
+
 		ok.setMinWidth(120);
 		cancel.setMinWidth(120);
-		
+
 		bottom.setAlignment(Pos.CENTER_RIGHT);
 		bottom.getChildren().add(ok);
 		bottom.getChildren().add(cancel);
-		
+
 		cancel.setCancelButton(true);
 		ok.setDefaultButton(true);
-		 
-		root.setBottom(bottom); 
+
+		root.setBottom(bottom);
 		BorderPane.setMargin(bottom, new Insets(0,10,10,10));
 
 		Scene myScene = new Scene(root, sceneWidth, sceneHeight);
 		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
-		
+
 		inputDialog = new Stage();
 		if(!Launcher.environment_isLinux){
 			inputDialog.setResizable(false); //Workaround, otherwise the window will "jump" a bit over the screen
 		}
-		
+
 		inputDialog.setTitle(windowTitle);
 		inputDialog.setScene(myScene);
 
 		inputDialog.initModality( Modality.APPLICATION_MODAL );
 		Tools.addDefaultIconsToStage(inputDialog);
 	}
-	
-	public String getInput() throws UserCanceledOperationException
-	{
+
+	public String getInput() throws UserCanceledOperationException {
 		inputDialog.showAndWait();
 		if(this.canceled){throw new UserCanceledOperationException("User has canceled the operation.");}
 		return input.getText();
 	}
-	
-	public static String show(FxUserInterface fxUI, String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog) throws UserCanceledOperationException
-	{
+
+	public static String show(FxUserInterface fxUI, String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog) throws UserCanceledOperationException {
 		InputDialog inputDialog = new InputDialog(fxUI, windowTitle, labelText, defaultValue, useAsPasswordDialog);
 		return inputDialog.getInput();
 	}

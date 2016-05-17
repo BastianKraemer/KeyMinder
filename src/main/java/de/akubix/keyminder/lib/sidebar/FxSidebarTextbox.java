@@ -15,15 +15,14 @@ public abstract class FxSidebarTextbox implements FxSidebarElement {
 	private final TextField textfield;
 	private final BorderPane row;
 
-	public FxSidebarTextbox(de.akubix.keyminder.core.ApplicationInstance instance)
-	{
+	public FxSidebarTextbox(de.akubix.keyminder.core.ApplicationInstance instance) {
 		textfield = new TextField();
 		textfield.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 			@Override
 			public void handle(KeyEvent event) {
 				storeData(instance.getTree().getSelectedNode());
 			}});
-		
+
 		Button copy = new Button("", de.akubix.keyminder.lib.gui.ImageSelector.getFxImageView(("icon_copy")));
 		copy.setMinWidth(16);
 		copy.setMaxWidth(16);
@@ -31,7 +30,7 @@ public abstract class FxSidebarTextbox implements FxSidebarElement {
 
 		copy.getStyleClass().add("noBorder");
 		copy.setFocusTraversable(false);
-		
+
 		copy.setOnAction(new EventHandler<ActionEvent>() {
 
 			@Override
@@ -39,7 +38,7 @@ public abstract class FxSidebarTextbox implements FxSidebarElement {
 					instance.getFxUserInterface().setClipboardText(getUIValue());
 			}
 		});
-		
+
 		row = new BorderPane(textfield);
 		row.setRight(copy);
 	}
@@ -56,10 +55,10 @@ public abstract class FxSidebarTextbox implements FxSidebarElement {
 
 	@Override
 	public abstract boolean loadData(TreeNode node);
-	
+
 	@Override
 	public abstract void storeData(TreeNode node);
-	
+
 	@Override
 	public Node getFxRootNode() {
 		return row;

@@ -7,14 +7,13 @@ public class StyleSelector {
 		assignStylesheets(scene, WindowSelector.Other);
 	}
 	private static final String defaultCSSFile = "/de/akubix/keyminder/ui/css/style.css";
-	
+
 	public static void assignDefaultStylesheet(Scene scene){
 		scene.getStylesheets().add(defaultCSSFile);
 	}
-	public static void assignStylesheets(Scene scene, WindowSelector window)
-	{
-		switch(window)
-		{
+
+	public static void assignStylesheets(Scene scene, WindowSelector window){
+		switch(window){
 			case MainWindow:
 				scene.getStylesheets().addAll(defaultCSSFile, "/de/akubix/keyminder/ui/css/treeview.css");
 				break;

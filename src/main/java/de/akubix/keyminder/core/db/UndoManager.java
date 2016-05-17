@@ -27,22 +27,22 @@ public class UndoManager {
 	private boolean multipleChanges = false;
 	private int undoIdCounter = -1;
 	private static int maximalNumberOfUndoActions = 16;
-	
+
 	private boolean enableUndoCapturing = false;
 	private int currentlyUndoableActions = 0;
-	
+
 	// This variables are needed to decide whether two sequently performed attribute changes should be captured as a single undo action or separately stored as two actions.
 	private boolean lastActionWasAttributeChange = false;
 	private String lastChangedAttributeKey = "";
 	private int lastChangedAttributeValueLength = -1;
 	private int lastChangedNodeId = -1;
 	private long lastChangeTime = -1;
-	
+
 	public UndoManager(StandardTree tree)
 	{
 		this.tree = tree;
 	}
-	
+
 	public synchronized void captureMulitpleChanges()
 	{
 		if(!multipleChanges){
@@ -51,16 +51,16 @@ public class UndoManager {
 			undoIdCounter++;
 		}
 	}
-	
+
 	public synchronized void commitChanges()
 	{
 		multipleChanges = false;
 	}
-	
+
 	public void setEnable(boolean enabled){
 		this.enableUndoCapturing = enabled;
 	}
-	
+
 	public boolean isEnabled(){
 		return this.enableUndoCapturing;
 	}
@@ -77,7 +77,7 @@ public class UndoManager {
 		}
 		return false;
 	}
-	
+
 	private void updateDataForCaptureCheck(String attributeKey, int nodeId, int attributeValueLength){
 		this.lastActionWasAttributeChange = true;
 		this.lastChangedAttributeKey = attributeKey;
@@ -85,9 +85,9 @@ public class UndoManager {
 		this.lastChangedAttributeValueLength = attributeValueLength;
 		this.lastChangeTime = System.currentTimeMillis();
 	}
-	
+
 	// =======================================================================================================================================================
-	
+
 	public synchronized void recordTextChange(TreeNode node, String previousText)
 	{
 		if(enableUndoCapturing){
@@ -96,7 +96,7 @@ public class UndoManager {
 			buffer.add(new UndoData(() -> {node.setText(previousText); return node;}));
 		}
 	}
-	
+
 	public synchronized void recordColorChange(TreeNode node, String previousColor)
 	{
 		if(enableUndoCapturing){
@@ -105,7 +105,7 @@ public class UndoManager {
 			buffer.add(new UndoData(() -> {node.setColor(previousColor); return node;}));
 		}
 	}
-	
+
 	public synchronized void recordAttributeChange(TreeNode node, String attributeKey, String attributeValue)
 	{
 		if(enableUndoCapturing){
@@ -116,7 +116,7 @@ public class UndoManager {
 			buffer.add(new UndoData(() -> {node.setAttribute(attributeKey, attributeValue); return node;}));
 		}
 	}
-	
+
 	public synchronized void recordAttributeAdded(TreeNode node, String attributeKey)
 	{
 		if(enableUndoCapturing){
@@ -126,7 +126,7 @@ public class UndoManager {
 			buffer.add(new UndoData(() -> {node.removeAttribute(attributeKey); return node;}));
 		}
 	}
-	
+
 	public synchronized void recordNodeAdded(TreeNode node)
 	{
 		if(enableUndoCapturing){
@@ -135,7 +135,7 @@ public class UndoManager {
 			buffer.add(new UndoData(() -> {TreeNode parent = node.getParentNode(); tree.removeNode(node); return parent;}));
 		}
 	}
-	
+
 	public synchronized void recordVerticalNodeMove(TreeNode node, int inverseOffset)
 	{
 		if(enableUndoCapturing){
@@ -143,7 +143,7 @@ public class UndoManager {
 			buffer.add(new UndoData(() -> {tree.moveNodeVertical(node, inverseOffset); return node;}));
 		}
 	}
-	
+
 	public synchronized void recordNodeRemoved(TreeNode node, int atIndex)
 	{
 		if(enableUndoCapturing){
@@ -175,7 +175,7 @@ public class UndoManager {
 			}
 		}
 	}
-	
+
 	/**
 	 * Undo a single action
 	 * @return 'true' if the last action has been undone, 'false' if the undo list is already used up
@@ -190,7 +190,7 @@ public class UndoManager {
 		}
 		return value;
 	}
-	
+
 	private boolean undo(int undoId)
 	{
 		TreeNode node2select = null;
@@ -202,11 +202,11 @@ public class UndoManager {
 			buffer.remove(buffer.size() - 1);
 			currentlyUndoableActions--;
 		} while(buffer.size() > 0 && (undoId == buffer.get(buffer.size() - 1).undoId));
-		
+
 		if(node2select != null){tree.setNodePointer(node2select);}
 		return true;
 	}
-	
+
 	class UndoData {
 		private final UndoAction action;
 		public final int undoId;
@@ -220,7 +220,7 @@ public class UndoManager {
 			}
 		}
 	}
-	
+
 	public void clear()
 	{
 		buffer.clear();

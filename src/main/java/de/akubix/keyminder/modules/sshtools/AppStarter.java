@@ -43,26 +43,26 @@ public class AppStarter {
 	public final String socksProfileId;
 	private final SSHTools sshtools;
 	private final boolean enableMenuItems;
-	
+
 	private Map<String, MenuItem> socksItems = null;
-	
+
 	public AppStarter(ApplicationInstance app, SSHTools sshtools, Supplier<org.w3c.dom.Document> xmlDocumentSupplier) throws IllegalArgumentException{
 		this(app, sshtools, false, xmlDocumentSupplier);
 	}
-	
+
 	public AppStarter(ApplicationInstance app, SSHTools sshtools, boolean noItemsAndCommands, Supplier<org.w3c.dom.Document> xmlDocumentSupplier) throws IllegalArgumentException{
 		this.app = app;
 		this.xmldocument = xmlDocumentSupplier;
 		this.sshtools = sshtools;
 		this.enableMenuItems = !noItemsAndCommands;
-		
+
 		Node attrib = xmldocument.get().getDocumentElement().getAttributes().getNamedItem("name");
 		if(attrib != null){
-			
+
 			String icon = "";
 			Node iconAttrib = xmldocument.get().getDocumentElement().getAttributes().getNamedItem("icon");
 			if(iconAttrib != null){icon = iconAttrib.getNodeValue();}
-			
+
 			Node canBeUsedWithSocks = xmldocument.get().getDocumentElement().getAttributes().getNamedItem("socks");
 			if(canBeUsedWithSocks != null){
 				socksProfileId = canBeUsedWithSocks.getNodeValue();
@@ -78,7 +78,7 @@ public class AppStarter {
 				if(app.isFxUserInterfaceAvailable()){
 					MenuItem contextMenuItem = Tools.createFxMenuItem(attrib.getNodeValue(), ImageSelector.getIcon(icon), (event) -> app.getFxUserInterface().updateStatus(sshtools.startApplication(this, false, null)));
 					app.getFxUserInterface().addMenuEntry(contextMenuItem, MenuEntryPosition.CONTEXTMENU, true);
-					
+
 					if(socksSupport){
 						if(icon.equals("")){
 							contextMenuItemUsingSocks = new Menu(attrib.getNodeValue() + " using socks");
@@ -90,10 +90,10 @@ public class AppStarter {
 						app.getFxUserInterface().addMenuEntry(contextMenuItemUsingSocks, MenuEntryPosition.CONTEXTMENU, true);
 					}
 				}
-	
+
 				Node commandNameAttribute = xmldocument.get().getDocumentElement().getAttributes().getNamedItem("command");
 				String cmdName = commandNameAttribute == null ? attrib.getNodeValue().toLowerCase() : commandNameAttribute.getNodeValue();
-				
+
 				app.provideNewCommand(cmdName, (out, appInstance, args) -> {
 					TreeNode node = null;
 					if(args.length > 0){
@@ -107,8 +107,7 @@ public class AppStarter {
 
 					boolean ignoreForward = (de.akubix.keyminder.lib.Tools.arrayIndexOf(args, "--noforward", true) != -1);
 					int socksprofileArgIndex = socksSupport ? de.akubix.keyminder.lib.Tools.arrayIndexOf(args, "--socks", true) : -1;
-					if(socksprofileArgIndex != -1 && args.length > ++socksprofileArgIndex)
-					{
+					if(socksprofileArgIndex != -1 && args.length > ++socksprofileArgIndex){
 						out.println(sshtools.startApplication(this, node, ignoreForward, args[socksprofileArgIndex]));
 					}
 					else
@@ -130,7 +129,7 @@ public class AppStarter {
 		XMLApplicationProfileParser xapp = new XMLApplicationProfileParser(app, xmldocument.get(), predefinedVariables);
 		return xapp.generateCommandLineParameters(id, treeNode);
 	}
-	
+
 	public void createUsingSocksItem(String socksProfileId, String socksProfileName){
 		if(socksSupport && enableMenuItems){
 			MenuItem m = Tools.createFxMenuItem(socksProfileName, "", (event) -> app.getFxUserInterface().updateStatus(sshtools.startApplication(this, false, socksProfileId)));
@@ -147,7 +146,7 @@ public class AppStarter {
 			}
 		}
 	}
-	
+
 	public void clearSocksItems(){
 		if(socksSupport && enableMenuItems){
 			socksItems.clear();

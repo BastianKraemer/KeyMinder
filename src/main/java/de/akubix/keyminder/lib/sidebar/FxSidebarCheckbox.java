@@ -22,11 +22,10 @@ public abstract class FxSidebarCheckbox implements FxSidebarElement {
 			}
 		});
 	}
-	
+
 	@Override
 	public void setUIValue(String value) {
-		if(value != null)
-		{
+		if(value != null){
 			checkbox.setSelected(de.akubix.keyminder.lib.Tools.isYes(value));
 		}
 	}

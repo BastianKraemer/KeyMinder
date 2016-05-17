@@ -29,43 +29,41 @@ import de.akubix.keyminder.core.interfaces.Command;
 import de.akubix.keyminder.core.interfaces.CommandOutputProvider;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
+import de.akubix.keyminder.lib.TreeSearch;
 
 /**
  * ConsoleMode for this application. This is an alternative user interface for using this with a console only.
  */
 public class ConsoleMode {
-	
+
 	private ApplicationInstance app;
 
 	public ConsoleMode(ApplicationInstance instance){
 		this.app = instance;
 	}
-	
+
 	private static Scanner in;
-	
-	public void start()
-	{
-		try
-		{
+
+	public void start(){
+		try{
 			in = new Scanner(System.in);
-			
+
 			System.out.println("\nKeyMinder\tCopyright (C) 2015   Bastian Kraemer\n\n"
 							 + "This program comes with ABSOLUTELY NO WARRANTY; for details type 'license -w'.\n"
 							 + "This is free software, and you are welcome to redistribute it under certain conditions; type 'license' for details.\n\n");
-			
+
 			app.startup();
 
 			app.addEventHandler(DefaultEvent.OnExit, new DefaultEventHandler() {
 				@Override
 				public void eventFired() {
-					in.close();	
+					in.close();
 				}
 			});
 
 			app.loadDefaultFile();
 
-			while(true)
-			{
+			while(true){
 				try{
 					System.out.print("\n$ ");
 					String input = in.nextLine();
@@ -73,24 +71,20 @@ public class ConsoleMode {
 					String[] param;
 
 					if(!input.equals("")){
-						if(input.contains(" "))
-						{
+						if(input.contains(" ")){
 							String[] splitstr = input.split(" ", 2);
 							cmd = splitstr[0];
 							param = de.akubix.keyminder.core.ApplicationInstance.splitParameters(splitstr[1]);
 						}
-						else
-						{
+						else{
 							cmd = input;
 							param = new String[0];
 						}
-	
-						if(app.commandAvailable(cmd))
-						{
+
+						if(app.commandAvailable(cmd)){
 							app.execute(app, cmd, param);
 						}
-						else
-						{
+						else{
 							app.println("Unknown command: " + cmd);
 						}
 					}
@@ -110,48 +104,42 @@ public class ConsoleMode {
 		}
 		catch (NoSuchElementException ex){} // Program has been terminated by using CTRL+C
 	}
-	
-	public static boolean askYesNo(String question)
-	{
+
+	public static boolean askYesNo(String question){
 		if(in == null){System.err.println(ApplicationInstance.APP_NAME + " console interface is not initialized."); return false;}
 		System.out.print(question + "\n[Yes/No]: ");
 		String input = in.nextLine().toLowerCase();
 		if(input.equals("y") || input.equals("yes") || input.equals("j") || input.equals("ja")){return true;}
 		return false;
 	}
-	
-	public static String readLineFromSystemIn()
-	{
+
+	public static String readLineFromSystemIn(){
 		if(in == null){System.err.println(ApplicationInstance.APP_NAME + " console interface is not initialized."); return "";}
 		String input = in.nextLine();
 		return input;
 	}
 
-	public static String readPasswordFromSystemIn()
-	{
-		try
-		{
+	public static String readPasswordFromSystemIn(){
+		try{
 			return new String(System.console().readPassword());
 		}
-		catch(NullPointerException nullPointEx)
-		{
+		catch(NullPointerException nullPointEx){
 			return "";
 		}
 	}
-	
+
 	/*
 	 * ========================================================================================================================================================
 	 * Add some default commands
 	 * ========================================================================================================================================================
-	 */	
-	public static void provideDefaultCommands(ApplicationInstance instance)
-	{
+	 */
+	public static void provideDefaultCommands(ApplicationInstance instance){
 		/*
 		 *  ================================================ license ================================================
 		 */
 		instance.provideNewCommand("license", (out, app, args) -> {
 			String filename = "/COPYING";
-			try{			
+			try{
 				if(args.length == 1){
 					if(args[0].toLowerCase().equals("-w")){
 						filename = "/LICENSE";
@@ -175,22 +163,18 @@ public class ConsoleMode {
 		instance.provideNewCommand("cd", new Command() {
 			@Override
 			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(args.length == 1)
-				{
+				if(args.length == 1){
 					TreeNode node = instance.getTree().getNodeByPath(args[0]);
 
-					if(node == null)
-					{
-						out.println("Cannot find node: " + args[0]);	
+					if(node == null){
+						out.println("Cannot find node: " + args[0]);
 					}
-					else
-					{
+					else{
 						instance.getTree().setSelectedNode(node);
 						instance.execute(out, "pwd", new String[0]);
 					}
 				}
-				else
-				{
+				else{
 					out.println("Invalid Syntax.\nUsage: \"cd [nodepath]\"");
 				}
 				return null;
@@ -200,7 +184,7 @@ public class ConsoleMode {
 					+ "You can also specify a path: \"cd /path/to/node\"");
 
 		instance.provideCommandAlias("select", "cd");
-		
+
 		/*
 		 *  ================================================ cdi - change directory by Index ================================================
 		 */
@@ -208,8 +192,7 @@ public class ConsoleMode {
 			@Override
 			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
 				if(args.length == 1){
-					try
-					{
+					try {
 						int index = Integer.parseInt(args[0]);
 						if(index < instance.getTree().getSelectedNode().countChildNodes()){
 							instance.getTree().setSelectedNode(instance.getTree().getSelectedNode().getChildNodeByIndex(index));
@@ -221,7 +204,7 @@ public class ConsoleMode {
 					}
 					catch(NumberFormatException numEx){
 						out.println("Error: '" + args[0] + "' is not a number.");
-					}			
+					}
 				}
 				else{
 					out.println("This command requires exactly ONE Argument!");
@@ -236,13 +219,11 @@ public class ConsoleMode {
 			@Override
 			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
 				TreeNode node;
-				if(args.length > 0)
-				{
+				if(args.length > 0){
 					node = instance.getTree().getNodeByPath(args[0]);
 					if(node == null){out.println("Cannot find node '" + args[0] + "'."); return null;}
 				}
-				else
-				{
+				else{
 					node = instance.getTree().getSelectedNode();
 				}
 
@@ -250,7 +231,7 @@ public class ConsoleMode {
 				out.println(path);
 				return path;
 			}}, "Shows the current \"node path\".\nUsage: pwd [nodepath]");
-		
+
 		/*
 		 *  ================================================ ll ================================================
 		 */
@@ -258,37 +239,33 @@ public class ConsoleMode {
 			@Override
 			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
 				TreeNode node;
-				if(args.length >= 1)
-				{
+				if(args.length >= 1){
 					node = instance.getTree().getNodeByPath(args[0]);
-					if(node == null)
-					{
+					if(node == null){
 						out.println("Cannot find node: " + args[0]);
 						return null;
 					}
 				}
-				else
-				{
+				else{
 					node = instance.getTree().getSelectedNode();
 				}
-				
+
 				out.println("Childnodes of \"" + node.getText() + "\":\n\n" +
 							"Index\tCreation date\tModification date\tNode name\n" +
 							"-----\t-------------\t-----------------\t---------");
 
 				int i = 0;
-				for(TreeNode n: node.getChildNodes())
-				{
+				for(TreeNode n: node.getChildNodes()){
 					String creationDate = de.akubix.keyminder.lib.Tools.getTimeFromEpochMilli(n.getAttribute(de.akubix.keyminder.core.ApplicationInstance.NODE_ATTRIBUTE_CREATION_DATE), true, "-\t");
 					String modificationDate = de.akubix.keyminder.lib.Tools.getTimeFromEpochMilli(n.getAttribute(de.akubix.keyminder.core.ApplicationInstance.NODE_ATTRIBUTE_MODIFICATION_DATE), true, "-\t");
-					
+
 					out.println(i++ + "\t" + creationDate + "\t" + modificationDate + "\t\t" + n.getText());
 				}
 				return null;
 			}}, "Lists all childnodes of a Node.\nUsage: ls [nodename]");
-		
+
 		instance.provideCommandAlias("ll", "ls");
-		
+
 		/*
 		 * ================================================ exit ================================================
 		 */
@@ -304,25 +281,22 @@ public class ConsoleMode {
 		 */
 		instance.provideNewCommand("vi", new Command() {
 			@Override
-			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {	
+			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
 				TreeNode node;
-				if(args.length > 0)
-				{
+				if(args.length > 0){
 					node = instance.getTree().getNodeByPath(args[0]);
 					if(node == null){out.println("Cannot find node '" + args[0] + "'."); return null;}
 				}
-				else
-				{
+				else{
 					node = instance.getTree().getSelectedNode();
 				}
-				
+
 				out.println("Attributes of '" + node.getText() + "'");
 
 				int i = 0;
 				out.println("#" + i++ +"\tName:\tid\n\tValue:\t" + node.getId() + "\n");
 
-				for(String key: de.akubix.keyminder.lib.Tools.asSortedList(node.listAttributes()))
-				{
+				for(String key: de.akubix.keyminder.lib.Tools.asSortedList(node.listAttributes())){
 					out.println("#" + i++ +"\tName:\t" + key + "\n\tValue:\t" + node.getAttribute(key) + "\n");
 				}
 
@@ -332,7 +306,7 @@ public class ConsoleMode {
 
 				return null;
 			}}, "Views all attributes of a node.\nUsage: vi [nodepath]");
-		
+
 		instance.provideCommandAlias("view", "vi");
 
 		/*
@@ -363,8 +337,8 @@ public class ConsoleMode {
 					node.setAttribute(args[args.length - 2], args[args.length - 1]);
 				}
 				return null;
-			}}, "Set the value of a node attribute or changes the text of a node.\n" + 
-				"Usage:\t\"set [nodename] <attributename> <value>\" to change a node attribute\n"+ 
+			}}, "Set the value of a node attribute or changes the text of a node.\n" +
+				"Usage:\t\"set [nodename] <attributename> <value>\" to change a node attribute\n"+
 				"\t\"set [nodename] text <new node text>\" to change the text of a node");
 
 		/*
@@ -374,19 +348,16 @@ public class ConsoleMode {
 			@Override
 			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
 				TreeNode node;
-				
-				if(args.length == 2)
-				{
+
+				if(args.length == 2){
 					node = instance.getTree().getNodeByPath(args[0]);
 					if(node == null){out.println("Cannot find node '" + args[0] + "'."); return null;}
 				}
-				else
-				{
+				else{
 					node = instance.getTree().getSelectedNode();
 				}
-				
-				if(args.length == 2 || args.length == 1)
-				{
+
+				if(args.length == 2 || args.length == 1){
 					if(node.hasAttribute(args[args.length -1])) {
 						node.removeAttribute(args[args.length -1]);
 					}
@@ -430,97 +401,81 @@ public class ConsoleMode {
 		instance.provideNewCommand("rm", new Command() {
 			@Override
 			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(args.length > 0)
-				{
+				if(args.length > 0)	{
 					int removedNodeCnt = 0;
-					for(String arg: args)
-					{
+					for(String arg: args){
 						TreeNode node = instance.getTree().getNodeByPath(arg);
-						if(node == null)
-						{
+						if(node == null){
 							out.println("Cannot find node: '" + arg + "'");
 						}
-						else if(node.getId() != 0)
-						{
+						else if(node.getId() != 0){
 							out.println("Removing node '" + arg + "'...");
-							instance.getTree().removeNode(node);	
+							instance.getTree().removeNode(node);
 							removedNodeCnt++;
 						}
-						else
-						{
+						else{
 							out.println("Cannot remove root node.");
 							return null;
 						}
 					}
 					out.println(removedNodeCnt + " nodes has been removed.");
 				}
-				
+
 				return null;
 			}}, "Removes a tree node from the tree.\nUsage: rm <nodename>");
-		
+
 		/*
 		 * ================================================ find (node) ================================================
 		 */
 		instance.provideNewCommand("find", new Command() {
 			@Override
 			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(args.length == 1)
-				{
-					if(de.akubix.keyminder.lib.TreeSearch.find(args[0], instance.getTree(), true) == de.akubix.keyminder.lib.TreeSearch.SearchResult.FOUND)
-					{
+				if(args.length == 1){
+					if(TreeSearch.find(args[0], instance.getTree(), true) == TreeSearch.SearchResult.FOUND){
 						out.println("Found matching node: " + instance.getTree().getSelectedNode().getText());
 						return instance.execute("pwd");
 					}
-					else
-					{
+					else{
 						out.println("No matching node found.");
 						return "";
 					}
 				}
-				else
-				{
+				else{
 					// Searching with advanced parameters
 					try{
 						ArrayList<de.akubix.keyminder.lib.NodeTimeCondition> conditions = new ArrayList<de.akubix.keyminder.lib.NodeTimeCondition>();
 
-						for(int i = 1; i < args.length; i++)
-						{
-							if(args[i].toLowerCase().equals("created") || args[i].toLowerCase().equals("modified"))
-							{
+						for(int i = 1; i < args.length; i++){
+							if(args[i].toLowerCase().equals("created") || args[i].toLowerCase().equals("modified")){
 								conditions.add(new de.akubix.keyminder.lib.NodeTimeCondition(args[i], de.akubix.keyminder.lib.NodeTimeCondition.getCompareTypeFromString(args[i + 1]), args[i + 2]));
 								i += 2;
 							}
-							else
-							{
+							else{
 								throw new IndexOutOfBoundsException();
 							}
 						}
 
-						if(de.akubix.keyminder.lib.TreeSearch.find(args[0], instance.getTree(), true, conditions.toArray(new de.akubix.keyminder.lib.NodeTimeCondition[conditions.size()])) == de.akubix.keyminder.lib.TreeSearch.SearchResult.FOUND)
-						{
+						if(TreeSearch.find(args[0], instance.getTree(), true, conditions.toArray(new de.akubix.keyminder.lib.NodeTimeCondition[conditions.size()])) == TreeSearch.SearchResult.FOUND){
 							out.println("Found matching node: " + instance.getTree().getSelectedNode().getText());
 							return instance.execute("pwd");
 						}
-						else
-						{
+						else{
 							out.println("No matching node found.");
 							return "";
 						}
 					}
-					catch(ParseException ex)
-					{
+					catch(ParseException ex){
 						ex.printStackTrace();
 						out.println("Invalid date.");
 					}
-					catch (IndexOutOfBoundsException | IllegalArgumentException ex)
-					{
+					catch (IndexOutOfBoundsException | IllegalArgumentException ex){
 						out.println("Inavlid parameters. Usage: find <keyword> [[created/modified] [before/after/at] [date]]");
 					}
 				}
 				return null;
 			}}, "Finds a node if it matches a specified string.\nUsage: find <keyword> [[created/modified] [before/after/at] [date]]\n\n" +
 				"Example: \"find * modified after 1.8.2015\" will return all nodes that have been modified since the first august.");
-		
+
 		/*
 		 * ================================================ substitute ================================================
 		 */
@@ -532,21 +487,21 @@ public class ConsoleMode {
 
 				// The syntax of this command is rubbish - one time it should be replaced by something else
 
-				for(int i = 0; i < args.length; i++)
-				{
-					if(args[i].toLowerCase().equals("-r") && !recursive) // Maybe someone wants to run a command like this: substitude -r -r something
-					{
+				for(int i = 0; i < args.length; i++){
+					if(args[i].toLowerCase().equals("-r") && !recursive){ // Maybe someone wants to run a command like this: substitude -r -r something
 						recursive = true;
 					}
-					else if(args[i].toLowerCase().equals("-m") && ignoreCase)
-					{
+					else if(args[i].toLowerCase().equals("-m") && ignoreCase){
 						ignoreCase = false;
 					}
-					else
-					{
-						if(find.equals("")){find = args[i];}
+					else{
+						if(find.equals("")){
+							find = args[i];
+						}
 						else{
-							if(replaceWith.equals("")){replaceWith = args[i];}
+							if(replaceWith.equals("")){
+								replaceWith = args[i];
+							}
 							else{
 								out.println("Unknown Parameter: '" + args[i] + "'");
 								return null;
@@ -556,7 +511,7 @@ public class ConsoleMode {
 				}
 
 				int replacement_cnt = 0;
-				if(de.akubix.keyminder.lib.TreeSearch.replaceTextOfNode(instance.getTree().getSelectedNode(), find, replaceWith, ignoreCase)){replacement_cnt++;}
+				if(TreeSearch.replaceTextOfNode(instance.getTree().getSelectedNode(), find, replaceWith, ignoreCase)){replacement_cnt++;}
 
 				if(recursive){replacement_cnt += rekursiveSubstitute(instance.getTree().getSelectedNode(), find, replaceWith, ignoreCase);}
 				out.println("Substituted occurrences: " + replacement_cnt);
@@ -572,38 +527,30 @@ public class ConsoleMode {
 		instance.provideNewCommand("passwd", new Command() {
 			@Override
 			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(instance.currentFile != null)
-				{
+				if(instance.currentFile != null){
 				  try{
-					if(args.length == 1)
-					{
-						if(args[0].toLowerCase().equals("reset"))
-						{
+					if(args.length == 1){
+						if(args[0].toLowerCase().equals("reset")){
 							if(!instance.currentFile.isEncrypted()){out.println("Encryption is already disabled."); return null;}
 
-							if(instance.currentFile.getEncryptionManager().checkPassword(instance.requestStringInput("Change file password", "Please enter your current file password: ", "", true).toCharArray()))
-							{
+							if(instance.currentFile.getEncryptionManager().checkPassword(instance.requestStringInput("Change file password", "Please enter your current file password: ", "", true).toCharArray())){
 								instance.currentFile.disableEncryption();
 								out.println("Encryption of passwordfile disabled (not recommended).");
 								instance.saveFile();
 							}
-							else
-							{
+							else{
 								out.println("Incorrect password. Canceling...");
 							}
 						}
-						else
-						{
+						else{
 							out.println("Invalid parameter: '" + args[0] + "'.");
 						}
 					}
-					else
-					{
+					else{
 						boolean wasEncrypted = instance.currentFile.isEncrypted();
 						boolean enableChangePw = !instance.currentFile.isEncrypted();
 						if(!enableChangePw){enableChangePw = (instance.currentFile.getEncryptionManager().checkPassword(instance.requestStringInput("Change file password", "Please enter your current file password: ", "", true).toCharArray()));}
-						if(enableChangePw)
-						{
+						if(enableChangePw){
 							if(!instance.currentFile.isEncrypted()){instance.currentFile.encryptFile(new de.akubix.keyminder.core.encryption.EncryptionManager(true));}
 							if(instance.currentFile.getEncryptionManager().requestPasswordInputWithConfirm(instance, wasEncrypted ? "Change file password" : "Set file password",
 																										  "Please enter your " + (wasEncrypted ? "new " : "") + "file password: ", "Please enter your password again: ")){
@@ -611,8 +558,7 @@ public class ConsoleMode {
 								out.println("Password changed.");
 								instance.saveFile();
 							}
-							else
-							{
+							else{
 								if(!wasEncrypted){
 									// Undo everything -> delete the created encryption manager
 									instance.currentFile.disableEncryption();
@@ -622,9 +568,8 @@ public class ConsoleMode {
 								out.println("The passwords you typed in does not match. Cancelling..."); return null;
 							}
 						}
-						else
-						{
-							out.println("Incorrect password. Canceling..."); 
+						else{
+							out.println("Incorrect password. Canceling...");
 						}
 					}
 				  }
@@ -642,8 +587,7 @@ public class ConsoleMode {
 		instance.provideNewCommand("cp", new Command() {
 			@Override
 			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(args.length >= 2)
-				{
+				if(args.length >= 2){
 					TreeNode src = instance.getTree().getNodeByPath(args[0]);
 					TreeNode dest = instance.getTree().getNodeByPath(args[1]);
 
@@ -664,8 +608,7 @@ public class ConsoleMode {
 		instance.provideNewCommand("mv", new Command() {
 			@Override
 			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(args.length >= 2)
-				{
+				if(args.length >= 2){
 					TreeNode src = instance.getTree().getNodeByPath(args[0]);
 					TreeNode dest = instance.getTree().getNodeByPath(args[1]);
 
@@ -743,8 +686,7 @@ public class ConsoleMode {
 		if(move){src.getTree().beginUpdate();}
 		TreeNode clone = src.getTree().cloneTreeNode(src, includeChildNodes);
 		dest.getTree().addNode(clone, dest);
-		if(move)
-		{
+		if(move){
 			src.getTree().removeNode(src);
 			dest.getTree().endUpdate();
 		}
@@ -753,9 +695,8 @@ public class ConsoleMode {
 	private static int rekursiveSubstitute(TreeNode node, String find, String replaceWith, boolean ignoreCase)
 	{
 		int replacements = 0;
-		for(TreeNode n: node.getChildNodes())
-		{
-			if(de.akubix.keyminder.lib.TreeSearch.replaceTextOfNode(n, find, replaceWith, ignoreCase)){replacements++;}
+		for(TreeNode n: node.getChildNodes()){
+			if(TreeSearch.replaceTextOfNode(n, find, replaceWith, ignoreCase)){replacements++;}
 			replacements += rekursiveSubstitute(n, find, replaceWith, ignoreCase);
 		}
 		return replacements;
@@ -770,15 +711,13 @@ public class ConsoleMode {
 		catch(Exception ex){
 		}
 	}
-	
+
 	public static String getClipboardText(){
 		try{
-			return (String) java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().getData(java.awt.datatransfer.DataFlavor.stringFlavor); 
+			return (String) java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().getData(java.awt.datatransfer.DataFlavor.stringFlavor);
 		}
 		catch(Exception ex){
 			return "";
 		}
 	}
-	
-	
 }

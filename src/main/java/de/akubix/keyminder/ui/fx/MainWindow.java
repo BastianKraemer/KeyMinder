@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 package de.akubix.keyminder.ui.fx;
-	
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -99,19 +99,19 @@ import javafx.util.Callback;
 public class MainWindow extends Application implements de.akubix.keyminder.core.interfaces.FxAdministrationInterface {
 
 	private HashMap<TreeNode, TreeItem<TreeNode>> treeNodeTranslator = new HashMap<>();
-	
+
 	private static ApplicationInstance app;
 	private de.akubix.keyminder.core.db.Tree dataTree;
-	
+
 	public static void init(String[] args, ApplicationInstance instance) {
 		app = instance;
 		launch(args);
 	}
-	
+
 	private boolean nextSelectedItemChangeEventWasFiredByMe = false;
-	
+
 	private boolean treeEditModeActive = false;
-	
+
 	private TreeView<TreeNode> fxtree;
 	private Stage me;
 
@@ -129,7 +129,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	private final Pane panelStack = new VBox();
 	private	TextField searchInput;
 	private Label statusLabel;
-	
+
 	private MenuBar menuBar;
 	private Menu menu_File;
 	private Menu menu_Edit;
@@ -137,15 +137,15 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	private Menu menu_Tools;
 	private Menu menu_Extras;
 	private Menu menu_FavoriteNodes = null;
-	
+
 	private SimpleBooleanProperty treeDependentElementsDisableProperty = new SimpleBooleanProperty(true);
 	private List<Node> assignedNotificationsItems = new ArrayList<>(2);
 	private ResourceBundle localeBundle;
 
 	final Clipboard clipboard = Clipboard.getSystemClipboard();
-	
+
 	private Map<String, FxHotKeyEvent> hotkeys = new HashMap<>();
-	
+
 	/*
 	 * ======================================================================================================================================================
 	 * TreeCell Factory Class
@@ -156,9 +156,9 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 * https://docs.oracle.com/javafx/2/ui_controls/tree-view.htm
 	 * ======================================================================================================================================================
 	 */
-	
+
 	final class TextFieldTreeCellImpl extends TreeCell<TreeNode> {
-		 
+
 		private TextField textField;
 		public TextFieldTreeCellImpl() {
 			super();
@@ -166,15 +166,13 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 		@Override
 		public void startEdit() {
-			if(treeEditModeActive)
-			{
+			if(treeEditModeActive){
 				super.startEdit();
 
 				if (textField == null) {
 					createTextField();
 				}
-				else
-				{
+				else{
 					textField.setText(getItem().getText());
 				}
 				setText(null);
@@ -216,22 +214,19 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 					treeEditModeActive = false;
 				} else {
 					setText(getString());
-					
+
 					this.getStyleClass().removeAll("bold", "italic", "strikeout");
-					if(item.hasAttribute("style"))
-					{
+					if(item.hasAttribute("style")){
 						this.getStyleClass().addAll(item.getAttribute("style").split(";"));
 					}
 
-					if(item.getColor().equals(""))
-					{
+					if(item.getColor().equals("")){
 						setTextFill(Color.BLACK);
 					}
-					else
-					{
+					else{
 						setTextFill(Color.web(item.getColor()));
 					}
-					
+
 					setGraphic(getTreeItem().getGraphic());
 				}
 			}
@@ -263,7 +258,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 * ======================================================================================================================================================
 	 */
 
-	/* The following code was written by StackOverflow (stackoverflow.com) user Ahmed and is licensed under CC BY-SA 3.0 
+	/* The following code was written by StackOverflow (stackoverflow.com) user Ahmed and is licensed under CC BY-SA 3.0
 	 * "Creative Commons Attribution-ShareAlike 3.0 Unported", http://creativecommons.org/licenses/by-sa/3.0/)
 	 *
 	 * Source: http://stackoverflow.com/questions/27059701/javafx-in-treeview-need-only-scroll-to-index-number-when-treeitem-is-out-of-vie
@@ -276,20 +271,18 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 * WARNING: This method relies on classes, which does not contain to the Java API
 	 */
 	@SuppressWarnings("restriction")
-	final class FolderTreeViewSkin extends com.sun.javafx.scene.control.skin.TreeViewSkin<TreeNode>
-	{
-		public FolderTreeViewSkin(TreeView<TreeNode> treeView)
-		{
+	final class FolderTreeViewSkin extends com.sun.javafx.scene.control.skin.TreeViewSkin<TreeNode> {
+		public FolderTreeViewSkin(TreeView<TreeNode> treeView){
 			super(treeView);
 		}
 
-		public boolean isIndexVisible(int index)
-		{
+		public boolean isIndexVisible(int index){
 			if (flow.getFirstVisibleCell() != null &&
 				flow.getLastVisibleCell() != null &&
 				flow.getFirstVisibleCell().getIndex() <= index &&
-				flow.getLastVisibleCell().getIndex() >= index)
+				flow.getLastVisibleCell().getIndex() >= index){
 				return true;
+			}
 			return false;
 		}
 	}
@@ -301,7 +294,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 */
 	@Override
 	public void start(Stage primaryStage) {
-		
+
 			me = primaryStage;
 
 			rootPanel = new BorderPane();
@@ -324,47 +317,43 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 			// Generate the whole graphical user interface
 			buildUI(rootPanel);
-			
+
 			StyleSelector.assignStylesheets(scene, WindowSelector.MainWindow);
 			me.setScene(scene);
 			me.setMinWidth(640);
 			me.setMinHeight(400);
-			
+
 			app.registerFXUserInterface(this);
-			
+
 			/* ================================================================================================================
 			 * Event Registration
 			 * ================================================================================================================
 			 */
-			
+
 			app.addEventHandler(TreeNodeEvent.OnSelectedItemChanged, (node) -> selectedNodeChanged(node));
-			
+
 			app.addEventHandler(TreeNodeEvent.OnNodeAdded, new TreeNodeEventHandler() {
-				
 				@Override
 				public void eventFired(TreeNode node) {
 					displayNewTreePart(node);
 				}
 			});
-			
+
 			app.addEventHandler(TreeNodeEvent.OnNodeEdited, new TreeNodeEventHandler() {
-				
 				@Override
 				public void eventFired(TreeNode node) {
 						updateTree(getTreeItemOfTreeNode(node));
 				}
 			});
-			
+
 			app.addEventHandler(TreeNodeEvent.OnNodeVerticallyMoved, new TreeNodeEventHandler() {
-				
 				@Override
 				public void eventFired(TreeNode node) {
 					rebuildTreePart(node.getParentNode());
 				}
 			});
-			
+
 			app.addEventHandler(TreeNodeEvent.OnNodeRemoved, new TreeNodeEventHandler() {
-				
 				@Override
 				public void eventFired(TreeNode node) {
 					TreeItem<TreeNode> treeitem = getTreeItemOfTreeNode(node);
@@ -372,7 +361,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 					deleteTranslatorHashItems(treeitem, true);
 				}
 			});
-			
+
 			app.addEventHandler(DefaultEvent.OnFileClosed, new DefaultEventHandler() {
 				@Override
 				public void eventFired() {
@@ -390,16 +379,16 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 					clearFavoriteNodeList(true);
 				}
 			});
-			
+
 			app.addEventHandler(DefaultEvent.OnExit, new DefaultEventHandler() {
 				@Override
 				public void eventFired() {
 					me.close();
 				}
 			});
-			
+
 			startupFxUI();
-			
+
 			if(!de.akubix.keyminder.lib.AESCore.isAES256Supported()){
 					// Important security note
 					Button notification = new Button("", ImageSelector.getFxImageView(("icon_warning")));
@@ -434,41 +423,36 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 						app.terminate();
 					}
 				});
-			
+
 			// Startup the application core (load the optional modules, ...)
 			app.startup();
-			
+
 			// Show the main window
 			Tools.addDefaultIconsToStage(me);
 
 			me.show();
-			
+
 			runAsFXThread(new Runnable() {
-				
 				@Override
 				public void run() {
 					// Load the default password file
 					app.loadDefaultFile();
-					
-					if(fxtree.getRoot().getChildren().size() == 1)
-					{
+
+					if(fxtree.getRoot().getChildren().size() == 1){
 						if(!fxtree.getRoot().getChildren().get(0).isLeaf()){fxtree.getRoot().getChildren().get(0).setExpanded(true);}
 					}
 				}
 			});
 	}
-	
+
 	private void selectedNodeChanged(TreeNode selectedNode){
-		if(!nextSelectedItemChangeEventWasFiredByMe)
-		{
-			if(getTreeItemOfTreeNode(selectedNode) != fxtree.getRoot())
-			{
+		if(!nextSelectedItemChangeEventWasFiredByMe){
+			if(getTreeItemOfTreeNode(selectedNode) != fxtree.getRoot()) {
 				if(getTreeItemOfTreeNode(selectedNode) != getSelectedTreeItem()){nextSelectedItemChangeEventWasFiredByMe = true;} // This value will be reset by the fxtree change listener
 				fxtree.getSelectionModel().select(getTreeItemOfTreeNode(selectedNode));
 
 				// Take a look at the class "FolderTreeViewSkin" above
-				if (!((FolderTreeViewSkin) fxtree.getSkin()).isIndexVisible(fxtree.getSelectionModel().getSelectedIndex()))
-				{
+				if (!((FolderTreeViewSkin) fxtree.getSkin()).isIndexVisible(fxtree.getSelectionModel().getSelectedIndex())){
 					fxtree.scrollTo(fxtree.getSelectionModel().getSelectedIndex() - 3);
 				}
 			}
@@ -482,8 +466,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	@Override
 	public void onFileOpenedHandler(){
 		buildTree();
-		if(fxtree.getRoot().getChildren().size() > 0)
-		{
+		if(fxtree.getRoot().getChildren().size() > 0){
 			fxtree.getSelectionModel().select((fxtree.getRoot().getChildren().get(0)));
 		}
 
@@ -513,7 +496,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	public void setTitle(String title){
 		me.setTitle(title);
 	}
-	
+
 	@Override
 	public void runAsFXThread(Runnable r){
 		Platform.runLater(r);
@@ -530,25 +513,25 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 
 	private void buildUI(BorderPane root){
-		
+
 		/* ===================================================================================
 		 * 	Menubar
 		 * ===================================================================================
 		 */
-		
+
 		menuBar = new MenuBar();
 		menuBar.setId("MenuBar");
 
 		// --- Menu File
 		menu_File = new Menu(localeBundle.getString("mainwindow.menu.file"));
-		
+
 		Menu file_new = new Menu(localeBundle.getString("mainwindow.menu.file.new"), ImageSelector.getFxImageView("icon_newfile"));
 		file_new.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new.encrypted_file"), ImageSelector.getIcon("icon_new_encrypted_file"),
 											  (event) -> showCreateNewFileDialog(true), false));
-		
+
 		file_new.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new.regular_file"), ImageSelector.getIcon("icon_newfile"),
 				  (event) -> showCreateNewFileDialog(false), false));
-		
+
 		menu_File.getItems().add(file_new);
 
 
@@ -559,17 +542,14 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.save"),
 												ImageSelector.getIcon("icon_save"),
 												(event) -> app.saveFile(), true));
-	
+
 		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.saveas"), "",
 												(event) -> initalizeSaveFileAs(), true));
 
 		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.close"), "", new EventHandler<ActionEvent>() {
-							@Override public void handle(ActionEvent e)
-							{
-								if(app.currentFile != null)
-								{
-									if(app.closeFile())
-									{
+							@Override public void handle(ActionEvent e){
+								if(app.currentFile != null){
+									if(app.closeFile()){
 										updateStatus(localeBundle.getString("mainwindow.messages.file_successfully_closed"));
 									}
 								}
@@ -586,7 +566,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			}
 			menu_File.getItems().add(openFileMenu);
 		}
-		
+
 		menu_File.getItems().addAll(new SeparatorMenuItem(), createMenuItem(localeBundle.getString("mainwindow.menu.file.filesettings"), "", new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent e){
 				de.akubix.keyminder.ui.fx.dialogs.FileSettingsDialog fsd = new de.akubix.keyminder.ui.fx.dialogs.FileSettingsDialog(me, app);
@@ -596,18 +576,17 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 		// --- Menu Edit
 		menu_Edit = new Menu(localeBundle.getString("mainwindow.menu.edit"));
- 
+
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.settings"), ImageSelector.getIcon("icon_settings"), new EventHandler<ActionEvent>() {
-			@Override public void handle(ActionEvent e)
-			{
+			@Override public void handle(ActionEvent e){
 				de.akubix.keyminder.ui.fx.dialogs.SettingsDialog sd = new de.akubix.keyminder.ui.fx.dialogs.SettingsDialog(me, app);
 				sd.show();
 				me.requestFocus();
 			}}, false));
-		
+
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.duplicate_node"), "",
 												(event) -> duplicateNode(getSelectedTreeNode(), true), true));
-		
+
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.copy_text"),
 												ImageSelector.getIcon("icon_copy"),
 												(event) -> setClipboardText(getSelectedTreeNode().getText()), true));
@@ -626,7 +605,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.undo"),
 												ImageSelector.getIcon("icon_undo"), (event) -> undo(), true));
-		
+
 		// Menu entry to format nodes (bold, italic, strikeout)
 		Menu nodeFontSettings = new Menu(localeBundle.getString("mainwindow.menu.edit.style"));
 
@@ -685,7 +664,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		menu_Tools.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.tools.terminal"),
 												 ImageSelector.getIcon("icon_bash"),
 												 (event) -> new Terminal(app).show(), false));
-		
+
 		// --- Menu Extras
 		menu_Extras = new Menu(localeBundle.getString("mainwindow.menu.extras"));
 		menu_Extras.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.extras.nodeinfo"),
@@ -694,15 +673,15 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 													  new de.akubix.keyminder.ui.fx.dialogs.NodeInfoDialog(dataTree.getSelectedNode(), app).show(me);
 													  me.requestFocus();
 												  }, true));
-		
+
 		menu_Extras.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.extras.appinfo"),
 				  ImageSelector.getIcon("icon_star_filled"),
 				  (event) -> {new de.akubix.keyminder.ui.fx.About(app).show();}, false));
 
 		menuBar.getMenus().addAll(menu_File, menu_Edit, menu_View, menu_Extras, menu_Tools);
 		root.setTop(menuBar);
-		
-		
+
+
 		/* ===================================================================================
 		 * 	Treeview
 		 * ===================================================================================
@@ -721,21 +700,18 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		fxtree.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<TreeItem<TreeNode>>() {
 			@Override
 			public void changed(ObservableValue<? extends TreeItem<TreeNode>> observable, TreeItem<TreeNode> oldValue, TreeItem<TreeNode> newValue) {
-				if(newValue != null)
-				{
-					if(!nextSelectedItemChangeEventWasFiredByMe)
-					{
+				if(newValue != null){
+					if(!nextSelectedItemChangeEventWasFiredByMe){
 						TreeNode n = newValue.getValue();
 						nextSelectedItemChangeEventWasFiredByMe = true;
 						dataTree.setSelectedNode(n);
 					}
-					else
-					{
+					else{
 						nextSelectedItemChangeEventWasFiredByMe = false;
 					}
 				}
 			}});
-		
+
 		centerPane = new BorderPane(fxtree);
 		centerPane.setTop(panelStack);
 		splitPane = new SplitPane(centerPane);
@@ -755,8 +731,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		fxtree.setOnMouseClicked(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				if(event.getButton() == MouseButton.MIDDLE)
-				{
+				if(event.getButton() == MouseButton.MIDDLE){
 					treeEditModeActive = true;
 					fxtree.edit(getSelectedTreeItem());
 				}
@@ -765,7 +740,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 		fxtree.setSkin(new FolderTreeViewSkin(fxtree));
 
-		/* The following code is based on answer written by StackOverflow (stackoverflow.com) user Jos� Pereda and is licensed under CC BY-SA 3.0 
+		/* The following code is based on answer written by StackOverflow (stackoverflow.com) user José Pereda and is licensed under CC BY-SA 3.0
 		 * "Creative Commons Attribution-ShareAlike 3.0 Unported", http://creativecommons.org/licenses/by-sa/3.0/)
 		 *
 		 * Source: http://stackoverflow.com/questions/27828982/javafx-treeview-remove-expand-collapse-button-disclosure-node-functionall/27831085#27831085
@@ -775,50 +750,40 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		// This is a workaround, because the JavafX Treeview Element acts a bit strange when moving the selected item using the arrow keys after a node has been removed.
 		final EventDispatcher originalEventDispatcher = fxtree.getEventDispatcher();
 		fxtree.setEventDispatcher(new EventDispatcher() {
-
 			@Override
 			public Event dispatchEvent(Event event, EventDispatchChain tail) {
 				if(event instanceof KeyEvent && event.getEventType().equals(KeyEvent.KEY_PRESSED)){
 					KeyCode kc = ((KeyEvent) event).getCode();
-					
+
 					if(kc.equals(KeyCode.SPACE)){
 						event.consume();
 					}
-					else if(kc.equals(KeyCode.F2))
-					{
+					else if(kc.equals(KeyCode.F2)){
 						treeEditModeActive = true;
 						fxtree.edit(getSelectedTreeItem());
 					}
-					else if(kc.equals(KeyCode.DOWN))
-					{
+					else if(kc.equals(KeyCode.DOWN)){
 						event.consume();
-						if(getSelectedTreeItem().isExpanded() && !getSelectedTreeItem().isLeaf())
-						{
+						if(getSelectedTreeItem().isExpanded() && !getSelectedTreeItem().isLeaf()){
 							dataTree.setSelectedNode(dataTree.getSelectedNode().getChildNodeByIndex(0));
 						}
-						else
-						{
+						else{
 							dataTree.setSelectedNode(dataTree.getNextNode(dataTree.getSelectedNode()));
 						}
 					}
-					else if (kc.equals(KeyCode.UP))
-					{
+					else if (kc.equals(KeyCode.UP)){
 						event.consume();
-						if(dataTree.getSelectedNode().getIndex() == 0)
-						{
+						if(dataTree.getSelectedNode().getIndex() == 0){
 							dataTree.setSelectedNode(dataTree.getPreviousNode(dataTree.getSelectedNode()));
 						}
-						else
-						{
+						else{
 							TreeNode node = dataTree.getPreviousNode(dataTree.getSelectedNode());
 							TreeItem<TreeNode> item = getTreeItemOfTreeNode(node);
 
-							if(item.isExpanded() && !item.isLeaf())
-							{
+							if(item.isExpanded() && !item.isLeaf()){
 								dataTree.setSelectedNode(node.getChildNodeByIndex(node.countChildNodes() - 1));
 							}
-							else
-							{
+							else{
 								dataTree.setSelectedNode(node);
 							}
 						}
@@ -834,7 +799,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			public void handle(KeyEvent event) {
 				if(!treeEditModeActive){validateKeyPress(event);}
 			}});
-		
+
 		// Tree - Contextmenu
 		treeContextMenu = new ContextMenu();
 
@@ -843,7 +808,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		treeContextMenu.getItems().add(createMenuItem(localeBundle.getString("mainwindow.contextmenu.remove"), ImageSelector.getIcon("icon_delete"),(event) -> removeNode(getSelectedTreeItem()), true));
 		Menu colorNodeItems = new Menu(localeBundle.getString("mainwindow.contextmenu.color"), ImageSelector.getFxImageView("icon_color"));
 		colorNodeItems.disableProperty().bind(treeDependentElementsDisableProperty);
-		
+
 		colorNodeItems.getItems().addAll( createColorContextMenu(localeBundle.getString("mainwindow.contextmenu.color.blue"), "icon_color_blue", "#00a1e7"),
 										  createColorContextMenu(localeBundle.getString("mainwindow.contextmenu.color.darkblue"), "icon_color_darkblue", "#21579a"),
 										  createColorContextMenu(localeBundle.getString("mainwindow.contextmenu.color.purple"), "icon_color_purple", "#a248a3"),
@@ -855,7 +820,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 										  createColorContextMenu(localeBundle.getString("mainwindow.contextmenu.color.brown"), "icon_color_brown", "#823700"),
 										  createColorContextMenu(localeBundle.getString("mainwindow.contextmenu.color.black"), "icon_color_black", "#000000"),
 										  createColorContextMenu(localeBundle.getString("mainwindow.contextmenu.color.none"),"", ""));
-		
+
 		treeContextMenu.getItems().add(colorNodeItems);
 
 		treeContextMenu.getItems().add(createMenuItem(localeBundle.getString("mainwindow.contextmenu.copy"),
@@ -870,9 +835,9 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 		treeContextMenu.getItems().add(createMenuItem(localeBundle.getString("mainwindow.contextmenu.insert_node"), "",
 													 (event) -> {dataTree.pasteNodeFromInternalClipboard(getSelectedTreeNode()); getSelectedTreeItem().setExpanded(true);}, true));
-		
+
 		fxtree.setContextMenu(treeContextMenu);
-		
+
 		sidebarPanel = new BorderPane();
 		sidebarPanel.setMinWidth(200);
 		sidebarPanel.setId("Sidebar");
@@ -881,7 +846,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		sidebarTabPanel.setId("SidebarTabPanel");
 		sidebarTabPanel.setStyle("-fx-border-width: 0");
 		sidebarPanel.setCenter(sidebarTabPanel);
-		
+
 		// Searching
 		searchBoard = new BorderPane();
 		searchBoard.setId("SearchPanel");
@@ -891,8 +856,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		startSearch.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				if(!searchInput.getText().equals(""))
-				{
+				if(!searchInput.getText().equals("")){
 					de.akubix.keyminder.lib.TreeSearch.SearchResult result = de.akubix.keyminder.lib.TreeSearch.find(searchInput.getText(), dataTree, true);
 					if(result == de.akubix.keyminder.lib.TreeSearch.SearchResult.END_REACHED){
 						updateStatus(localeBundle.getString("mainwindow.find.end_of_document_reached"));
@@ -907,61 +871,59 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		searchInput.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 			@Override
 			public void handle(KeyEvent event) {
-				if(event.getCode() == KeyCode.ENTER)
-				{
+				if(event.getCode() == KeyCode.ENTER){
 					startSearch.fire();
 				}
 			}});
 
 		searchBoard.setCenter(searchInput);
 		searchBoard.setRight(startSearch);
-		
+
 		/* ===================================================================================
 		 * 	Status (bottom panel)
 		 * ===================================================================================
-		 */  
-		
+		 */
+
 		statusLabel = new Label("");
 		statusLabel.setPadding(new Insets(2, 4, 2, 4));
-		
+
 		BorderPane bottomPanel = new BorderPane(statusLabel);
 		BorderPane.setAlignment(statusLabel, Pos.CENTER_LEFT);
 		bottomPanel.setRight(notificationArea);
 		bottomPanel.setId("StatusBar");
 		root.setBottom(bottomPanel);
 	}
-	
+
 	private void showCreateNewFileDialog(boolean encryptFile){
 		if(!app.closeFile()){return;}
-		
+
 		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.new_file.title"), "", "", app.storageManager.getFileChooserExtensionFilter());
-		if(f != null)
-		{
+		if(f != null){
 			app.createNewFile(f, encryptFile);
 		}
 	}
-	
+
 	private MenuItem createColorContextMenu(String colorName, String iconKeyWord, String colorHTMLValue)
 	{
 		return createMenuItem(colorName, ImageSelector.getIcon(iconKeyWord), new EventHandler<ActionEvent>() {
+			@Override
 			public void handle(ActionEvent e) {
 				getSelectedTreeNode().setColor(colorHTMLValue);
 				updateStatus(localeBundle.getString("mainwindow.messages.node_color_changed"));
 			}}, false);
 	}
-	
+
 	/*
 	 * ======================================================================================================================================================
 	 * End of part "build ui"
 	 * ======================================================================================================================================================
 	 */
-	
-	private void startupFxUI()
-	{
+
+	private void startupFxUI(){
 		// TODO FXUI Startup
-		
+
 		// Define all "hot keys"
-		
+
 		final de.akubix.keyminder.core.interfaces.FxUserInterface fxUI = this;
 
 		Precondition condition_FileOpened = new Precondition() {
@@ -970,14 +932,14 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 				return app.currentFile != null;
 			}
 		};
-		
+
 		Precondition condition_nodesAvailable = new Precondition() {
 			@Override
 			public boolean check() {
 				return (dataTree.getRootNode().countChildNodes() > 0);
 			}
 		};
-		
+
 		// Possible Key-Combinations
 		addApplicationHotKey(KeyCode.A, true, false, false, new FxHotKeyEvent(condition_nodesAvailable) {
 			@Override
@@ -985,21 +947,21 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 				showAddTreeNodeDialog(false);
 			}
 		});
-		
+
 		addApplicationHotKey(KeyCode.E,true, false, false, new FxHotKeyEvent(condition_FileOpened) {
 			@Override
 			public void onKeyDown() {
 				showAddTreeNodeDialog(true);
 			}
 		});
-		
+
 		addApplicationHotKey(KeyCode.C, true, false, false, new FxHotKeyEvent(condition_nodesAvailable) {
 			@Override
 			public void onKeyDown() {
 				setClipboardText(getSelectedTreeNode().getText());
 			}
 		});
-		
+
 		addApplicationHotKey(KeyCode.C, true, true, false, new FxHotKeyEvent(condition_nodesAvailable) {
 			@Override
 			public void onKeyDown() {
@@ -1013,42 +975,42 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 				 showEditCurrentNodeDialog();
 			}
 		});
-		
+
 		addApplicationHotKey(KeyCode.DELETE, false, false, false, new FxHotKeyEvent(condition_nodesAvailable) {
   			@Override
   			public void onKeyDown() {
   				removeNode(getSelectedTreeItem());
   			}
   		});
-		
+
 		addApplicationHotKey(KeyCode.F, true, false, false, new FxHotKeyEvent(condition_nodesAvailable) {
 				@Override
 				public void onKeyDown() {
 					showSearchBar(!searchBoardIsVisible);
 				}
 			});
-		
+
 		addApplicationHotKey(KeyCode.D, true, false, false, new FxHotKeyEvent(condition_nodesAvailable) {
 			@Override
 			public void onKeyDown() {
 				duplicateNode(getSelectedTreeNode(), true);
 			}
 		});
-		
+
 		addApplicationHotKey(KeyCode.H, true, false, false, new FxHotKeyEvent(condition_nodesAvailable) {
 				@Override
 				public void onKeyDown() {
 					FindAndReplaceDialog.showInstance(me, dataTree, fxUI);
 				}
 			});
-		
+
 		addApplicationHotKey(KeyCode.V, true, false, false, new FxHotKeyEvent(condition_FileOpened) {
 				@Override
 				public void onKeyDown() {
 					InsertNodeFromClipboard();
 				}
 			});
-		
+
 		addApplicationHotKey(KeyCode.V, true, true, false, new FxHotKeyEvent(condition_FileOpened) {
 			@Override
 			public void onKeyDown() {
@@ -1099,21 +1061,21 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 				dataTree.moveNodeVertical(dataTree.getSelectedNode(), 1);
 			}
 		});
-		
+
 		addApplicationHotKey(KeyCode.O, true, false, false, new FxHotKeyEvent() {
 			@Override
 			public void onKeyDown() {
 				initalizeOpenFile();
 			}
 		});
-		
+
 		addApplicationHotKey(KeyCode.S, true, false, false, new FxHotKeyEvent(condition_FileOpened) {
 			@Override
 			public void onKeyDown() {
 				app.saveFile();
 			}
 		});
-		
+
 		addApplicationHotKey(KeyCode.S, true, true, false, new FxHotKeyEvent(condition_FileOpened) {
 			@Override
 			public void onKeyDown() {
@@ -1195,14 +1157,12 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	@Override
 	public void addApplicationHotKey(KeyCode keyCode, boolean controlKey, boolean shiftKey, boolean altKey, FxHotKeyEvent onKeyDown){
 		String key = generatreKeyCodeString(keyCode, controlKey, shiftKey, altKey);
-		if(!hotkeys.containsKey(key))
-		{
+		if(!hotkeys.containsKey(key)){
 			hotkeys.put(key, onKeyDown);
 		}
 	}
-	
-	private static String generatreKeyCodeString(KeyCode keyCode, boolean controlKey, boolean shiftKey, boolean altKey)
-	{
+
+	private static String generatreKeyCodeString(KeyCode keyCode, boolean controlKey, boolean shiftKey, boolean altKey){
 		return (controlKey ? "CTRL+" : "") + (shiftKey ? "SHIFT+" : "") + (altKey ? "ALT+" : "") + keyCode.toString();
 	}
 
@@ -1211,17 +1171,15 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 * Tree Handling
 	 * ======================================================================================================================================================
 	 */
-	
-	private void buildTree()
-	{
+
+	private void buildTree(){
 		treeNodeTranslator.clear();
 		fxtree.getRoot().getChildren().clear();
 		fxtree.getRoot().setValue(dataTree.getRootNode());
 		addChildNodes2FxTree(fxtree.getRoot());
 	}
-	
-	private void addChildNodes2FxTree(TreeItem<TreeNode> parentNode)
-	{
+
+	private void addChildNodes2FxTree(TreeItem<TreeNode> parentNode){
 		parentNode.getValue().forEachChildNode((childNode) -> {
 			TreeItem<TreeNode> node = new TreeItem<TreeNode>(childNode);
 			treeNodeTranslator.put(childNode, node);
@@ -1229,10 +1187,9 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			addChildNodes2FxTree(node);
 		});
 	}
-	
+
 	private void updateTree(TreeItem<TreeNode> node) {
-		if(node.isLeaf())
-		{
+		if(node.isLeaf()){
 			nextSelectedItemChangeEventWasFiredByMe = true;
 			boolean wasExpanded = node.getParent().isExpanded();
 			node.getParent().setExpanded(!wasExpanded);
@@ -1240,90 +1197,78 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			node.getParent().setExpanded(wasExpanded);
 			fxtree.getSelectionModel().select(node);
 		}
-		else
-		{
+		else{
 			boolean wasExpanded = node.isExpanded();
 			node.setExpanded(!wasExpanded);
 			node.setExpanded(wasExpanded);
 		}
 	}
-	
+
 	private void rebuildTreePart(TreeNode parentNode) {
-		if(parentNode.getId() > 0)
-		{
+		if(parentNode.getId() > 0){
 			TreeItem<TreeNode> fxTreeNode = treeNodeTranslator.get(parentNode);
-			
+
 			deleteTranslatorHashItems(fxTreeNode, false);
 			fxTreeNode.getChildren().clear();
 			addChildNodes2FxTree(fxTreeNode);
 		}
-		else
-		{
+		else{
 			int selectedIndex = fxtree.getSelectionModel().getSelectedIndex();
 			buildTree();
 			fxtree.getSelectionModel().select(selectedIndex);
 		}
 	}
-	
-	private void deleteTranslatorHashItems(TreeItem<TreeNode> parentNode, boolean includeParentNode)
-	{
+
+	private void deleteTranslatorHashItems(TreeItem<TreeNode> parentNode, boolean includeParentNode){
 		if(includeParentNode){treeNodeTranslator.remove(parentNode.getValue());}
-		
+
 		parentNode.getChildren().forEach((node) -> {
 			treeNodeTranslator.remove(node.getValue());
 			deleteTranslatorHashItems(node, false);
 		});
 	}
-	
+
 	private void displayNewTreePart(TreeNode newNode) {
-		
 		TreeItem<TreeNode> node = new TreeItem<TreeNode>(newNode);
 		treeNodeTranslator.put(newNode, node);
-		
+
 		TreeNode parentNode = newNode.getParentNode();
-		if(parentNode.getId() == 0) // -> RootNode
-		{
+		if(parentNode.getId() == 0){ // -> RootNode
 			fxtree.getRoot().getChildren().add(node);
 		}
-		else
-		{
+		else{
 			treeNodeTranslator.get(parentNode).getChildren().add(node);
 		}
 
 		if(newNode.countChildNodes() != 0){addChildNodes2FxTree(node);}
 	}
-	
+
 	public TreeItem<TreeNode> getSelectedTreeItem(){
 		return fxtree.getSelectionModel().getSelectedItem();
 	}
-	
+
 	private TreeNode getSelectedTreeNode(){
 		return fxtree.getSelectionModel().getSelectedItem().getValue();
 	}
-	
-	private void removeNode(TreeItem<TreeNode> node)
-	{
+
+	private void removeNode(TreeItem<TreeNode> node){
 		node.getValue().getTree().removeNode(node.getValue());
 	}
 
-	private TreeItem<TreeNode> getTreeItemOfTreeNode(TreeNode node)
-	{
+	private TreeItem<TreeNode> getTreeItemOfTreeNode(TreeNode node){
 		if(node.getId() == 0){return fxtree.getRoot();}
 		if(treeNodeTranslator.containsKey(node)){return treeNodeTranslator.get(node);}
 		alert("ERROR - Node '" + node.getText() + "' is not assigned to tree!");
-		
-		if(fxtree.getRoot().getChildren().size() > 0)
-		{
+
+		if(fxtree.getRoot().getChildren().size() > 0){
 			return fxtree.getRoot().getChildren().get(0);
 		}
-		else
-		{
+		else{
 			return fxtree.getRoot();
 		}
 	}
-	
-	private void duplicateNode(TreeNode node, boolean selectNewNodeAfterDuplicate)
-	{
+
+	private void duplicateNode(TreeNode node, boolean selectNewNodeAfterDuplicate){
 		TreeNode clone = dataTree.cloneTreeNode(node, true);
 		dataTree.insertNode(clone, node.getParentNode(), node.getIndex() + 1);
 		if(selectNewNodeAfterDuplicate){dataTree.setSelectedNode(clone);}
@@ -1335,31 +1280,25 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 * ======================================================================================================================================================
 	 */
 
-	private boolean node_hasStyle(TreeItem<TreeNode> node, String styleClass)
-	{
+	private boolean node_hasStyle(TreeItem<TreeNode> node, String styleClass){
 		return node.getValue().getAttribute("style").contains(styleClass + ";");
 	}
 
-	private void node_addStyle(TreeItem<TreeNode> node, String styleClass)
-	{
+	private void node_addStyle(TreeItem<TreeNode> node, String styleClass){
 		node.getValue().setAttribute("style", node.getValue().getAttribute("style") + styleClass + ";");
 		updateTree(node);
 	}
 
-	private void node_removeStyle(TreeItem<TreeNode> node, String styleClass)
-	{
+	private void node_removeStyle(TreeItem<TreeNode> node, String styleClass){
 		node.getValue().setAttribute("style", node.getValue().getAttribute("style").replace(styleClass + ";", ""));
 		updateTree(node);
 	}
 
-	private void node_toogleStyle(TreeItem<TreeNode> node, String styleClass)
-	{
-		if(!node_hasStyle(node, styleClass))
-		{
+	private void node_toogleStyle(TreeItem<TreeNode> node, String styleClass){
+		if(!node_hasStyle(node, styleClass)){
 			node_addStyle(node, styleClass);
 		}
-		else
-		{
+		else{
 			node_removeStyle(node, styleClass);
 		}
 	}
@@ -1369,26 +1308,21 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 * File Handling
 	 * ======================================================================================================================================================
 	 */
-	
-	private void initalizeOpenFile()
-	{		 	
+
+	private void initalizeOpenFile(){
 		if(!app.closeFile()){return;}
 
 		File f = showOpenFileDialog(localeBundle.getString("mainwindow.dialogs.open_file.title"), "", "", app.storageManager.getFileChooserExtensionFilter());
-		if(f != null)
-		{
+		if(f != null){
 			app.openFile(f);
 		}
 	}
 
-	private void initalizeSaveFileAs()
-	{		
+	private void initalizeSaveFileAs(){
 		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.save_file.title"), app.currentFile.getFilepath().getAbsolutePath(), "", app.storageManager.getFileChooserExtensionFilter());
-		if(f != null)
-		{
+		if(f != null){
 			String fileTypeIdentifier = app.storageManager.getIdentifierByExtension(de.akubix.keyminder.lib.Tools.getFileExtension(f.getName()), "");
-			if(fileTypeIdentifier.equals(""))
-			{
+			if(fileTypeIdentifier.equals("")){
 				app.alert(String.format(localeBundle.getString("mainwindow.dialogs.save_file.unsupported_filetype_message"), de.akubix.keyminder.lib.Tools.getFileExtension(f.getAbsolutePath()), de.akubix.keyminder.core.io.StorageManager.defaultFileType));
 				fileTypeIdentifier = de.akubix.keyminder.core.io.StorageManager.defaultFileType;
 			}
@@ -1406,52 +1340,45 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 */
 
 	private String lastFileDialogDirectory = System.getProperty("user.home");
-	public File showOpenFileDialog(String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions)
-	{
+	@Override
+	public File showOpenFileDialog(String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions){
 		return showFileChooser(true, dialogTitle, initalFileName, initalDirectory, fileExtensions);
 	}
-	
-	public File showSaveFileDialog(String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions)
-	{
+
+	@Override
+	public File showSaveFileDialog(String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions){
 		return showFileChooser(false, dialogTitle, initalFileName, initalDirectory, fileExtensions);
 	}
 
-	private File showFileChooser(Boolean showAsOpenFileDialog, String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions)
-	{
+	private File showFileChooser(Boolean showAsOpenFileDialog, String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions){
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.setTitle(dialogTitle);
-		  
+
 		//Set extension filter
-		if(fileExtensions != null)
-		{
+		if(fileExtensions != null){
 			  fileChooser.getExtensionFilters().addAll(fileExtensions);
 		}
-		else
-		{
+		else{
 			  fileChooser.getExtensionFilters().addAll(app.storageManager.getFileChooserExtensionFilter());
 		}
-		
-		if(initalFileName != null && !initalFileName.equals(""))
-		{
+
+		if(initalFileName != null && !initalFileName.equals("")){
 			fileChooser.setInitialFileName(initalFileName);
 		}
-		else
-		{
-			if(initalDirectory != null && !initalDirectory.equals(""))
-			{
+		else{
+			if(initalDirectory != null && !initalDirectory.equals("")){
 				fileChooser.setInitialDirectory(new File(initalDirectory));
 				lastFileDialogDirectory = initalDirectory;
 			}
-			else
-			{
+			else{
 				fileChooser.setInitialDirectory(new File(lastFileDialogDirectory));
-			}  
+			}
 		}
-		
+
 		//Show open file dialog
 		File f;
 		if(showAsOpenFileDialog){f = fileChooser.showOpenDialog(me);}else{f = fileChooser.showSaveDialog(me);}
-		
+
 		if(f != null){
 			lastFileDialogDirectory = f.getParent();
 		}
@@ -1459,8 +1386,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		return f;
 	}
 
-	private MenuItem createMenuItem(String text, String iconname, EventHandler<ActionEvent> event, boolean add2TreeDependentItems)
-	{
+	private MenuItem createMenuItem(String text, String iconname, EventHandler<ActionEvent> event, boolean add2TreeDependentItems){
 		MenuItem menuItem = new MenuItem(text);
 		menuItem.setOnAction(event);
 		if(!iconname.equals("")){
@@ -1470,7 +1396,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		if(add2TreeDependentItems){menuItem.disableProperty().bind(treeDependentElementsDisableProperty);}
 		return menuItem;
 	}
-	
+
 	private void showLinkNodePanel(TreeNode nodeLinkSource){
 		Label l = new Label(String.format(localeBundle.getString("mainwindow.dialogs.link_nodes"), nodeLinkSource.getText()));
 		l.setStyle("-fx-padding: 0 0 0 8");
@@ -1493,48 +1419,44 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 * Interface "core.interfaces.FXUserInterface"
 	 * ======================================================================================================================================================
 	 */
-	
+
 	private List<de.akubix.keyminder.lib.sidebar.SidebarNodeChangeEvent> sidebarPanelNodeChangeEvenHandler = new ArrayList<de.akubix.keyminder.lib.sidebar.SidebarNodeChangeEvent>();
 	private boolean sidebarAvailable = false;
-	
+
 	@Override
 	public Tab addSidebarPanel(String tabtitle, Node panel, de.akubix.keyminder.lib.sidebar.SidebarNodeChangeEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked) {
-	
 		if(sidebarTabPanel.getTabs().size() == 0){createSidebar();}
 		sidebarAvailable = true;
 
 		Tab myTabPage = new Tab(tabtitle);
 		myTabPage.setContent(panel);
 		myTabPage.setClosable(false);
-		
+
 		if(keyClipSidebarButton != null){
 		sidebarTabPanel.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Tab>() {
-					@Override
-					public void changed(ObservableValue<? extends Tab> ov, Tab oldTab, Tab newTab) {
-						if(myTabPage.equals(newTab)){
-							if(onKeyClipButtonClicked == null)
-							{
-								keyClipSidebarButton.setVisible(false);
-							}
-							else
-							{
-								keyClipSidebarButton.setOnAction(onKeyClipButtonClicked);
-								keyClipSidebarButton.setVisible(true);
-							}
-						}
-					}});
+			@Override
+			public void changed(ObservableValue<? extends Tab> ov, Tab oldTab, Tab newTab) {
+				if(myTabPage.equals(newTab)){
+					if(onKeyClipButtonClicked == null){
+						keyClipSidebarButton.setVisible(false);
+					}
+					else{
+						keyClipSidebarButton.setOnAction(onKeyClipButtonClicked);
+						keyClipSidebarButton.setVisible(true);
+					}
+				}
+			}});
 		}
-		
+
 		sidebarPanelNodeChangeEvenHandler.add(onSelectedNodeChanged);
 		sidebarTabPanel.getTabs().add(myTabPage);
 		return myTabPage;
 	}
-	
-	private void createSidebar()
-	{
+
+	private void createSidebar(){
 		Label l = new Label();
 		BorderPane bp = new BorderPane(l);
-		
+
 		l.setPadding(new Insets(2,3,3,3));
 
 		GridPane grid = new GridPane();
@@ -1555,7 +1477,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 				sidebarPanelNodeChangeEvenHandler.forEach((event) -> sidebarIsEmpty[0] = event.selectedNodeChanged(node) || sidebarIsEmpty[0]);
 				showSidebar(sidebarIsEmpty[0]);
 			});
-		
+
 		bp.setMaxHeight(28);
 		bp.getStyleClass().add("lightHeader");
 
@@ -1588,8 +1510,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 * @param onClick the event handler
 	 * @return a button with your preferences
 	 */
-	public static Button createSmallButton(String tooltip, String icon, double size, EventHandler<ActionEvent> onClick)
-	{
+	public static Button createSmallButton(String tooltip, String icon, double size, EventHandler<ActionEvent> onClick){
 		Button b = new Button("", ImageSelector.getFxImageView((icon)));
 		b.setMinWidth(size);
 		b.setMaxWidth(size);
@@ -1599,8 +1520,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		return b;
 	}
 
-	private Button createSidebarNodeLinkButton()
-	{
+	private Button createSidebarNodeLinkButton(){
 		ContextMenu cm = new ContextMenu();
 		MenuItem menuItems[] = createNodeLinkMenuItems(3);
 		cm.getItems().addAll(menuItems);
@@ -1617,8 +1537,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 	private MenuItem[] createNodeLinkMenuItems(int count){
 		MenuItem menuItems[] = new MenuItem[count];
-		for(int i = 0; i < count; i++)
-		{
+		for(int i = 0; i < count; i++){
 			menuItems[i] = new MenuItem();
 			menuItems[i].setUserData(-1);
 			menuItems[i].setOnAction((event) -> {
@@ -1636,13 +1555,11 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		return menuItems;
 	}
 
-	private void updateSidebarNodeLinkContextMenu(MenuItem[] menuItems, TreeNode node)
-	{
+	private void updateSidebarNodeLinkContextMenu(MenuItem[] menuItems, TreeNode node){
 		int i[] = new int[]{0};
 
 		app.forEachLinkedNode(node, (linkedNode) -> {
-			if(i[0] < menuItems.length)
-			{
+			if(i[0] < menuItems.length){
 				menuItems[i[0]].setText(linkedNode.getText());
 				menuItems[i[0]].setUserData(linkedNode.getId());
 				menuItems[i[0]].setVisible(true);
@@ -1651,8 +1568,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		});
 
 		boolean isFirst = true;
-		while(i[0] < menuItems.length)
-		{
+		while(i[0] < menuItems.length){
 			menuItems[i[0]].setVisible(isFirst);
 			if(isFirst){
 				menuItems[i[0]].setText(localeBundle.getString("mainwindow.sidebar.button_add_node_link"));
@@ -1663,8 +1579,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		}
 	}
 
-	private Button createFavNodeButton()
-	{
+	private Button createFavNodeButton(){
 		ImageView imgview_notStarred = new ImageView(ImageSelector.getIcon("icon_star"));
 		ImageView imgview_starred = new ImageView(ImageSelector.getIcon("icon_star_filled"));
 		Button b = new Button("", imgview_notStarred);
@@ -1685,12 +1600,10 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 		b.setOnAction((event) -> {
 			TreeNode node = getSelectedTreeNode();
-			if(node.hasAttribute(ApplicationInstance.NODE_ATTRIBUTE_FAVORITE_NODE))
-			{
+			if(node.hasAttribute(ApplicationInstance.NODE_ATTRIBUTE_FAVORITE_NODE)){
 				app.removeFavoriteNode(node);
 			}
-			else
-			{
+			else{
 				if(!app.setFavoriteNode(node)){
 					//Cannot set node as favorite node - most likely the maximal number of favorite nodes (10) is reached
 					app.alert(localeBundle.getString("mainwindow.messages.max_number_of_favorite_nodes_reached"));
@@ -1726,31 +1639,29 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 
 	@Override
-	public javafx.beans.property.ReadOnlyDoubleProperty getSidbarWidthProperty()
-	{
+	public javafx.beans.property.ReadOnlyDoubleProperty getSidbarWidthProperty(){
 		return sidebarPanel.widthProperty();
 	}
-	
+
 	@Override
 	public void addMenuEntry(MenuItem item, de.akubix.keyminder.core.etc.MenuEntryPosition pos, boolean add2TreeDependentItems) {
-		switch(pos)
-		{
+		switch(pos){
 			case FILE:
 				menu_File.getItems().add(item);
 				break;
-				
+
 			case EDIT:
 				menu_Edit.getItems().add(item);
 				break;
-				
+
 			case VIEW:
 				menu_View.getItems().add(item);
 				break;
-				
+
 			case CONTEXTMENU:
 				treeContextMenu.getItems().add(item);
 				break;
-				
+
 			case TOOLS:
 				menu_Tools.getItems().add(item);
 				break;
@@ -1760,16 +1671,14 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 
 	@Override
-	public void addMenu(Menu menu, boolean add2TreeDependentItems)
-	{
+	public void addMenu(Menu menu, boolean add2TreeDependentItems){
 		menuBar.getMenus().add(menu);
 		if(add2TreeDependentItems){menu.disableProperty().bind(treeDependentElementsDisableProperty);}
 	}
 
 	@Override
 	public synchronized String getClipboardText() {
-		if(clipboard.hasString() || clipboard.hasHtml() || clipboard.hasUrl())
-		{
+		if(clipboard.hasString() || clipboard.hasHtml() || clipboard.hasUrl()){
 			return clipboard.getString();
 		}
 		return "";
@@ -1777,7 +1686,6 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 	@Override
 	public synchronized void setClipboardText(String text) {
-		
 		if(Platform.isFxApplicationThread()){
 			ClipboardContent clipboard_content = new ClipboardContent();
 			clipboard_content.putString(text);
@@ -1788,10 +1696,9 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			Platform.runLater(() -> setClipboardText(text));
 		}
 	}
-	
+
 	@Override
-	public void updateStatus(String text)
-	{
+	public void updateStatus(String text){
 		if(Platform.isFxApplicationThread()){
 			changeStatusText(text);
 		}
@@ -1812,7 +1719,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			  }
 			}, 500);
 	}
-	
+
 	private void changeStatusText(String text){
 		statusLabel.setText(text);
 		statusLabel.setStyle("-fx-text-fill: -fx-accent");
@@ -1832,7 +1739,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			runAsFXThread(() -> {alert(AlertType.INFORMATION, "", null, text);});
 		}
 	}
-	
+
 	@Override
 	public void alert(AlertType type, String title, String headline, String contentText){
 		final String alertTile = title.equals("") ? ApplicationInstance.APP_NAME : title;
@@ -1844,7 +1751,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			runAsFXThread(() -> {showAlert(type, alertTile, headline, contentText);});
 		}
 	}
-	
+
 	private void showAlert(AlertType type, String title, String headline, String text){
 		Alert msg = new Alert(type);
 		msg.setTitle(title);
@@ -1856,33 +1763,28 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		StyleSelector.assignDefaultStylesheet(s.getScene());
 		msg.showAndWait();
 	}
-	
+
 	@Override
-	public String showInputDialog(String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog) throws UserCanceledOperationException
-	{
+	public String showInputDialog(String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog) throws UserCanceledOperationException{
 		InputDialog id = new InputDialog(me, this, windowTitle, labelText, defaultValueOrPasswordHint, useAsPasswordDialog);
 		return id.getInput();
 	}
-	
+
 	/*
 	 * Shows a dialog to add a new tree node to the currently selected node
 	 */
-	private void showAddTreeNodeDialog(boolean add2Root)
-	{
+	private void showAddTreeNodeDialog(boolean add2Root){
 		InputDialog id = new InputDialog(me, this, localeBundle.getString("mainwindow.dialogs.add_node.title"), localeBundle.getString("mainwindow.dialogs.add_node.text"), "", false);
 		try {
 			String input = id.getInput();
 
-			if(input != null && !input.equals(""))
-			{
+			if(input != null && !input.equals("")){
 				TreeNode newNode = dataTree.createNode(input);
-				if(add2Root)
-				{
+				if(add2Root){
 					dataTree.addNode(newNode, dataTree.getRootNode());
 					dataTree.setSelectedNode(newNode);
 				}
-				else
-				{
+				else{
 					dataTree.addNode(newNode, getSelectedTreeNode());
 					fxtree.getSelectionModel().getSelectedItem().setExpanded(true);
 				}
@@ -1891,9 +1793,8 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 		me.requestFocus();
 	}
-	
-	private void showEditCurrentNodeDialog()
-	{
+
+	private void showEditCurrentNodeDialog(){
 		TreeNode selectedNode = getSelectedTreeNode();
 		InputDialog id = new InputDialog(this, localeBundle.getString("mainwindow.dialogs.edit_node.text"), localeBundle.getString("mainwindow.dialogs.edit_node.text"), selectedNode.getText(), false);
 		try {
@@ -1904,55 +1805,47 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		} catch (UserCanceledOperationException e) {}
 		me.requestFocus();
 	}
-		
-	private void validateKeyPress(KeyEvent event)
-	{
+
+	private void validateKeyPress(KeyEvent event){
 		String keyCodeStr = generatreKeyCodeString(event.getCode(), event.isControlDown(), event.isShiftDown(), event.isAltDown());
 		if(hotkeys.containsKey(keyCodeStr)){hotkeys.get(keyCodeStr).fireEvent();}
 	}
-	
-	private void InsertNodeFromClipboard()
-	{
+
+	private void InsertNodeFromClipboard(){
 		String clipboardText = getClipboardText();
-		if(!clipboardText.trim().equals(""))
-		{
+		if(!clipboardText.trim().equals("")){
 			TreeNode newNode = dataTree.createNode(clipboardText);
 			dataTree.addNode(newNode, getSelectedTreeNode());
 			updateStatus(localeBundle.getString("mainwindow.messages.node_insert_from_clipboard"));
 		}
 	}
-		
+
 	private boolean searchBoardIsVisible = false;
-	private void showSearchBar(boolean show)
-	{
-		if(show)
-		{
+	private void showSearchBar(boolean show){
+		if(show){
 			centerPane.setBottom(searchBoard);
 			searchInput.requestFocus();
 			searchBoardIsVisible = true;
 		}
-		else
-		{
+		else{
 			centerPane.setBottom(null);
 			searchBoardIsVisible = false;
 		}
 	}
-	
+
 	@Override
-	public boolean showSaveChangesDialog() throws UserCanceledOperationException
-	{
+	public boolean showSaveChangesDialog() throws UserCanceledOperationException {
 		de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result r = de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.show(this);
 		if(r == Result.Cancel){throw new UserCanceledOperationException("Cancel button was pressed.");}
 		return (r == Result.SaveChanges);
 	}
-	
+
 	@Override
 	/**
 	 * Display a simple yes/no dialog to the user
 	 * @return TRUE if the user has clicked "YES", false if she/he chooses "No"
 	 **/
-	public boolean showYesNoDialog(String windowTitle, String headline, String contentText)
-	{
+	public boolean showYesNoDialog(String windowTitle, String headline, String contentText){
 		Alert alert = new Alert(AlertType.CONFIRMATION);
 		alert.setTitle(windowTitle);
 		alert.setHeaderText(headline);
@@ -1961,7 +1854,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		Tools.addDefaultIconsToStage(s);
 		StyleSelector.assignDefaultStylesheet(alert.getDialogPane().getScene());
 		s.initOwner(me);
-		
+
 		ButtonType buttonYes = new ButtonType(localeBundle.getString("yes"), ButtonData.YES);
 		ButtonType buttonNo = new ButtonType(localeBundle.getString("no"), ButtonData.NO);
 
@@ -1972,8 +1865,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 
 	@Override
-	public void addNotificationItem(Node item, boolean assignToThisFile)
-	{
+	public void addNotificationItem(Node item, boolean assignToThisFile){
 		if(Platform.isFxApplicationThread()){
 			notificationArea.getChildren().add(item);
 			if(assignToThisFile){assignedNotificationsItems.add(item);}
@@ -1984,8 +1876,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 
 	@Override
-	public void removeNotificationItem(Node item)
-	{
+	public void removeNotificationItem(Node item){
 		notificationArea.getChildren().remove(item);
 		if(assignedNotificationsItems.contains(item)){
 			assignedNotificationsItems.remove(item);
@@ -1993,8 +1884,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 
 	@Override
-	public void addTreePanel(Node item, boolean assignToThisFile)
-	{
+	public void addTreePanel(Node item, boolean assignToThisFile){
 		if(Platform.isFxApplicationThread()){
 			panelStack.getChildren().add(item);
 			if(assignToThisFile){assignedNotificationsItems.add(item);}
@@ -2005,8 +1895,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 
 	@Override
-	public void removeTreePanel(Node item)
-	{
+	public void removeTreePanel(Node item){
 		panelStack.getChildren().remove(item);
 		if(assignedNotificationsItems.contains(item)){
 			assignedNotificationsItems.remove(item);
@@ -2014,8 +1903,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 
 	@Override
-	public void buildFavoriteNodeList(int[] favoriteNodes)
-	{
+	public void buildFavoriteNodeList(int[] favoriteNodes){
 		if(menu_FavoriteNodes == null){
 			menu_FavoriteNodes = new Menu(localeBundle.getString("mainwindow.menu.favorite_nodes"));
 		}
@@ -2024,13 +1912,10 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		}
 
 		byte count = 0;
-		for(byte i = 0; i< favoriteNodes.length; i++)
-		{
-			if(favoriteNodes[i] > 0)
-			{
+		for(byte i = 0; i< favoriteNodes.length; i++){
+			if(favoriteNodes[i] > 0){
 				TreeNode n = dataTree.getNodeById(favoriteNodes[i]);
-				if(n != null)
-				{
+				if(n != null){
 					MenuItem menuItem = new MenuItem(i + ": " +n.getText());
 					menuItem.setUserData(favoriteNodes[i]);
 					menuItem.setOnAction((event) -> {
@@ -2052,8 +1937,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		}
 	}
 
-	private void clearFavoriteNodeList(boolean setNull)
-	{
+	private void clearFavoriteNodeList(boolean setNull){
 		if(menu_FavoriteNodes != null){
 			menu_FavoriteNodes.getItems().clear();
 			menuBar.getMenus().remove(menu_FavoriteNodes);

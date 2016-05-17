@@ -22,18 +22,16 @@ public abstract class FxSidebarHyperlink implements FxSidebarElement {
 	private final Hyperlink hyperlink;
 	private final BorderPane row;
 
-	public FxSidebarHyperlink(de.akubix.keyminder.core.ApplicationInstance instance)
-	{
+	public FxSidebarHyperlink(de.akubix.keyminder.core.ApplicationInstance instance){
 		this(instance, false);
 	}
 
-	public FxSidebarHyperlink(de.akubix.keyminder.core.ApplicationInstance instance, boolean useMailTo)
-	{
+	public FxSidebarHyperlink(de.akubix.keyminder.core.ApplicationInstance instance, boolean useMailTo){
 		FxUserInterface fxUI = instance.getFxUserInterface();
 		hyperlink = new Hyperlink();
 		hyperlink.prefWidthProperty().bind(instance.getFxUserInterface().getSidbarWidthProperty().subtract(12));
-		hyperlink.setMinHeight(24);	
-		
+		hyperlink.setMinHeight(24);
+
 		Button edit = new Button("", de.akubix.keyminder.lib.gui.ImageSelector.getFxImageView(("icon_edit")));
 		edit.setMinWidth(16);
 		edit.setMaxWidth(16);
@@ -41,7 +39,7 @@ public abstract class FxSidebarHyperlink implements FxSidebarElement {
 				fxUI.getLocaleBundleString("mainwindow.sidebar.hyperlink.edit_email") :
 				fxUI.getLocaleBundleString("mainwindow.sidebar.hyperlink.edit_link")));
 		edit.getStyleClass().add("noBorder");
-	
+
 		edit.setOnAction(new EventHandler<ActionEvent>() {
 
 			@Override
@@ -49,26 +47,23 @@ public abstract class FxSidebarHyperlink implements FxSidebarElement {
 				storeData(instance.getTree().getSelectedNode());
 			}
 		});
-		
-		hyperlink.setOnMouseClicked(new EventHandler<MouseEvent>() {	
+
+		hyperlink.setOnMouseClicked(new EventHandler<MouseEvent>() {
 			@Override
 			public void handle(MouseEvent event) {
-				if(event.getButton() == MouseButton.SECONDARY)
-				{
+				if(event.getButton() == MouseButton.SECONDARY){
 					instance.getFxUserInterface().setClipboardText(getUIValue());
 					instance.getFxUserInterface().updateStatus(fxUI.getLocaleBundleString("mainwindow.sidebar.hyperlink.messages.copied_to_clipboard"));
 				}
 			}
 		});
-		
-		if(useMailTo)
-		{
+
+		if(useMailTo){
 			hyperlink.setOnAction(new EventHandler<ActionEvent>() {
 				@Override
 				public void handle(ActionEvent event) {
 					String mailAddr = getUIValue();
-					if(!mailAddr.equals("") && !mailAddr.equals("..."))
-					{
+					if(!mailAddr.equals("") && !mailAddr.equals("...")){
 						try {
 							Desktop.getDesktop().mail(new URI(mailAddr.startsWith("mailto:") ? mailAddr : "mailto:" + mailAddr));
 							hyperlink.setVisited(false);
@@ -76,21 +71,18 @@ public abstract class FxSidebarHyperlink implements FxSidebarElement {
 							instance.getFxUserInterface().alert(String.format(fxUI.getLocaleBundleString("mainwindow.sidebar.hyperlink.cannot_start_mail_app"), e.getMessage()));
 						}
 					}
-					else
-					{
+					else{
 						storeData(instance.getTree().getSelectedNode());
 					}
 				}
 			});
 		}
-		else
-		{
+		else{
 			hyperlink.setOnAction(new EventHandler<ActionEvent>() {
 				@Override
 				public void handle(ActionEvent event) {
 					String url = getUIValue();
-					if(!url.equals("") && !url.equals("..."))
-					{
+					if(!url.equals("") && !url.equals("...")){
 						if(!url.matches(".*://.*")){url = "https://" + url;}
 						if(!instance.getSettingsValueAsBoolean(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_USE_OTHER_WEB_BROWSER, false)){
 							try {
@@ -126,11 +118,11 @@ public abstract class FxSidebarHyperlink implements FxSidebarElement {
 				}
 			});
 		}
-		
+
 		row = new BorderPane(hyperlink);
 		row.setRight(edit);
 	}
-	
+
 	@Override
 	public void setUIValue(String value) {
 		hyperlink.setText(value);
@@ -143,10 +135,10 @@ public abstract class FxSidebarHyperlink implements FxSidebarElement {
 
 	@Override
 	public abstract boolean loadData(TreeNode node);
-	
+
 	@Override
 	public abstract void storeData(TreeNode node);
-	
+
 	@Override
 	public Node getFxRootNode() {
 		return row;

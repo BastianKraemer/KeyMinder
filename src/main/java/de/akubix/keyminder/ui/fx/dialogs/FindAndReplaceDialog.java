@@ -51,23 +51,21 @@ public class FindAndReplaceDialog {
 	private TextField replaceTextField;
 	private CheckBox ignoreCase;
 	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI;
-	private FindAndReplaceDialog(Stage primaryStage, Tree tree, de.akubix.keyminder.core.interfaces.FxUserInterface fxUI)
-	{
+	private FindAndReplaceDialog(Stage primaryStage, Tree tree, de.akubix.keyminder.core.interfaces.FxUserInterface fxUI){
 		this.tree = tree;
 		this.fxUI = fxUI;
 		createScene();
 		me.initOwner(primaryStage);
 	}
-	
-	public void show()
-	{
+
+	public void show(){
 		me.show();
 	}
-	
+
 	public void bringToFront(){
 		me.requestFocus();
 	}
-	
+
 	public static synchronized void showInstance(Stage primaryStage, Tree tree, de.akubix.keyminder.core.interfaces.FxUserInterface fxUI){
 		if(instance == null){
 			instance = new FindAndReplaceDialog(primaryStage, tree, fxUI);
@@ -78,23 +76,22 @@ public class FindAndReplaceDialog {
 		}
 	}
 
-	private void createScene()
-	{
+	private void createScene(){
 		BorderPane root = new BorderPane();
-		
+
 		Label title = new Label(fxUI.getLocaleBundleString("dialogs.findreplace.headerlabel"));
 		Pane top = new Pane(title);
 		top.getStyleClass().add("header");
 		root.setTop(top);
 
 		VBox vbox = new VBox(4);
-		
+
 		// Textfields
 		findTextField = new TextField();
 		replaceTextField = new TextField();
-		
+
 		ignoreCase = new CheckBox(fxUI.getLocaleBundleString("dialogs.findreplace.ignorecaselabel"));
-		
+
 		// Date-Picker
 		DatePicker datePicker = new DatePicker();
 		datePicker.setMinWidth(290);
@@ -122,9 +119,9 @@ public class FindAndReplaceDialog {
 
 		BorderPane.setMargin(vbox, new Insets(4,10,0,10));
 		root.setCenter(vbox);
-	
+
 		HBox bottom = new HBox(4);
-		
+
 		Button findButton = new Button(fxUI.getLocaleBundleString("dialogs.findreplace.findbuttontext"));
 		findButton.setOnAction(new EventHandler<ActionEvent>() {
 
@@ -153,7 +150,7 @@ public class FindAndReplaceDialog {
 				}
 			}
 		});
-		
+
 		Button replaceButton = new Button(fxUI.getLocaleBundleString("dialogs.findreplace.replacebuttontext"));
 		replaceButton.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
@@ -165,22 +162,22 @@ public class FindAndReplaceDialog {
 				}
 			}
 		});
-		
+
 		findButton.setMinWidth(138);
 		replaceButton.setMinWidth(137);
-		
+
 		bottom.setAlignment(Pos.CENTER);
 		bottom.getChildren().add(findButton);
 		bottom.getChildren().add(replaceButton);
 
 		findButton.setDefaultButton(true);
-		 
-		root.setBottom(bottom); 
+
+		root.setBottom(bottom);
 		BorderPane.setMargin(bottom, new Insets(0,10,10,10));
 
 		Scene myScene = new Scene(root, 300, 270);
 		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
-		
+
 		me = new Stage();
 		me.setTitle(ApplicationInstance.APP_NAME + " - " + fxUI.getLocaleBundleString("dialogs.findreplace.title"));
 		me.setScene(myScene);
@@ -188,7 +185,7 @@ public class FindAndReplaceDialog {
 		me.setResizable(false);
 		//me.initModality( Modality.NONE );
 		Tools.addDefaultIconsToStage(me);
-		
+
 		me.setOnCloseRequest(new EventHandler<WindowEvent>() {
 			@Override
 			public void handle(WindowEvent event) {

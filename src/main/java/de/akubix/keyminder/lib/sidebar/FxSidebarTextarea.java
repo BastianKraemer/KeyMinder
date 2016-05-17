@@ -15,14 +15,14 @@ public abstract class FxSidebarTextarea implements FxSidebarElement {
 		textarea = new TextArea();
 		textarea.setMaxHeight(100);
 		textarea.setFocusTraversable(false);
-		
+
 		textarea.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 			@Override
 			public void handle(KeyEvent event) {
 				storeData(instance.getTree().getSelectedNode());
 			}});
 	}
-	
+
 	@Override
 	public void setUIValue(String value) {
 		textarea.setText(value);
@@ -35,10 +35,10 @@ public abstract class FxSidebarTextarea implements FxSidebarElement {
 
 	@Override
 	public abstract boolean loadData(TreeNode node);
-	
+
 	@Override
 	public abstract void storeData(TreeNode node);
-	
+
 	@Override
 	public Node getFxRootNode() {
 		return textarea;

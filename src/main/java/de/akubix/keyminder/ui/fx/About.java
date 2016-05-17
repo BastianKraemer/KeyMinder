@@ -46,21 +46,19 @@ public class About {
 	public About(ApplicationInstance app){
 		this.fxUI = app.getFxUserInterface();
 	}
-	
-	public void show()
-	{
+
+	public void show(){
 		BorderPane root = new BorderPane();
 		root.setId("Body");
 
-		
 		ImageView appIcon = ImageSelector.getFxImageView("appicon");
 		Pane imageContainer = new Pane(appIcon);
 		appIcon.setId("AppIcon");
 		imageContainer.setId("AppIconContainer");
-		
+
 		HBox hbox = new HBox(4);
 		hbox.setId("BottomPane");
-		
+
 		hbox.getChildren().addAll(
 				createBottomLabel(fxUI.getLocaleBundleString("about.show_info"), 2, (e) -> content.setText(fxUI.getLocaleBundleString("gplinfo"))),
 				createBottomLabel(fxUI.getLocaleBundleString("about.show_gpl"), 2, (e) -> showGPL()));
@@ -69,13 +67,13 @@ public class About {
 		contentPane.setId("ContentPane");
 		VBox headlineContainer = new VBox(0);
 		Label appName = new Label(ApplicationInstance.APP_NAME);
-		
+
 		appName.setId("AppName");
 		Label appVersion = new Label("Version " + ApplicationInstance.APP_VERSION);
 		appVersion.setId("AppVersion");
 		headlineContainer.getChildren().addAll(appName, appVersion);
 		contentPane.setTop(headlineContainer);
-		
+
 		content = new TextArea(fxUI.getLocaleBundleString("gplinfo"));
 		content.setId("Content");
 		content.setEditable(false);
@@ -85,7 +83,7 @@ public class About {
 		root.setCenter(contentPane);
 		root.setBottom(hbox);
 		root.setLeft(imageContainer);
-		
+
 		Stage aboutWindow = new Stage();
 		Scene myScene = new Scene(root, WINDOW_WIDTH, 250);
 
@@ -98,7 +96,7 @@ public class About {
 
 		aboutWindow.show();
 	}
-	
+
 	private void showGPL(){
 		final String filename = "/COPYING";
 		try{
@@ -110,7 +108,7 @@ public class About {
 			content.setText(String.format("ERROR, cannot find resource '%s'", filename));
 		}
 	}
-	
+
 	private Node createBottomLabel(String text, int numberOfLabels, EventHandler<ActionEvent> onAction){
 		Hyperlink l = new Hyperlink(text);
 		l.setOnAction(onAction);

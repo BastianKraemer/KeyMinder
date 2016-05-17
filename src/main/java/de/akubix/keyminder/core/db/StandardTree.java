@@ -49,16 +49,14 @@ public class StandardTree implements Tree {
 		createRoot();
 	}
 
-	private void createRoot()
-	{
+	private void createRoot(){
 		rootNode = new StandardNode(this, 0, "root");
 		treeNodeDB.put(0, rootNode);
 		nodePointer = rootNode;
 		undoManager = new UndoManager(this);
 	}
-	
-	public synchronized void reset()
-	{
+
+	public synchronized void reset(){
 		if(treeNodeDB.size() > 1){
 			treeNodeDB.clear();
 			System.gc(); //After the clear() operation many objects are trash...
@@ -74,72 +72,62 @@ public class StandardTree implements Tree {
 	}
 
 	@Override
-	public boolean treeHasBeenUpdated()
-	{
+	public boolean treeHasBeenUpdated(){
 		return treeWasUpdated;
 	}
-	
+
 	@Override
-	public void setTreeChangedStatus(boolean value)
-	{
+	public void setTreeChangedStatus(boolean value){
 		treeWasUpdated = value;
 	}
-	
+
 	@Override
-	public void enableNodeTimestamps(boolean value)
-	{
+	public void enableNodeTimestamps(boolean value){
 		enableNodeTimestamps = value;
 	}
-	
+
 	@Override
-	public void enableEventFireing(boolean value)
-	{
+	public void enableEventFireing(boolean value){
 		enableFireEvents = value;
 	}
-	
+
 	@Override
-	public boolean isEventFireingEnabled()
-	{
+	public boolean isEventFireingEnabled(){
 		return enableFireEvents;
 	}
-	
+
 	@Override
-	public synchronized void fireEditedEventForTreeNode(TreeNode node)
-	{
-		if(enableFireEvents){app.fireEvent(TreeNodeEvent.OnNodeEdited, node);}
+	public synchronized void fireEditedEventForTreeNode(TreeNode node){
+		if(enableFireEvents){
+			app.fireEvent(TreeNodeEvent.OnNodeEdited, node);
+		}
 	}
-	
-	public int countAllNodes()
-	{
+
+	public int countAllNodes(){
 		return treeNodeDB.size();
 	}
-	
-	public StandardNode getDefaultNodeById(int id)
-	{
+
+	public StandardNode getDefaultNodeById(int id){
 		return treeNodeDB.get(id);
 	}
-	
+
 	@Override
-	public boolean nodeExists(int nodeId)
-	{
+	public boolean nodeExists(int nodeId){
 		return treeNodeDB.containsKey(nodeId);
 	}
-	
+
 	@Override
-	public TreeNode getNodeById(int id)
-	{
+	public TreeNode getNodeById(int id){
 		return treeNodeDB.get(id);
 	}
-	
+
 	@Override
-	public TreeNode getSelectedNode()
-	{
+	public TreeNode getSelectedNode(){
 		return nodePointer;
 	}
-	
+
 	@Override
-	public void setSelectedNode(TreeNode node)
-	{
+	public void setSelectedNode(TreeNode node){
 		if(node.getId() != nodePointer.getId())
 		{
 			setNodePointer(node);
@@ -147,86 +135,74 @@ public class StandardTree implements Tree {
 	}
 
 	// The functionality "setSelectedNode" has been split into two methods, because there has to be a private "setNodePointer()" method which will force firing an event, even if it is the same node
-	protected synchronized void setNodePointer(TreeNode node)
-	{
-		if(node != null)
-		{
+	protected synchronized void setNodePointer(TreeNode node){
+		if(node != null){
 			nodePointer = node;
 			if(enableFireEvents){app.fireEvent(EventTypes.TreeNodeEvent.OnSelectedItemChanged, node);}
 		}
 	}
-	
+
 	/**
 	 * Reset the NodePointer to its default position, this is the first node below the root node, or the root node if the tree is empty
 	 */
-	public synchronized void resetNodePointer()
-	{
-		if(getRootNode().countChildNodes() > 0)
-		{
+	public synchronized void resetNodePointer(){
+		if(getRootNode().countChildNodes() > 0){
 			if(treeNodeDB.containsKey(getRootNode().getChildNodeByIndex(0).getId())){
 				// Selecting first node
 				setSelectedNode(getRootNode().getChildNodeByIndex(0));
 			}
-			else
-			{
+			else{
 				// Tree is empty
 				setSelectedNode(getRootNode());
-			}	
+			}
 		}
-		else
-		{
+		else{
 			setSelectedNode(getRootNode());
 		}
 	}
-	
+
 	@Override
-	public TreeNode getRootNode()
-	{
+	public TreeNode getRootNode(){
 		return (TreeNode) rootNode;
 	}
-	
-	public StandardNode getDocumentRootNode()
-	{
+
+	public StandardNode getDocumentRootNode(){
 		return rootNode;
 	}
 
 	@Override
-	public TreeNode getNextNode(TreeNode node)
-	{
+	public TreeNode getNextNode(TreeNode node){
 		return getNextNode(node, 1);
 	}
 
 	@Override
-	public TreeNode getPreviousNode(TreeNode node)
-	{
+	public TreeNode getPreviousNode(TreeNode node){
 			return getNextNode(node, -1);
 	}
 
-	private TreeNode getNextNode(TreeNode node, int offset)
-	{
-		if(node.getId() != 0)
-		{
+	private TreeNode getNextNode(TreeNode node, int offset){
+		if(node.getId() != 0){
 			try{
 				int i = node.getIndex();
-				if(i + offset < 0){if(node.getParentNode().getId() != 0){return node.getParentNode();}}
+				if(i + offset < 0){
+					if(node.getParentNode().getId() != 0){
+						return node.getParentNode();
+					}
+				}
 				return node.getParentNode().getChildNodeByIndex(i + offset);
 			}
-			catch(IndexOutOfBoundsException ex)
-			{
+			catch(IndexOutOfBoundsException ex){
 				return (node.getParentNode().getId() != 0 ? getNextNode(node.getParentNode(), 1) : node);
 			}
 		}
-		else
-		{
+		else{
 			return node;
 		}
 	}
-	
+
 	@Override
-	public synchronized boolean addNode(TreeNode node, TreeNode parentNode)
-	{
-		if(node.getParentNode() == null)
-		{
+	public synchronized boolean addNode(TreeNode node, TreeNode parentNode){
+		if(node.getParentNode() == null){
 			// Node does not contain to the tree
 			treeNodeDB.put(node.getId(), node.getUnrestrictedAccess());
 			parentNode.getUnrestrictedAccess().childNodes.add(node.getId());
@@ -237,22 +213,18 @@ public class StandardTree implements Tree {
 			undoManager.recordNodeAdded(node);
 			return true;
 		}
-		else
-		{
+		else{
 			app.log("ERROR: Couldn't append treenode to tree, because the node has been already assigned to it.");
 			return false;
 		}
 	}
 
 	@Override
-	public synchronized boolean insertNode(TreeNode node, TreeNode parentNode, int insertAtIndex)
-	{
-		if(addNode(node, parentNode))
-		{
+	public synchronized boolean insertNode(TreeNode node, TreeNode parentNode, int insertAtIndex){
+		if(addNode(node, parentNode)){
 			StandardNode pNode = parentNode.getUnrestrictedAccess();
 			int lastIndex = (pNode.countChildNodes() - 1);
-			for(int i = insertAtIndex; i < lastIndex; i++)
-			{
+			for(int i = insertAtIndex; i < lastIndex; i++){
 				int tmp = pNode.childNodes.get(lastIndex);
 				pNode.childNodes.set(lastIndex, pNode.childNodes.get(i));
 				pNode.childNodes.set(i, tmp);
@@ -261,18 +233,17 @@ public class StandardTree implements Tree {
 			if(enableFireEvents){app.fireEvent(EventTypes.TreeNodeEvent.OnNodeVerticallyMoved, node);}
 			return true;
 		}
-		else
-		{
+		else{
 			return false;
 		}
 	}
-	
+
 	@Override
-	public TreeNode createNode(String text) {
+	public TreeNode createNode(String text){
 		idCounter++;
 		return new StandardNode(this, idCounter, text);
 	}
-	
+
 	@Override
 	public TreeNode loadNode(String text, int predefinedId, String color, Map<String, String> nodeAttributes) {
 		if(treeNodeDB.containsKey(predefinedId) || predefinedId <= 0){
@@ -292,36 +263,31 @@ public class StandardTree implements Tree {
 		idCounter++;
 		return new StandardNode(this, idCounter, text);
 	}
-	
+
 	@Override
 	public void removeNode(int id) {
 		removeNode(getNodeById(id).getUnrestrictedAccess());
 	}
-	
+
 	@Override
 	public void removeNode(TreeNode node) {
-		removeNode(node.getUnrestrictedAccess());	
+		removeNode(node.getUnrestrictedAccess());
 	}
-	
-	private synchronized void removeNode(StandardNode node)
-	{
-		if(node.getId() != 0) //The root node can't be removed
-		{
+
+	private synchronized void removeNode(StandardNode node){
+		if(node.getId() != 0){ //The root node can't be removed
 			undoManager.captureMulitpleChanges();
 			StandardNode parentNode = node.getParentNode().getUnrestrictedAccess();
 
 			// Fire an event to notify UI and modules
 			if(enableFireEvents){app.fireEvent(EventTypes.TreeNodeEvent.OnNodeRemoved, node);}
-			if(node.getId() == nodePointer.getId())
-			{
-				if(parentNode == rootNode)
-				{
+			if(node.getId() == nodePointer.getId()){
+				if(parentNode == rootNode){
 					// Node is a child node of root
 					TreeNode node2Select = getPreviousNode(node);
 					if(node2Select.getId() == 0){resetNodePointer();}else{setSelectedNode(node2Select);}
 				}
-				else
-				{
+				else{
 					//Node is anywhere, but not a child node of root
 					setSelectedNode(parentNode);
 				}
@@ -329,10 +295,8 @@ public class StandardTree implements Tree {
 
 			removeChildNodes(node, false);
 
-			for(int i = 0; i < parentNode.childNodes.size(); i++)
-			{
-				if(parentNode.childNodes.get(i) == node.getId())
-				{
+			for(int i = 0; i < parentNode.childNodes.size(); i++){
+				if(parentNode.childNodes.get(i) == node.getId()){
 					undoManager.recordNodeRemoved(node, i);
 					parentNode.childNodes.remove(i);
 					break;
@@ -346,37 +310,34 @@ public class StandardTree implements Tree {
 		}
 	}
 
-	private synchronized void verifyThatTheTreeIsNotEmpty()
-	{
-		if(rootNode.countChildNodes() == 0)
-		{
+	private synchronized void verifyThatTheTreeIsNotEmpty(){
+		if(rootNode.countChildNodes() == 0){
 			//All nodes are removed, the tree is empty - this is not allowed!
 			addNode(createNode(de.akubix.keyminder.core.ApplicationInstance.APP_NAME), rootNode);
 			resetNodePointer();
 		}
 	}
-	
+
 	@Override
 	public synchronized void removeAllChildNodes(TreeNode node){
 		removeChildNodes(node.getUnrestrictedAccess(), true);
 		if(node.getId() == 0){verifyThatTheTreeIsNotEmpty();}
 	}
-	
+
 	private synchronized boolean removeChildNodes(StandardNode node, boolean fireEvents){
 		boolean resetNodePointerAfterOperation = false;
 		boolean resetCalled = false;
 		if(fireEvents){undoManager.captureMulitpleChanges();}
-		for(int nodeid: node.childNodes)
-		{
+
+		for(int nodeid: node.childNodes){
 			StandardNode knode = getDefaultNodeById(nodeid);
-			if(fireEvents && enableFireEvents){	
+			if(fireEvents && enableFireEvents){
 				// Notify UI and modules that the node will be removed
 				app.fireEvent(EventTypes.TreeNodeEvent.OnNodeRemoved, knode);
-				
+
 				resetNodePointerAfterOperation = knode.getId() == nodePointer.getId();
 			}
-			else
-			{
+			else{
 				if(knode.getId() == nodePointer.getId()){resetNodePointerAfterOperation = true;}
 			}
 
@@ -387,24 +348,23 @@ public class StandardTree implements Tree {
 
 			// The nodePointer must be something else than null and always has to point to a valid node, if all else fails at least to the root node
 			// If not now, the node pointer has to be corrected before this method will be exited
-			if(fireEvents && enableFireEvents && resetNodePointerAfterOperation)
-			{
+			if(fireEvents && enableFireEvents && resetNodePointerAfterOperation){
 				 // "fireEvents" is false in every recursive call
 				setSelectedNode(node);
 				resetNodePointerAfterOperation = false;
 				resetCalled = true;
 			}
-		}		
+		}
 		node.childNodes.clear();
 
 		// Correct the node pointer to verify that it points to a valid node
 		if(fireEvents && resetNodePointerAfterOperation){setSelectedNode(node); resetCalled = true;} // "fireEvents" is false in every recursive call
-		
+
 		treeWasUpdated = true;
 		if(fireEvents){undoManager.commitChanges();}
 		return fireEvents ? true : resetCalled;
 	}
-	
+
 	@Override
 	public synchronized TreeNode cloneTreeNode(TreeNode node2clone, boolean includeChildNodes){
 		boolean undoWasEnabled = undoManager.isEnabled();
@@ -415,75 +375,66 @@ public class StandardTree implements Tree {
 		undoManager.setEnable(undoWasEnabled);
 		return ret;
 	}
-	
+
 	// Note: Before using this method its indispensable to turn off event firing
 	private synchronized TreeNode cloneDefaultNode(StandardNode node2clone, boolean includeChildNodes){
 		StandardNode clonedNode = createDefaultNode(node2clone.getText());
 		clonedNode.setColor(node2clone.getColor());
 		de.akubix.keyminder.lib.Tools.hashCopy(node2clone.getUnrestrictedAccess().attributes, clonedNode.getUnrestrictedAccess().attributes);
-			
-		if(includeChildNodes)
-		{
-			for(int i = 0; i < node2clone.countChildNodes(); i++)
-			{
+
+		if(includeChildNodes){
+			for(int i = 0; i < node2clone.countChildNodes(); i++){
 				addNode(cloneDefaultNode(node2clone.getChildNodeByIndex(i).getUnrestrictedAccess(),  true), clonedNode);
 			}
 		}
 
 		return clonedNode;
 	}
-	
+
 	@Override
-	public synchronized void moveNodeVertical(TreeNode node, int offSet)
-	{
+	public synchronized void moveNodeVertical(TreeNode node, int offSet){
 		int nodeID = node.getId();
 		boolean reselectNode = (node.getId() == nodePointer.getId());
 		if(nodeID != 0) // Verify that the node is not the root node
 		{
 			StandardNode parentNode = node.getParentNode().getUnrestrictedAccess();
 			int index = 0;
-			for(int childnodeID: parentNode.childNodes)
-			{
+			for(int childnodeID: parentNode.childNodes){
 				if(childnodeID == nodeID){break;}
 				index++;
 			}
-			
+
 			int newIndex = index + offSet;
 			if(newIndex < 0){
 				if(index == 0){return;} // Node is already at the beginning
 				newIndex = 0;
 			}
-			else
-			{
+			else{
 				int childNodeCnt = parentNode.countChildNodes();
-				if(newIndex >= childNodeCnt)
-				{
+				if(newIndex >= childNodeCnt){
 					if(index == childNodeCnt){return;} // Node is already at the end
 					newIndex = childNodeCnt -1;
 				}
 			}
-			
+
 			int tmp = parentNode.childNodes.get(newIndex);
 			parentNode.childNodes.set(newIndex, parentNode.childNodes.get(index));
 			parentNode.childNodes.set(index, tmp);
 			undoManager.recordVerticalNodeMove(node, offSet * -1);
 			app.fireEvent(TreeNodeEvent.OnNodeVerticallyMoved, node);
-			
+
 			if(reselectNode){setNodePointer(node);}
-			
+
 			treeWasUpdated = true;
 		}
 	}
-	
+
 	private StandardNode treeNodeClipboard = null;
 	@Override
-	public synchronized void copyNodeToInternalClipboard(TreeNode node)
-	{
-		if(node.getId() != 0) // It is not permitted to copy the root node
-		{
+	public synchronized void copyNodeToInternalClipboard(TreeNode node){
+		if(node.getId() != 0){ // It is not permitted to copy the root node
 			enableEventFireing(false);
-			if(treeNodeClipboard != null)
-			{
+			if(treeNodeClipboard != null){
 				// Nodes does not really contain to tree it's a relic of a copy action
 				removeChildNodes(treeNodeClipboard.getUnrestrictedAccess(), false);
 				treeNodeDB.remove(treeNodeClipboard.getId());
@@ -492,41 +443,33 @@ public class StandardTree implements Tree {
 			enableEventFireing(true);
 		}
 	}
-	
+
 	@Override
-	public synchronized boolean pasteNodeFromInternalClipboard(TreeNode parentNode)
-	{
-		if(treeNodeClipboard != null)
-		{
+	public synchronized boolean pasteNodeFromInternalClipboard(TreeNode parentNode){
+		if(treeNodeClipboard != null){
 			enableEventFireing(false);
 			StandardNode tmp = cloneDefaultNode(treeNodeClipboard, true).getUnrestrictedAccess();
 			enableEventFireing(true);
-			
+
 			parentNode.getTree().addNode(treeNodeClipboard, parentNode);
 			treeNodeClipboard = tmp;
 			return true;
 		}
-		else
-		{
+		else{
 			return false;
 		}
 	}
 
 	@Override
-	public int getChildNodeIdByNodeText(String nodetext, TreeNode parentNode)
-	{
+	public int getChildNodeIdByNodeText(String nodetext, TreeNode parentNode){
 		int ret = -1;
 
-		for(TreeNode n: parentNode.getChildNodes())
-		{
-			if(nodetext.equals(n.getText()))
-			{
-				if(ret == -1)
-				{
+		for(TreeNode n: parentNode.getChildNodes()){
+			if(nodetext.equals(n.getText())){
+				if(ret == -1){
 					ret = n.getId();
 				}
-				else
-				{
+				else{
 					return -2;
 				}
 			}
@@ -536,45 +479,35 @@ public class StandardTree implements Tree {
 	}
 
 	@Override
-	public String getNodePath(TreeNode node, String pathSeperator)
-	{
+	public String getNodePath(TreeNode node, String pathSeperator){
 		if(node.getId() == 0){return "/" + node.getText();}
 		TreeNode tmp = node;
 		StringBuilder path = new StringBuilder(pathSeperator + node.getText());
-		while(true)
-		{
-			if(tmp.getParentNode().getId() != 0)
-			{
+		while(true){
+			if(tmp.getParentNode().getId() != 0){
 				tmp = tmp.getParentNode();
 				path.insert(0, pathSeperator + tmp.getText());
 			}
-			else
-			{
+			else{
 				return path.toString();
 			}
 		}
 	}
 
 	@Override
-	public TreeNode getNodeByPath(String path)
-	{
+	public TreeNode getNodeByPath(String path){
 		TreeNode node = (path.charAt(0) == '/' ? getRootNode() : getSelectedNode());
-		for(String p: path.split("/"))
-		{
-			if(p.equals(".."))
-			{
+		for(String p: path.split("/")){
+			if(p.equals("..")){
 				if(node.getId() == 0){return null;} //This node is already the Root-Node...
 				node = node.getParentNode();
 			}
-			else if(p.equals(".") || p.equals(""))
-			{
+			else if(p.equals(".") || p.equals("")){
 				continue;
 			}
-			else
-			{
+			else{
 				boolean foundNode = false;
-				for(TreeNode childNode: node.getChildNodes())
-				{
+				for(TreeNode childNode: node.getChildNodes()){
 					if(childNode.getText().equals(p)){node = childNode; foundNode = true; break;}
 				}
 				if(!foundNode){return null;}
@@ -584,13 +517,11 @@ public class StandardTree implements Tree {
 	}
 
 	@Override
-	public synchronized void sortChildNodes(TreeNode parentNode, boolean recursive)
-	{
+	public synchronized void sortChildNodes(TreeNode parentNode, boolean recursive){
 		if(parentNode.countChildNodes() > 0)
 		{
 			Map<String, TreeNode> inverseList = new HashMap<>();
 			parentNode.forEachChildNode((node) -> {
-
 				String key = node.getText().toLowerCase();
 				int ext = 0;
 				while(inverseList.containsKey(key)){
@@ -620,28 +551,23 @@ public class StandardTree implements Tree {
 	}
 
 	@Override
-	public synchronized void allNodes(Consumer<? super TreeNode> lambda)
-	{
+	public synchronized void allNodes(Consumer<? super TreeNode> lambda){
 		allNodes(getRootNode(), lambda);
 		//treeNodeDB.values().forEach((parentDefaultNode node) -> {TreeNode n = node; lambda.accept(n);}); //Faster, but some nodes in the has may currently not belong to the tree -> internal clipboard
 	}
 
-	private synchronized void allNodes(TreeNode parent, Consumer<? super TreeNode> lambda)
-	{
+	private synchronized void allNodes(TreeNode parent, Consumer<? super TreeNode> lambda){
 		parent.forEachChildNode((node) -> {lambda.accept(node); allNodes(node, lambda);});
 	}
 
 	/**
 	 * This function will fix any conflicts that will occur if "loadNode()" has been used.
 	 */
-	public synchronized void verify()
-	{
+	public synchronized void verify(){
 		//fix conflicts
-		if(idConflicts < 0)
-		{
+		if(idConflicts < 0){
 			if(de.akubix.keyminder.core.Launcher.verbose_mode){app.print(String.format("Fixing conflicts (%d id conflicts detected)... ", idConflicts * -1));}
-			for(int i = -1; i >= idConflicts; i--) //for each conflict
-			{
+			for(int i = -1; i >= idConflicts; i--){ //for each conflict
 				StandardNode node = getNodeById(i).getUnrestrictedAccess();
 				changeNodeId(node, ++idCounter); //Get the next free id for this node and update
 			}
@@ -659,8 +585,7 @@ public class StandardTree implements Tree {
 
 		// Update the reference in the child list of the parent node
 		StandardNode parent = node.getParentNode().getUnrestrictedAccess();
-		for(int j = 0; j < parent.countChildNodes(); j++)
-		{
+		for(int j = 0; j < parent.countChildNodes(); j++){
 			if(parent.childNodes.get(j) == oldId){
 				parent.childNodes.set(j, node.nodeID);
 				break;
@@ -673,8 +598,7 @@ public class StandardTree implements Tree {
 	}
 
 	@Override
-	public synchronized boolean undo()
-	{
+	public synchronized boolean undo(){
 		return undoManager.undo();
 	}
 

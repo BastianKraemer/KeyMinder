@@ -42,13 +42,13 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI;
 	private boolean trayItemCreated = false;
 	private String pw = "";
-	
+
 	@Override
 	public void onStartup(ApplicationInstance instance) throws ModuleStartupException {
-	
+
 		if(instance.isFxUserInterfaceAvailable()){
 			this.fxUI = instance.getFxUserInterface();
-						
+
 			// Provide the KeyClip feature as command
 			instance.provideNewCommand("keyclip", new Command() {
 				@Override
@@ -74,20 +74,17 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 					return "ok";
 				}});
 		}
-		else
-		{
+		else{
 			throw new ModuleStartupException("JavaFX User Interface is not available.", ModuleStartupException.ModuleErrorLevel.FxUserInterfaceNotAvailable);
 		}
 	}
-		
-	public void copyUserAndPassword(String username, String password)
-	{
+
+	public void copyUserAndPassword(String username, String password){
 		if(!trayItemCreated){
 			if(!username.equals("")){
 				fxUI.setClipboardText(username);
-				
-				if(!password.equals(""))
-				{
+
+				if(!password.equals("")){
 					this.pw = password;
 					createSystemTrayIcon();
 				}
@@ -97,11 +94,10 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 			}
 		}
 	}
-	
-	public void createSystemTrayIcon()
-	{
+
+	public void createSystemTrayIcon(){
 		if (java.awt.SystemTray.isSupported()) {
-			
+
 			java.awt.SystemTray tray = java.awt.SystemTray.getSystemTray();
 			java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(getClass().getResource(de.akubix.keyminder.lib.gui.ImageSelector.getIcon("appicon_16")));
 
@@ -109,16 +105,16 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 			trayIcon.addMouseListener(new MouseListener() {
 				@Override
 				public void mouseReleased(MouseEvent e) {}
-				
+
 				@Override
 				public void mousePressed(MouseEvent e) {}
-				
+
 				@Override
 				public void mouseExited(MouseEvent e) {}
-				
+
 				@Override
 				public void mouseEntered(MouseEvent e) {}
-				
+
 				@Override
 				public void mouseClicked(MouseEvent e) {
 					if(e.getButton() != 1){
@@ -134,7 +130,7 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 					}
 				}
 			});
-			
+
 		    // set the TrayIcon properties
 		    trayIcon.addActionListener((e) -> {
 		    	if(trayItemCreated){
@@ -145,7 +141,7 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 		    });
 
 		    trayIcon.setToolTip(ApplicationInstance.APP_NAME + " KeyClip - " + fxUI.getLocaleBundleString("module.keyclip.copy_action_tooltip"));
-		    
+
 		    try {
 		        tray.add(trayIcon);
 		    } catch (AWTException e) {
@@ -153,8 +149,7 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 		       fxUI.alert(AlertType.ERROR, "KeyClip", "System Tray Icon", "An error occured. Unable to show system tray icon:\n" + e.getMessage());
 		    }
 		}
-		
+
 		trayItemCreated = true;
 	}
-	
 }

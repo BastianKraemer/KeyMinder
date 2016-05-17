@@ -17,22 +17,22 @@ public class ImageSelector {
 		imageMap.put("appicon", "/de/akubix/keyminder/images/app/AppIcon256.png");
 		imageMap.put("appicon_16", "/de/akubix/keyminder/images/app/AppIcon16.png");
 		imageMap.put("appicon_32", "/de/akubix/keyminder/images/app/AppIcon32.png");
-		
+
 		imageMap.put("icon_copy", "/de/akubix/keyminder/images/icons/copy.png");
-		
+
 		imageMap.put("icon_add", "/de/akubix/keyminder/images/icons/add.png");
 		imageMap.put("icon_edit", "/de/akubix/keyminder/images/icons/dots.png");
 		imageMap.put("icon_delete", "/de/akubix/keyminder/images/icons/delete.png");
 		imageMap.put("icon_remove", "/de/akubix/keyminder/images/icons/remove.png");
 		imageMap.put("icon_arrow-left", "/de/akubix/keyminder/images/icons/arrow-left.png");
 		imageMap.put("icon_arrow-rotate-box", "/de/akubix/keyminder/images/icons/arrow-rotate-box.png");
-		
+
 		imageMap.put("icon_bash", "/de/akubix/keyminder/images/icons/bash.png");
 		imageMap.put("icon_up", "/de/akubix/keyminder/images/icons/up.png");
 		imageMap.put("icon_down", "/de/akubix/keyminder/images/icons/down.png");
 		imageMap.put("icon_find", "/de/akubix/keyminder/images/icons/find.png");
 		imageMap.put("icon_info", "/de/akubix/keyminder/images/icons/info.png");
-		
+
 		imageMap.put("icon_newfile", "/de/akubix/keyminder/images/icons/newfile.png");
 		imageMap.put("icon_new_encrypted_file", "/de/akubix/keyminder/images/icons/newfile_lock.png");
 		imageMap.put("icon_openfile", "/de/akubix/keyminder/images/icons/openfile.png");
@@ -63,9 +63,9 @@ public class ImageSelector {
 		imageMap.put("icon_color_green", "/de/akubix/keyminder/images/icons/colors/green.png");
 		imageMap.put("icon_color_brown", "/de/akubix/keyminder/images/icons/colors/brown.png");
 		imageMap.put("icon_color_black", "/de/akubix/keyminder/images/icons/colors/black.png");
-		
+
 	}
-	
+
 	public static String getIcon(String keyword)
 	{
 		if(imageMap.containsKey(keyword)){
@@ -75,7 +75,7 @@ public class ImageSelector {
 			return "";
 		}
 	}
-		
+
 	public static Image getFxImage(String keyword)
 	{
 		if(imageMap.containsKey(keyword)){
@@ -85,7 +85,7 @@ public class ImageSelector {
 			return null;
 		}
 	}
-	
+
 	public static ImageView getFxImageView(String keyword)
 	{
 		if(imageMap.containsKey(keyword)){

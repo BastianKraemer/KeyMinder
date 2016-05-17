@@ -16,7 +16,7 @@ import javafx.scene.input.KeyCode;
 import javafx.stage.FileChooser;
 
 public interface FxUserInterface {
-	
+
 	// Additional FX Components
 	public javafx.scene.control.Tab addSidebarPanel(String tabtitle, Node panel, de.akubix.keyminder.lib.sidebar.SidebarNodeChangeEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked);
 	public javafx.beans.property.ReadOnlyDoubleProperty getSidbarWidthProperty();
@@ -26,24 +26,24 @@ public interface FxUserInterface {
 	public void removeNotificationItem(Node item);
 	public void addTreePanel(Node item, boolean assignToThisFile);
 	public void removeTreePanel(Node item);
-	
+
 	// Localization
 	public ResourceBundle getLocaleRessourceBundle();
 	public String getLocaleBundleString(String key);
-	
+
 	// Clipboard
 	public String getClipboardText();
 	public void setClipboardText(String text);
-	
+
 	// Text output
 	public void updateStatus(String text);
 	public void log(String text);
 	public void alert(String text);
 	public void alert(AlertType type, String title, String headline, String contentText);
-	
+
 	// Hotkeys
 	public void addApplicationHotKey(KeyCode keyCode, boolean controlKey, boolean shiftKey, boolean altKey, FxHotKeyEvent onKeyDown);
-	
+
 	// Dialogs
 
 	/**
@@ -54,10 +54,10 @@ public interface FxUserInterface {
 	public boolean showSaveChangesDialog() throws UserCanceledOperationException;
 	public String showInputDialog(String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog) throws UserCanceledOperationException;
 	public boolean showYesNoDialog(String windowTitle, String headline, String contentText);
-	
+
 	public File showOpenFileDialog(String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions);
 	public File showSaveFileDialog(String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions);
-	
+
 	// etc
 	public void runAsFXThread(Runnable r);
 	public boolean isFXThread();

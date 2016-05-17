@@ -34,21 +34,20 @@ public class NodeTimeCondition {
 	private long milliSeconds;
 	private CompareType compareType;
 	private String attributeName;
-	
+
 	/**
 	 * Create a new time condition
 	 * @param attributeName Should be "created" or "modified"
 	 * @param compareType created/modified before or after this date?
 	 * @param date the date you want to compare to
 	 */
-	public NodeTimeCondition(String attributeName, CompareType compareType, Instant date)
-	{
+	public NodeTimeCondition(String attributeName, CompareType compareType, Instant date){
 		this.referenceDate = date;
 		this.milliSeconds = date.getEpochSecond() * 1000;
 		this.compareType = compareType;
 		this.attributeName = attributeName;
 	}
-	
+
 	/**
 	 * Create a new time condition
 	 * @param attributeName Should be "created" or "modified"
@@ -56,8 +55,7 @@ public class NodeTimeCondition {
 	 * @param date the date you want to compare to
 	 * @throws ParseException if the entered date is not a valid date
 	 */
-	public NodeTimeCondition(String attributeName, CompareType compareType, String date) throws ParseException
-	{
+	public NodeTimeCondition(String attributeName, CompareType compareType, String date) throws ParseException {
 		this(attributeName, compareType, new SimpleDateFormat("dd.MM.yy").parse(date).toInstant());
 	}
 
@@ -66,61 +64,52 @@ public class NodeTimeCondition {
 	 * @param node the tree node
 	 * @return {@code true} if the condition matches, {@code false} if not
 	 */
-	public boolean compareTo(de.akubix.keyminder.core.db.TreeNode node)
-	{
-		try
-		{	
-			if(compareType == CompareType.Before)
-			{
+	public boolean compareTo(de.akubix.keyminder.core.db.TreeNode node){
+		try{
+			if(compareType == CompareType.Before){
 				return Long.parseLong(node.getAttribute(attributeName)) <= milliSeconds;
 			}
-			else if(compareType == CompareType.After)
-			{
+			else if(compareType == CompareType.After){
 				return Long.parseLong(node.getAttribute(attributeName)) >= milliSeconds;
 			}
-			else
-			{
+			else{
 				// At same Day
 				Instant nodeTime = Instant.ofEpochMilli(Long.parseLong(node.getAttribute(attributeName)));
 				ZonedDateTime refzdt = referenceDate.atZone((ZoneId.systemDefault()));
 				ZonedDateTime zdt = nodeTime.atZone((ZoneId.systemDefault()));
-				
-				return (refzdt.getYear() == zdt.getYear() && refzdt.getDayOfYear() == zdt.getDayOfYear());	
+
+				return (refzdt.getYear() == zdt.getYear() && refzdt.getDayOfYear() == zdt.getDayOfYear());
 			}
 		}
-		catch (NumberFormatException | DateTimeException ex)
-		{
+		catch (NumberFormatException | DateTimeException ex){
 			return false;
 		}
 	}
-	
+
 	enum CompareType {
 		Before, After, AtSameDay
 	}
-	
+
 	/**
 	 * Returns a compare type selected by a given string
 	 * @param str should be "before", "after" or "at
 	 * @return Your CompareType variable
 	 * @throws IllegalArgumentException if the given string is not "after", "before" or "at"
 	 */
-	public static CompareType getCompareTypeFromString(String str) throws IllegalArgumentException
-	{
-		switch(str.toLowerCase())
-		{
-		case "before":
-		case "vor":
-			return CompareType.Before;
-		case "after":
-		case "nach":
-			return CompareType.After;
-		case "at":
-		case "atsameday":
-		case "am":
-			return CompareType.AtSameDay;
+	public static CompareType getCompareTypeFromString(String str) throws IllegalArgumentException {
+		switch(str.toLowerCase()){
+			case "before":
+			case "vor":
+				return CompareType.Before;
+			case "after":
+			case "nach":
+				return CompareType.After;
+			case "at":
+			case "atsameday":
+			case "am":
+				return CompareType.AtSameDay;
 		}
-		
+
 		throw new IllegalArgumentException("Invalid compare type.");
 	}
-	
 }

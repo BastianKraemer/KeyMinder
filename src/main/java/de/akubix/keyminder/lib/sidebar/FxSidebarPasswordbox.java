@@ -18,21 +18,20 @@ public abstract class FxSidebarPasswordbox implements FxSidebarElement {
 	private TextInputControl inputElement;
 	BorderPane row;
 	public FxSidebarPasswordbox(de.akubix.keyminder.core.ApplicationInstance instance)
-	{	
+	{
 		row = new BorderPane();
 		inputElement = createPasswordbox(instance, true);
 		row.setCenter(inputElement);
-		
+
 		CheckBox showPw = new CheckBox(instance.getFxUserInterface().getLocaleBundleString("passwordfield.show_password"));
 		showPw.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				if(showPw.isSelected())
-				{
+				if(showPw.isSelected()){
 					TextField t = new TextField(getUIValue());
 					t.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 						@Override
-						public void handle(KeyEvent event) {	
+						public void handle(KeyEvent event) {
 							storeData(instance.getTree().getSelectedNode());
 						}});
 					inputElement = t;
@@ -43,9 +42,9 @@ public abstract class FxSidebarPasswordbox implements FxSidebarElement {
 				}
 				row.setCenter(inputElement);
 			}});
-		
+
 		row.setBottom(showPw);
-		
+
 		Button copy = new Button("", de.akubix.keyminder.lib.gui.ImageSelector.getFxImageView(("icon_copy")));
 		copy.setMinWidth(16);
 		copy.setMaxWidth(16);
@@ -53,23 +52,22 @@ public abstract class FxSidebarPasswordbox implements FxSidebarElement {
 
 		copy.getStyleClass().add("noBorder");
 		copy.setFocusTraversable(false);
-		
+
 		copy.setOnAction((event) -> instance.getFxUserInterface().setClipboardText(getUIValue()));
 		row.setRight(copy);
 	}
-	
-	private TextInputControl createPasswordbox(de.akubix.keyminder.core.ApplicationInstance instance, boolean init)
-	{
+
+	private TextInputControl createPasswordbox(de.akubix.keyminder.core.ApplicationInstance instance, boolean init){
 		PasswordField t = new PasswordField();
 		if(!init){t.setText(getUIValue());}
 		t.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 			@Override
-			public void handle(KeyEvent event) {	
+			public void handle(KeyEvent event) {
 				storeData(instance.getTree().getSelectedNode());
 			}});
 		return t;
 	}
-	
+
 	@Override
 	public void setUIValue(String value) {
 		inputElement.setText(value);
@@ -82,10 +80,10 @@ public abstract class FxSidebarPasswordbox implements FxSidebarElement {
 
 	@Override
 	public abstract boolean loadData(TreeNode node);
-	
+
 	@Override
 	public abstract void storeData(TreeNode node);
-	
+
 	@Override
 	public Node getFxRootNode() {
 		return row;

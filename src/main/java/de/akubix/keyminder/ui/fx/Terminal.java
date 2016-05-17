@@ -47,65 +47,61 @@ public class Terminal implements de.akubix.keyminder.core.interfaces.CommandOutp
 		this.app = instance;
 		this.history.add("");
 	}
-	
-	public void show()
-	{
+
+	public void show(){
 		BorderPane root = new BorderPane();
-	   
+
 		output = new TextArea();
 		input = new TextField();
-		 
+
 		root.setCenter(output);
-		
+
 		HBox hbox = new HBox(0);
 		TextField prompt = new TextField("$");
 		prompt.setMaxWidth(16);
 		hbox.getChildren().addAll(prompt, input);
 		HBox.setHgrow(input, Priority.ALWAYS);
-		
+
 		root.setBottom(hbox);
-		
+
 		Scene myScene = new Scene(root, 640, 320);
 		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene, de.akubix.keyminder.lib.gui.StyleSelector.WindowSelector.Terminal);
-		
+
 		input.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
 			@Override
 			public void handle(KeyEvent event) {
-				if(event.getCode() == KeyCode.ENTER)
-				{
+				if(event.getCode() == KeyCode.ENTER){
 					runCommand(input.getText());
 					input.setText("");
 				}
-				else if(event.getCode() == KeyCode.UP && currentHistoryIndex != -1)
-				{
+				else if(event.getCode() == KeyCode.UP && currentHistoryIndex != -1){
 					if(currentHistoryIndex > 0){currentHistoryIndex--;}
 					input.setText(history.get(currentHistoryIndex));
 					input.selectAll();
 					event.consume();
 				}
-				else if(event.getCode() == KeyCode.DOWN && currentHistoryIndex != -1)
-				{
+				else if(event.getCode() == KeyCode.DOWN && currentHistoryIndex != -1){
 					if(currentHistoryIndex < history.size() - 1){currentHistoryIndex++;}
 					input.setText(history.get(currentHistoryIndex));
 					input.selectAll();
 					event.consume();
 				}
 			}});
-		
+
 		output.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 			@Override
 			public void handle(KeyEvent event) {
 				if(!event.isControlDown()){input.requestFocus(); input.appendText(event.getText());}
 			}});
-		
+
 		output.setWrapText(true);
 		output.setEditable(false);
 		input.requestFocus();
-		
+
 		input.setFocusTraversable(false);
 		output.setFocusTraversable(false);
 		prompt.setFocusTraversable(false);
-		
+
 		terminalwindow = new Stage();
 		terminalwindow.setTitle(ApplicationInstance.APP_NAME + " Terminal");
 		terminalwindow.setScene(myScene);
@@ -114,10 +110,10 @@ public class Terminal implements de.akubix.keyminder.core.interfaces.CommandOutp
 		Tools.addDefaultIconsToStage(terminalwindow);
 		terminalwindow.setMinWidth(560);
 		terminalwindow.setMinHeight(240);
-		
+
 		terminalwindow.setOnCloseRequest((event) -> app.terminateOutputRedirect(this));
 		terminalwindow.show();
-		
+
 		println(" #    #                    #       #");
 		println(" #   #    ######  #     #  # #   # #   #   #    #  #####   ######  #####");
 		println(" #  #     #        #   #   #  # #  #   #   ##   #  #    #  #       #    #");
@@ -129,37 +125,32 @@ public class Terminal implements de.akubix.keyminder.core.interfaces.CommandOutp
 
 		app.tryToEstablishOutputRedirect(this);
 	}
-	
-	private void runCommand(String line)
-	{
-		if(!line.equals(""))
-		{
+
+	private void runCommand(String line){
+		if(!line.equals("")){
 			String cmd;
 			String[] param;
-			if(line.contains(" "))
-			{
+			if(line.contains(" ")){
 				String[] splitstr = line.split(" ", 2);
 				cmd = splitstr[0];
 				param = de.akubix.keyminder.core.ApplicationInstance.splitParameters(splitstr[1]);
 			}
-			else
-			{
+			else{
 				cmd = line;
 				param = new String[0];
 			}
 			if(cmd.toLowerCase().equals("exit")){terminalwindow.close(); return;}
-			
+
 			print("\n$ " + line + "\n");
 			history.add(line);
 			currentHistoryIndex = history.size();
 			if(app.commandAvailable(cmd)){app.execute(this, cmd, param);}else{println("Unknown command: '" + cmd + "'");}
 		}
-		else
-		{
+		else{
 			println("$");
 		}
 	}
-	
+
 	@Override
 	public void print(String text) {
 		if(Platform.isFxApplicationThread()){
@@ -185,8 +176,7 @@ public class Terminal implements de.akubix.keyminder.core.interfaces.CommandOutp
 		this.print(String.format(text, args));
 	}
 
-	private void printAsFxThread(String str)
-	{
+	private void printAsFxThread(String str){
 		Platform.runLater(() -> output.appendText(str));
 	}
 }
