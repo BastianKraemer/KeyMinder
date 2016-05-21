@@ -1,7 +1,12 @@
-.settings/
-.classpath
-.project
-target/
-doc/
-bin/
+# Maven build files
+**/target/
+
+# Eclipse project files
+**/.settings/
+**/.classpath
+**/.project
+**/bin/
+
+# Documentation
+**/doc/
 
