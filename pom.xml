@@ -12,7 +12,6 @@
 		<keyminder.version>0.2-SNAPSHOT</keyminder.version>
 		<jdk.version>1.8</jdk.version>
 		<junit.version>4.12</junit.version>
-		<antrun.version>1.8</antrun.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 

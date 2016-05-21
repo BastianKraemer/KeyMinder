@@ -1,5 +1,5 @@
 /*	KeyMinder
-	Copyright (C) 2015 Bastian Kraemer
+	Copyright (C) 2015-2016 Bastian Kraemer
 
 	ApplicationInstance.java
 
@@ -19,14 +19,15 @@
 package de.akubix.keyminder.core;
 
 import java.io.File;
-import java.lang.reflect.Constructor;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -713,53 +714,29 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 	private Map<String, List<Object>> eventCollection = new HashMap<>();
 
 	private void loadModules(){
-		if(settings.containsKey(SETTINGS_KEY_ENABLED_MODULES)){
+		List<String> enabledModules = Arrays.asList(settings.getOrDefault(SETTINGS_KEY_ENABLED_MODULES, "").split(";"));
 
-			List<String> availableModules = Arrays.asList(new String[]{"sidebar.Sidebar", "keyclip.KeyClip", "sshtools.SSHTools", "deadline.Deadline"});
+		Iterator<Module> moduleIterator = ServiceLoader.load(Module.class).iterator();
+		while (moduleIterator.hasNext()) {
+			Module m = (Module) moduleIterator.next();
 
-			List<String> enabledModules = Arrays.asList(settings.get(SETTINGS_KEY_ENABLED_MODULES).split(";"));
-			if(enabledModules.size() == 0){return;}
+			//Get the module description by reading the class annotation
+			ModuleProperties moduleDescription = m.getClass().getAnnotation(de.akubix.keyminder.core.interfaces.ModuleProperties.class);
 
-			// Create a new JavaClassLoader
-			ClassLoader classLoader = this.getClass().getClassLoader();
-			for(String moduleName: availableModules){
-				// Load the target class using its binary name
-				try {
-					Class<?> loadedClass = classLoader.loadClass("de.akubix.keyminder.modules." + moduleName);
-
-					//Get the module description by reading the class annotation
-					ModuleProperties desc = loadedClass.getAnnotation(de.akubix.keyminder.core.interfaces.ModuleProperties.class);
-
-					if(enabledModules.contains(moduleName)){
-						// Create a new instance of the loaded class
-						Constructor<?> constructor = loadedClass.getConstructor();
-						Object myClassObject = constructor.newInstance();
-
-						if((myClassObject instanceof Module)){
-							allModules.put(moduleName, new ModuleInfo((Module) myClassObject, desc, true));
-						}
-						else{
-							println(String.format("Cannot load module '%s'. Class is not a instance of 'Module'.", moduleName));
-						}
-					}
-					else{
-						//Module is not enabled
-						allModules.put(moduleName, new ModuleInfo(null, desc, false));
-					}
-
-				} catch (ClassNotFoundException e) {
-					println(String.format("Cannot load module '%s'. Class does not exit.", moduleName));
-					if(KeyMinder.environment.containsKey("verbose_mode")){e.printStackTrace();}
-				} catch (Exception e) {
-					println(String.format("Cannot load module '%s'. Unknown exception.", moduleName));
-					if(KeyMinder.environment.containsKey("verbose_mode")){e.printStackTrace();}
+			if(moduleDescription != null){
+				if(enabledModules.contains(moduleDescription.name())){
+					allModules.put(moduleDescription.name(), new ModuleInfo(m, moduleDescription, true));
+				}
+				else{
+					//Module is not enabled
+					allModules.put(moduleDescription.name(), new ModuleInfo(m, moduleDescription, false));
 				}
 			}
+		}
 
-			//Start all modules, observing their dependencies to other modules
-			for(String moduleName: enabledModules){
-				startModule(moduleName, new ArrayList<String>());
-			}
+		//Start all modules, observing their dependencies to other modules
+		for(String moduleName: enabledModules){
+			startModule(moduleName, new ArrayList<String>());
 		}
 	}
 
