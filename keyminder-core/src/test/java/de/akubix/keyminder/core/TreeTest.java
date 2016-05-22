@@ -4,42 +4,25 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import de.akubix.keyminder.core.db.StandardTree;
 import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.core.encryption.EncryptionManager;
 
 public class TreeTest {
 
+	private ApplicationInstance app;
+
+	@Before
+	public void prepareInstance(){
+		app = KeyMinderInstanceBuilder.getNewInstance("./keyminder_settings.xml");
+	}
+
 	@Test
 	public void test() {
-
-
-		// Prepare environment
-		final String os = System.getProperty("os.name").toLowerCase();
-		if(os.indexOf("linux") >= 0){KeyMinder.environment.put("os", "Linux"); KeyMinder.environment_isLinux = true;}
-		else if(os.indexOf("win") >= 0){KeyMinder.environment.put("os", "Windows");}
-		else {KeyMinder.environment.put("os", "Unknown");}
-
-		KeyMinder.environment.put("cmd.settingsfile", "./zpm_settings.xml");
-
-		KeyMinder.verbose_mode = false;
-
-		// Initialize EncryptionManager
-		EncryptionManager.loadDefaultCiphers();
-
-		// Initialize application core (but not "startup" it)
-		ApplicationInstance app = new ApplicationInstance();
-
-		// Provide all icons by keywords
-		//ImageSelector.buildIndex();
-
-		app.startup(false);
-
 		runSimpleTreeTest(app.getTree());
-
 	}
 
 	private void runSimpleTreeTest(Tree tree)
