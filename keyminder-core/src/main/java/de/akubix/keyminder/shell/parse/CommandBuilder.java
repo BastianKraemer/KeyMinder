@@ -48,7 +48,7 @@ public class CommandBuilder {
 		}
 		else{
 			if(command == null){
-				command = str;
+				command = str.toLowerCase();
 				originalCommand = new StringBuilder();
 			}
 			else{

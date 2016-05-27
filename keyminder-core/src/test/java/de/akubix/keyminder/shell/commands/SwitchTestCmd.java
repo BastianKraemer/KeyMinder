@@ -1,12 +1,12 @@
 package de.akubix.keyminder.shell.commands;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.interfaces.CommandOutputProvider;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.RequiredOptions;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
+import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Option(name="-required", paramCnt=1)
 @Option(name="-optional1", paramCnt=0)
@@ -17,7 +17,7 @@ import de.akubix.keyminder.shell.io.CommandOutput;
 public class SwitchTestCmd extends AbstractShellCommand{
 
 	@Override
-	public CommandOutput exec(CommandOutputProvider out, ApplicationInstance instance, CommandInput in){
+	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in){
 		StringBuilder sb = new StringBuilder();
 
 		sb.append(in.getParameters().get("-required")[0]).append(";");

@@ -18,6 +18,7 @@
 */
 package de.akubix.keyminder.shell;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -29,8 +30,10 @@ import java.util.regex.Pattern;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
+import de.akubix.keyminder.shell.io.ShellOutputWriter;
 import de.akubix.keyminder.shell.parse.CommandBuilder;
 import de.akubix.keyminder.shell.parse.ParsedCommand;
 import de.akubix.keyminder.shell.parse.ShellExecOption;
@@ -76,12 +79,34 @@ public class Shell {
 		addCommand(name, classPath, classLoader);
 	}
 
+	/**
+	 * Loads a command list from an ini file
+	 * @param resourcePath
+	 */
+	public void loadCommandsFromIniFile(String resourcePath){
+		try {
+			new IniCommandLoader().load(resourcePath, this);
+		}
+		catch (IOException e) {
+			if(KeyMinder.verbose_mode){
+				instance.printf("Error: Cannot load commands from resource file '%s': %s",
+								resourcePath, e.getMessage());
+			}
+		}
+	}
+
+	/**
+	 * Adds an alias command to the shell
+	 * @param alias
+	 * @param value
+	 */
 	public void addAlias(String alias, String value){
 		aliasMap.put(alias, value);
 	}
 
 	@SuppressWarnings("unchecked")
-	private void addCommand(String name, String classPath, ClassLoader classLoader){
+	protected void addCommand(String name, String classPath, ClassLoader classLoader){
+		name = name.toLowerCase();
 		try {
 			if(!availableCommands.containsKey(name)){
 				Class<?> loadedClass = classLoader.loadClass(classPath);
@@ -100,8 +125,9 @@ public class Shell {
 	 * Executes a command string
 	 * @param commandLineInput
 	 * @throws CommandException
+	 * @throws UserCanceledOperationException when the user entered the 'exit' command
 	 */
-	public void runShellCommand(String commandLineInput) throws CommandException {
+	public void runShellCommand(ShellOutputWriter outWriter, String commandLineInput) throws CommandException, UserCanceledOperationException {
 		List<ParsedCommand> cmdList = parseCommandLineString(commandLineInput);
 
 		for(int i = 0; i < cmdList.size(); i++){
@@ -117,6 +143,9 @@ public class Shell {
 			}
 
 			if(!availableCommands.containsKey(cmdList.get(i).getCommand())){
+				if(cmdList.get(i).getCommand().toLowerCase().equals("exit")){
+					throw new UserCanceledOperationException("Exit command called.");
+				}
 				throw new CommandException(String.format("Unknown command '%s'", cmdList.get(i).getCommand()));
 			}
 		}
@@ -128,7 +157,7 @@ public class Shell {
 				out = null;
 			}
 
-			out = executeCommand(cmd, out);
+			out = executeCommand(outWriter, cmd, out);
 
 			if(execOption == ShellExecOption.REQUIRE_EXIT_0){
 				if(out.getExitCode() != 0){
@@ -147,13 +176,13 @@ public class Shell {
 	 * @return The output of this command
 	 * @throws CommandException
 	 */
-	private CommandOutput executeCommand(ParsedCommand cmd, CommandOutput pipedOut) throws CommandException {
+	private CommandOutput executeCommand(ShellOutputWriter outWriter, ParsedCommand cmd, CommandOutput pipedOut) throws CommandException {
 		try {
 			Constructor<?> constructor = availableCommands.get(cmd.getCommand()).getConstructor();
 			ShellCommand sc = (ShellCommand) constructor.newInstance();
 			CommandInput in = sc.parseArguments(instance, cmd.getArguments());
 			in.setInputData(in);
-			return sc.exec(instance, instance, in);
+			return sc.exec(outWriter, instance, in);
 
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException	| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			throw new CommandException(e.getMessage());
