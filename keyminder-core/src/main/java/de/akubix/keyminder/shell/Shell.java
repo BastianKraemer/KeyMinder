@@ -31,6 +31,8 @@ import java.util.regex.Pattern;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
@@ -122,13 +124,39 @@ public class Shell {
 	}
 
 	/**
+	 * Returns the description an usage of a command (the values are taken from the annotations {@link Description} and {@link Usage})
+	 * @param cmd The name of the command
+	 * @return String array with the description (index 0) and the usage definition (index 1). Both values can be {@code null} if there was no annotation
+	 * @throws CommandException if the command does not exist
+	 */
+	public String[] getManual(String cmd) throws CommandException {
+		if(availableCommands.containsKey(cmd.toLowerCase())){
+			Description desc = availableCommands.get(cmd.toLowerCase()).getAnnotation(Description.class);
+			Usage usage = availableCommands.get(cmd.toLowerCase()).getAnnotation(Usage.class);
+
+			return new String[]{
+				desc != null ? desc.value() : null,
+				usage != null ? usage.value() : null
+			};
+		}
+		else{
+			if(aliasMap.containsKey(cmd)){
+				return new String[]{
+					String.format("'%s' is an alias for '%s'", cmd, aliasMap.get(cmd)),
+					null};
+			}
+			throw new CommandException(String.format("Unknown command '%s'", cmd));
+		}
+	}
+
+	/**
 	 * Executes a command string
 	 * @param commandLineInput
 	 * @throws CommandException
 	 * @throws UserCanceledOperationException when the user entered the 'exit' command
 	 */
 	public void runShellCommand(ShellOutputWriter outWriter, String commandLineInput) throws CommandException, UserCanceledOperationException {
-		List<ParsedCommand> cmdList = parseCommandLineString(commandLineInput);
+		List<ParsedCommand> cmdList = parseCommandLineString(commandLineInput.trim());
 
 		for(int i = 0; i < cmdList.size(); i++){
 			ParsedCommand p = cmdList.get(i);
@@ -151,21 +179,21 @@ public class Shell {
 		}
 
 		CommandOutput out = null;
-		ShellExecOption execOption = ShellExecOption.NONE;
+		ShellExecOption prevExecOption = ShellExecOption.NONE;
 		for(ParsedCommand cmd: cmdList){
-			if(execOption != ShellExecOption.PIPE){
+			if(prevExecOption != ShellExecOption.PIPE){
 				out = null;
 			}
 
-			out = executeCommand(outWriter, cmd, out);
+			out = executeCommand(outWriter, cmd, out, cmd.getExecOption() == ShellExecOption.PIPE);
 
-			if(execOption == ShellExecOption.REQUIRE_EXIT_0){
+			if(cmd.getExecOption() == ShellExecOption.REQUIRE_EXIT_0){
 				if(out.getExitCode() != 0){
 					throw new CommandException(String.format("Command '%s' has exit with code %s. Aborting...", cmd.getCommand(), out.getExitCode()));
 				}
 			}
 
-			execOption = cmd.getExecOption();
+			prevExecOption = cmd.getExecOption();
 		}
 	}
 
@@ -176,13 +204,21 @@ public class Shell {
 	 * @return The output of this command
 	 * @throws CommandException
 	 */
-	private CommandOutput executeCommand(ShellOutputWriter outWriter, ParsedCommand cmd, CommandOutput pipedOut) throws CommandException {
+	private CommandOutput executeCommand(ShellOutputWriter outWriter, ParsedCommand cmd, CommandOutput pipedOut, boolean setPipeIndicator) throws CommandException {
 		try {
 			Constructor<?> constructor = availableCommands.get(cmd.getCommand()).getConstructor();
 			ShellCommand sc = (ShellCommand) constructor.newInstance();
 			CommandInput in = sc.parseArguments(instance, cmd.getArguments());
-			in.setInputData(in);
-			return sc.exec(outWriter, instance, in);
+
+			if(pipedOut != null){
+				in.setInputData(pipedOut.getOutputData());
+			}
+
+			if(setPipeIndicator){in.setPipedOutputInidcator();}
+
+			CommandOutput out = sc.exec(outWriter, instance, in);
+			outWriter.setColor(AnsiColor.RESET);
+			return out;
 
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException	| InvocationTargetException | NoSuchMethodException | SecurityException e) {
 			throw new CommandException(e.getMessage());

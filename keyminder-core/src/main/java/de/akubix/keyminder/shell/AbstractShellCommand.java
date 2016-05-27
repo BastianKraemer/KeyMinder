@@ -53,6 +53,9 @@ public abstract class AbstractShellCommand implements ShellCommand{
 
 		for(Option o: optionList){
 			knownOptions.put(o.name(), o);
+			for(String alias: o.alias()){
+				knownOptions.put(alias, o);
+			}
 		}
 
 		TreeNode node = instance.getTree().getSelectedNode();
@@ -82,7 +85,10 @@ public abstract class AbstractShellCommand implements ShellCommand{
 			else{
 				if(operands.nodeArgAt() == operandArgIndex){
 					node = instance.getTree().getNodeByPath(args.get(i));
-					if(node == null){
+					if(node != null){
+						parameters.put("$" + operandArgIndex, new String[]{args.get(i)});
+					}
+					else{
 						if(operands.optionalNodeArg()){
 							parameters.put("$" + (++operandArgIndex), new String[]{args.get(i)});
 						}
@@ -99,9 +105,12 @@ public abstract class AbstractShellCommand implements ShellCommand{
 			}
 		}
 
-		if(operands != null && operandArgIndex < operands.cnt()){
-			// Not enough operands for this command
-			throw new CommandException("Cannot execute command: Missing operand. Try 'man <command>' for more information.");
+		if(operands != null){
+			int hasOptionalNodeArg = (operands.nodeArgAt() >= 0 && operands.optionalNodeArg()) ? 1 : 0;
+			if(operandArgIndex < (operands.cnt() - hasOptionalNodeArg)){
+				// Not enough operands for this command
+				throw new CommandException("Cannot execute command: Missing operand. Try 'man <command>' for more information.");
+			}
 		}
 
 		for(String requiredSwitch: requiredOptions){

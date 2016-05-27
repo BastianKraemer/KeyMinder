@@ -49,8 +49,11 @@ public class CommandInput {
 	 * @param inputData the inputData to set
 	 */
 	public void setInputData(Object inputData) {
-		this.pipedOutput = (inputData != null);
 		this.inputData = inputData;
+	}
+
+	public void setPipedOutputInidcator(){
+		this.pipedOutput = true;
 	}
 
 	/**

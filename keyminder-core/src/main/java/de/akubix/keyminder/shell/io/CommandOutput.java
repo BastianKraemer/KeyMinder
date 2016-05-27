@@ -31,6 +31,10 @@ public class CommandOutput {
 		return new CommandOutput(0, data);
 	}
 
+	public static CommandOutput error(){
+		return new CommandOutput(1, null);
+	}
+
 	public static CommandOutput error(String message){
 		return new CommandOutput(1, message);
 	}

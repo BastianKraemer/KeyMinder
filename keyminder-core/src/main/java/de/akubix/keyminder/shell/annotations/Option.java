@@ -28,4 +28,10 @@ public @interface Option {
 	 * @return The default value for these options
 	 */
 	String[] defaultValue() default {};
+
+	/**
+	 * The default value if the switch is not present
+	 * @return The default value for these options
+	 */
+	String[] alias() default {};
 }
