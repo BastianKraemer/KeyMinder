@@ -35,7 +35,7 @@ public class CommandOutput {
 		return new CommandOutput(1, null);
 	}
 
-	public static CommandOutput error(String message){
-		return new CommandOutput(1, message);
+	public static CommandOutput error(Object data){
+		return new CommandOutput(1, data);
 	}
 }

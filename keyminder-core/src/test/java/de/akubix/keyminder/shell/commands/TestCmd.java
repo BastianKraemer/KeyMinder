@@ -15,7 +15,7 @@ public class TestCmd extends AbstractShellCommand{
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in) {
 		String ret = in.getParameters().get("$0")[0] + "," +
-					 (in.getTreeNode() != null ? (instance.getTree().getNodePath(in.getTreeNode(), "/") + ",") : "") +
+					 (in.getParameters().containsKey("$1") ? (in.getParameters().get("$1")[0] + ",") : "") +
 					 in.getParameters().get("$2")[0];
 		return CommandOutput.success(ret);
 	}

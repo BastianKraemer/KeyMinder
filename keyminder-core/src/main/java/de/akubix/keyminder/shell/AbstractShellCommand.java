@@ -31,6 +31,7 @@ import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.RequireOpenedFile;
 import de.akubix.keyminder.shell.annotations.RequiredOptions;
 import de.akubix.keyminder.shell.io.CommandInput;
+import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 public abstract class AbstractShellCommand implements ShellCommand{
 	@Override
@@ -84,12 +85,14 @@ public abstract class AbstractShellCommand implements ShellCommand{
 			}
 			else{
 				if(operands.nodeArgAt() == operandArgIndex){
-					node = instance.getTree().getNodeByPath(args.get(i));
-					if(node != null){
+					TreeNode tmp = instance.getTree().getNodeByPath(args.get(i));
+					if(tmp != null){
 						parameters.put("$" + operandArgIndex, new String[]{args.get(i)});
+						node = tmp;
 					}
 					else{
 						if(operands.optionalNodeArg()){
+							// Set this argument as the value of the next operand
 							parameters.put("$" + (++operandArgIndex), new String[]{args.get(i)});
 						}
 						else {
@@ -145,5 +148,27 @@ public abstract class AbstractShellCommand implements ShellCommand{
 			}
 		}
 		return list;
+	}
+
+	protected static void checkInputObjectArgumentConflict(ShellOutputWriter out, CommandInput in, String... argumentKeys){
+		for(String arg: argumentKeys){
+			if(in.getParameters().containsKey(arg)){
+				printInputObjectArgumentConflictWarning(out);
+				return;
+			}
+		}
+	}
+
+	private static void printInputObjectArgumentConflictWarning(ShellOutputWriter out){
+		out.setColor(AnsiColor.YELLOW);
+		out.println("WARNING: The tree node of the input data conflicts with the parameters.\n" +
+					"         In this case the input data will be used instead as data source.");
+		out.setColor(AnsiColor.RESET);
+	}
+
+	protected static void printUnusableInputWarning(ShellOutputWriter out){
+		out.setColor(AnsiColor.YELLOW);
+		out.println("WARNING: Invalid input data for this command. Object type is not supported.");
+		out.setColor(AnsiColor.RESET);
 	}
 }

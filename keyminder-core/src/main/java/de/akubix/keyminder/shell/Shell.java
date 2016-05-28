@@ -32,6 +32,7 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.PipeInfo;
 import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
@@ -144,6 +145,24 @@ public class Shell {
 				return new String[]{
 					String.format("'%s' is an alias for '%s'", cmd, aliasMap.get(cmd)),
 					null};
+			}
+			throw new CommandException(String.format("Unknown command '%s'", cmd));
+		}
+	}
+
+	/**
+	 * Returns the pipe information stored in the {@link PipeInfo} annotation of each command)
+	 * @param cmd The name of the command
+	 * @return The pipe information
+	 * @throws CommandException if the command does not exist (or is just an alias)
+	 */
+	public PipeInfo getPipeInformation(String cmd) throws CommandException {
+		if(availableCommands.containsKey(cmd.toLowerCase())){
+			return availableCommands.get(cmd.toLowerCase()).getAnnotation(PipeInfo.class);
+		}
+		else{
+			if(aliasMap.containsKey(cmd)){
+				throw new CommandException("Pipe informations are not availabe for alias commands");
 			}
 			throw new CommandException(String.format("Unknown command '%s'", cmd));
 		}
