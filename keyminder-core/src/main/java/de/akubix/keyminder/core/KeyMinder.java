@@ -128,6 +128,9 @@ public class KeyMinder {
 								if(args[i+1].toLowerCase().equals("on")){
 									enableColoredOutput = true;
 								}
+								else if(args[i+1].toLowerCase().equals("off")){
+									enableColoredOutput = false;
+								}
 								i++;
 								break;
 

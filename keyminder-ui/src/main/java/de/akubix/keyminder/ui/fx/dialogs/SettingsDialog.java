@@ -22,8 +22,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.ApplicationInstance.ModuleInfo;
+import de.akubix.keyminder.core.interfaces.ModuleProperties;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
+import de.akubix.keyminder.core.modules.ModuleInfo;
+import de.akubix.keyminder.core.modules.ModuleLoader;
 import de.akubix.keyminder.lib.Tools;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -100,23 +102,24 @@ public class SettingsDialog {
 				de.akubix.keyminder.lib.Tools.hashCopy(settingscopy, originalGeneralSettingsReference);
 
 				//Check if the user enabled or disabled some modules
+				ModuleLoader moduleLoader =  app.getModuleLoader();
 				for(String moduleName: moduleList.keySet())
 				{
-					ModuleInfo m = app.getModuleInfo(moduleName);
-					if(m.isEnabled != moduleList.get(moduleName).isSelected())
+					ModuleInfo m = moduleLoader.getModuleInfo(moduleName);
+					if(m.isEnabled() != moduleList.get(moduleName).isSelected())
 					{
 						if(moduleList.get(moduleName).isSelected())
 						{
-							app.enableModule(moduleName);
+							moduleLoader.enableModule(moduleName);
 						}
 						else
 						{
-							app.disableModule(moduleName);
+							moduleLoader.disableModule(moduleName);
 						}
 					}
 				}
 
-				app.settingsHasBeenUpdated();
+				app.saveSettings();
 
 				saveSettings = true;
 				me.close();
@@ -278,25 +281,27 @@ public class SettingsDialog {
 
 		VBox list = new VBox(6);
 		list.setPadding(new Insets(4));
-		for(String moduleName: de.akubix.keyminder.lib.Tools.asSortedList(app.getModules())){
-			ModuleInfo moduleInfo = app.getModuleInfo(moduleName);
+		ModuleLoader moduleLoader = app.getModuleLoader();
+		for(String moduleName: de.akubix.keyminder.lib.Tools.asSortedList(moduleLoader.getModules())){
+			ModuleInfo moduleInfo = moduleLoader.getModuleInfo(moduleName);
 			CheckBox cb;
-			if(moduleInfo.properties != null){
-				cb = new CheckBox(!moduleInfo.properties.name().equals("") ? moduleInfo.properties.name() : moduleName);
+			if(moduleInfo.getProperties() != null){
+				ModuleProperties mp = moduleInfo.getProperties();
+				cb = new CheckBox(!mp.name().equals("") ? mp.name() : moduleName);
 				cb.setTooltip(new Tooltip(String.format(fxUI.getLocaleBundleString("settings.modules.moduleinfo_author") + ": %s\n" +
 														fxUI.getLocaleBundleString("settings.modules.moduleinfo_version") + "%s\n\n%s",
-														moduleInfo.properties.author(),
-														moduleInfo.properties.version().equals(".") ? de.akubix.keyminder.core.ApplicationInstance.APP_VERSION : moduleInfo.properties.version(),
-														de.akubix.keyminder.lib.Tools.forceLineBreak(moduleInfo.properties.description(), 60))));
+														mp.author(),
+														mp.version().equals(".") ? de.akubix.keyminder.core.ApplicationInstance.APP_VERSION : moduleInfo.getProperties().version(),
+														de.akubix.keyminder.lib.Tools.forceLineBreak(mp.description(), 60))));
 			}
 			else{
 				cb = new CheckBox(moduleName);
 			}
 
-			if(moduleInfo.isEnabled && !moduleInfo.isStarted()){cb.setText(cb.getText() + " (!)");}
-			if(!moduleInfo.isEnabled && moduleInfo.isStarted()){cb.setText(cb.getText() + " (*)");}
+			if(moduleInfo.isEnabled() && !moduleInfo.isStarted()){cb.setText(cb.getText() + " (!)");}
+			if(!moduleInfo.isEnabled() && moduleInfo.isStarted()){cb.setText(cb.getText() + " (*)");}
 
-			cb.setSelected(moduleInfo.isEnabled);
+			cb.setSelected(moduleInfo.isEnabled());
 			cb.setMaxWidth(size_x - 18);
 			cb.setMinWidth(size_x - 18);
 			moduleList.put(moduleName, cb);

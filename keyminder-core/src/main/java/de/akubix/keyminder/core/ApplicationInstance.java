@@ -27,7 +27,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -46,8 +45,6 @@ import de.akubix.keyminder.core.interfaces.Command;
 import de.akubix.keyminder.core.interfaces.CommandOutputProvider;
 import de.akubix.keyminder.core.interfaces.FxAdministrationInterface;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
-import de.akubix.keyminder.core.interfaces.Module;
-import de.akubix.keyminder.core.interfaces.ModuleProperties;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventHost;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
@@ -55,6 +52,7 @@ import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
 import de.akubix.keyminder.core.io.StorageManager;
+import de.akubix.keyminder.core.modules.ModuleLoader;
 import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.lib.XMLCore;
 import javafx.scene.control.TabPane;
@@ -95,8 +93,10 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 	private Map<String, Command> commands = new HashMap<String, Command>();
 	private Map<String, String> commandManual = new HashMap<String, String>();
 
+	private Map<String, List<Object>> eventCollection = new HashMap<>();
 	private StandardTree tree;
 	private CommandOutputProvider outputRedirect = null;
+	private final ModuleLoader moduleLoader;
 	public final StorageManager storageManager;
 	public final Locale applicationLocale;
 
@@ -150,10 +150,15 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 				applicationLocale = new Locale("en", "EN");
 			}
 		}
+		this.moduleLoader = new ModuleLoader(this);
 	}
 
 	public Tree getTree(){
 		return tree;
+	}
+
+	public ModuleLoader getModuleLoader(){
+		return this.moduleLoader;
 	}
 
 	/*
@@ -170,7 +175,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 	public void startup(boolean enableModuleLoading){
 
 		if(enableModuleLoading){
-			loadModules();
+			moduleLoader.loadModules();
 		}
 
 		provideCoreCommands();
@@ -274,6 +279,13 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 		}
 	}
 
+	public void reloadSettings(){
+		settings.clear();
+		presetDefaultSettings();
+		loadSettingsFromXMLFile();
+		fireEvent(DefaultEvent.OnSettingsChanged);
+	}
+
 	public boolean settingsContainsKey(String name){
 		return settings.containsKey(name);
 	}
@@ -283,7 +295,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 	}
 
 	public String setSettingsValue(String name, String value) throws IllegalArgumentException, IllegalStateException {
-		if(!name.matches("[a-zA-Z0-9[_][:]\\.]*")){throw new IllegalArgumentException("The name for the settings value contains an illegal character. Allowed characters: 'A-Z', 'a-z', '0-9', '.', '_' and ':'.");}
+		if(!name.matches("[a-zA-Z0-9_:\\.]+")){throw new IllegalArgumentException("The name for the settings value contains an illegal character. Allowed characters: 'A-Z', 'a-z', '0-9', '.', '_' and ':'.");}
 		return settings.put(name, value);
 	}
 
@@ -291,6 +303,10 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 		if(!settings.containsKey(name)){return onNotExist;}
 		String value = settings.get(name).toLowerCase();
 		if(value.equals("yes") || value.equals("true") || value.equals("1")){return true;}else{return false;}
+	}
+
+	public boolean removeSettingsValue(String name){
+		return (settings.remove(name) != null);
 	}
 
 	public boolean fileSettingsContainsKey(String name){
@@ -312,16 +328,36 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 			throw new IllegalStateException("Unable to change the file settings if not file is opened!");
 		}
 
-		if(!name.matches("[a-zA-Z0-9[_][:]\\.]*")){
+		if(!name.matches("[a-zA-Z0-9_:\\.]+")){
 			throw new IllegalArgumentException("The name for the file settings value contains an illegal character. Allowed characters: 'A-Z', 'a-z', '0-9', '.', '_' and ':'.");
 		}
 		currentFile.fileSettings.put(name, value);
 	}
 
+	public boolean removeFileSettingsValue(String name){
+		if(currentFile == null){
+			throw new IllegalStateException("Unable to change the file settings if not file is opened!");
+		}
+
+		return (currentFile.fileSettings.remove(name) != null);
+	}
+
+	public Set<String> getSettingsKeySet(){
+		return settings.keySet();
+	}
+
+	public Set<String> getFileSettingsKeySet(){
+		if(currentFile == null){
+			throw new IllegalStateException("Unable to change the file settings if not file is opened!");
+		}
+
+		return currentFile.fileSettings.keySet();
+	}
+
 	/**
 	 * Tell the ApplicationInstance that some settings may have changed an fire the assigned events
 	 */
-	public void settingsHasBeenUpdated(){
+	public void saveSettings(){
 		XMLCore.saveMapAsXMLFile(settingsFile, settings, "keyminder_settings");
 		fireEvent(DefaultEvent.OnSettingsChanged);
 	}
@@ -708,178 +744,6 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 
 	public void registerFXUserInterface(FxAdministrationInterface fxUI){
 		fxInterface = fxUI;
-	}
-
-	private Map<String, ModuleInfo> allModules = new HashMap<String, ModuleInfo>();
-	private Map<String, List<Object>> eventCollection = new HashMap<>();
-
-	private void loadModules(){
-		List<String> enabledModules = Arrays.asList(settings.getOrDefault(SETTINGS_KEY_ENABLED_MODULES, "").split(";"));
-
-		Iterator<Module> moduleIterator = ServiceLoader.load(Module.class).iterator();
-		while (moduleIterator.hasNext()) {
-			Module m = (Module) moduleIterator.next();
-
-			//Get the module description by reading the class annotation
-			ModuleProperties moduleDescription = m.getClass().getAnnotation(de.akubix.keyminder.core.interfaces.ModuleProperties.class);
-
-			if(moduleDescription != null){
-				if(enabledModules.contains(moduleDescription.name())){
-					allModules.put(moduleDescription.name(), new ModuleInfo(m, moduleDescription, true));
-				}
-				else{
-					//Module is not enabled
-					allModules.put(moduleDescription.name(), new ModuleInfo(m, moduleDescription, false));
-				}
-			}
-		}
-
-		//Start all modules, observing their dependencies to other modules
-		for(String moduleName: enabledModules){
-			startModule(moduleName, new ArrayList<String>());
-		}
-	}
-
-	private void startModule(String moduleName, List<String> initiators){
-		if(!allModules.containsKey(moduleName)){return;}
-
-		ModuleInfo m = allModules.get(moduleName);
-		if(!m.isStarted() && m.isEnabled){
-			String dependencies = (m.properties == null ? "" : m.properties.dependencies().replace(" ", ""));
-			if(!dependencies.equals("")){
-				initiators.add(moduleName);
-				for(String dependent_module: dependencies.split(";")){
-					if(!initiators.contains(dependent_module)){
-						startModule(dependent_module, initiators);
-					}
-					else{
-						println(String.format("Warning: Cannot resolve module dependencies of '%s', because they are cyclic.", initiators.get(0)));
-					}
-				}
-				initiators.remove(moduleName);
-			}
-
-			if(startModule(moduleName, m.moduleInstance)){
-				m.setStarted();
-			}
-			else{
-				allModules.put(moduleName, new ModuleInfo(null, m.properties, true)); //Remove the instance from the module list
-			}
-		}
-	}
-
-	/**
-	 * Starts a module an handles the errors if the start fails
-	 * @param name
-	 * @param moduleInstance
-	 * @return {@code true} if the module has been successfully started, {@code false} if not
-	 */
-	private boolean startModule(String name, Module moduleInstance){
-		if(moduleInstance == null){return false;}
-		try {
-			if(KeyMinder.environment.containsKey("verbose_mode")){println(String.format("Starting module \"%s\"... ", name));}
-			moduleInstance.onStartup(this);
-			return true;
-
-		} catch (de.akubix.keyminder.core.exceptions.ModuleStartupException e) {
-			switch(e.getErrorLevel()){
-				case Critical:
-					println("Critical error while loading module \"" + name + "\": " +e.getMessage());
-					break;
-				case Default:
-					println("Cannot load module \"" + name + "\": " +e.getMessage());
-					break;
-				case FxUserInterfaceNotAvailable:
-				case OSNotSupported:
-					if(!KeyMinder.environment.containsKey("silent_mode")){
-						println("Cannot load module \"" + name + "\": " +e.getMessage());
-					}
-					break;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Enable a module (will be loaded on next start)
-	 * @param moduleClassName class name of the module
-	 * @throws IllegalArgumentException if the module does not exist
-	 */
-	public void enableModule(String moduleClassName) throws IllegalArgumentException{
-		if(allModules.containsKey(moduleClassName)){
-			if(settings.containsKey(SETTINGS_KEY_ENABLED_MODULES)){
-				String currentlyEnabledModules = settings.get(SETTINGS_KEY_ENABLED_MODULES);
-				List<String> enabledModules = Arrays.asList(currentlyEnabledModules.split(";"));
-				if(!enabledModules.contains(moduleClassName)) {
-					if(currentlyEnabledModules.endsWith(";")) {
-						settings.put(SETTINGS_KEY_ENABLED_MODULES, currentlyEnabledModules + moduleClassName);
-					}
-					else {
-						settings.put(SETTINGS_KEY_ENABLED_MODULES, currentlyEnabledModules + ";" + moduleClassName);
-					}
-
-					allModules.get(moduleClassName).isEnabled = true;
-					settingsHasBeenUpdated();
-				}
-			}
-			else{
-				settings.put(SETTINGS_KEY_ENABLED_MODULES, moduleClassName);
-			}
-		}
-		else{
-			throw new IllegalArgumentException("Module does not exist.");
-		}
-	}
-
-	/**
-	 * Disable a module (won't be loaded on next start)
-	 * @param moduleClassName the class name of the module
-	 * @throws IllegalArgumentException if the module does not exist
-	 */
-	public void disableModule(String moduleClassName) throws IllegalArgumentException {
-		if(allModules.containsKey(moduleClassName)){
-			if(settings.containsKey(SETTINGS_KEY_ENABLED_MODULES)){
-				List<String> enabledModules = new ArrayList<>();
-				for(String s: settings.get(SETTINGS_KEY_ENABLED_MODULES).split(";")){
-					enabledModules.add(s);
-				}
-
-				if(enabledModules.contains(moduleClassName)){
-					enabledModules.remove(moduleClassName);
-
-					if(enabledModules.size() > 0){
-						StringBuilder sb = new StringBuilder("");
-						for(String moduleName: enabledModules){
-							sb.append(moduleName + ";");
-						}
-
-						settings.put(SETTINGS_KEY_ENABLED_MODULES, sb.toString());
-					}
-					allModules.get(moduleClassName).isEnabled = false;
-					settingsHasBeenUpdated();
-				}
-			}
-		}
-		else{
-			throw new IllegalArgumentException("Module does not exist.");
-		}
-	}
-
-	/**
-	 * Returns a list, respectively a Set of all modules
-	 * @return a list (as Set) of all modules
-	 */
-	public Set<String> getModules(){
-		return allModules.keySet();
-	}
-
-	/**
-	 * Returns the properties of a specific module
-	 * @param moduleName the name of the module
-	 * @return The ModuleInfo OR null if the module does not exist respectively the module does not have any properties
-	 */
-	public ModuleInfo getModuleInfo(String moduleName){
-		return allModules.get(moduleName);
 	}
 
 	@Override
@@ -1410,83 +1274,6 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 				"  file types		to print a list of all supported file types.\n"
 				+ "file set-cipher	to change the encryption algorithm of your file");
 
-		provideNewCommand("module", new Command() {
-			@Override
-			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(args.length == 2){
-					switch(args[0].toLowerCase()){
-						case "-info":
-						case "-about":
-							ModuleInfo m = allModules.get(args[1]);
-							if(m != null){
-								if(m.properties != null){
-									out.println(String.format(	"Modulename: \t%s\n" +
-																"Version: \t%s\n" +
-																"Author: \t%s\n" +
-																"Status: \t%s\n\n" +
-																"Description:\n%s",
-												m.properties.name(),
-												m.properties.version().equals(".") ? APP_VERSION : m.properties.version(),
-												m.properties.author(),
-												(m.isEnabled ? (m.isStarted() ? "ENABLED" : "ENABLED (Startup error)" ): "DISABLED"),
-												m.properties.description()));
-								}
-								else{
-									out.println("No information for module '" + args[0] + "' available");
-								}
-							}
-							else{
-								out.println("Cannot finde module '" + args[1] + "'. Maybe you did not observe to match the module names case?");
-							}
-							break;
-
-						case "-enable":
-						case "--enable":
-						case "/enable":
-							try{
-								enableModule(args[1]);
-							}
-							catch(IllegalArgumentException ex){
-								out.println("Cannot enable module: " + ex.getMessage());
-							}
-							break;
-
-						case "-disable":
-						case "--disable":
-						case "/disable":
-							try{
-								disableModule(args[1]);
-							}
-							catch(IllegalArgumentException ex){
-								out.println("Cannot enable module: " + ex.getMessage());
-							}
-							break;
-					}
-				}
-				else
-				{
-					out.println("Status\t\tModule name\n" +
-								"------\t\t-----------");
-
-					for(String name: allModules.keySet()){
-						out.println(String.format("%s%s",
-								(allModules.get(name).isEnabled ?
-										(allModules.get(name).isStarted() ? "ENABLED\t\t" : "ENABLED (!)\t") :
-										(allModules.get(name).isStarted() ? "ENABLED (-)\t" : "DISABLED\t")),
-								name));
-					}
-
-					out.println("\n(!) This module is currently not started, this could happen if the module crashed on startup or if it has enabled during this session.\n" +
-								"(-) This module will be disabled at the next start.");
-
-				}
-				return null;
-			}
-		}, "Enables or disables a Krytonit module.\n\n" +
-			"\tUsage: module [option] [modulename]\n\n" +
-			"Possible options are: '-about', '-enable' or '-disable'\n" +
-			"Its also possible to call 'module' without arguments to dislay a list of all modules.");
-
 		provideNewCommand("favorites", new Command() {
 			@Override
 			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
@@ -1591,7 +1378,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 				}
 				else if(args.length == 1){
 					if(args[0].toLowerCase().equals("save")){
-						instance.settingsHasBeenUpdated();
+						instance.saveSettings();
 					}
 					else if(args[0].toLowerCase().equals("reload")){
 						settings.clear();
@@ -1619,7 +1406,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 					if(args[index].matches("[a-zA-Z0-9[_][:]\\.]*")){
 						instance.setSettingsValue(args[index], args[index + 1]);
 
-						if(args.length == 3){instance.settingsHasBeenUpdated();}else{fireEvent(DefaultEvent.OnSettingsChanged);}
+						if(args.length == 3){instance.saveSettings();}else{fireEvent(DefaultEvent.OnSettingsChanged);}
 					}
 					else{
 						out.println("Invalid key characters. Valid characters are only \"A-Z\", \"a-z\", \"0-9\", \".\", \"_\" and \":\".");
@@ -1755,26 +1542,5 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 			fireEvent(DefaultEvent.OnExit);
 			System.exit(0);
 		}
-	}
-
-	/*
-	 * ========================================================================================================================================================
-	 * Module Information Class
-	 * ========================================================================================================================================================
-	 */
-	public class ModuleInfo{
-		public ModuleInfo(Module instance, ModuleProperties moduleProperties, boolean isEnabled){
-			this.moduleInstance = instance;
-			this.isEnabled = isEnabled;
-			this.properties = moduleProperties;
-			this.moduleIsStarted = false;
-		}
-		public final Module moduleInstance;
-		public boolean isEnabled;
-		public final ModuleProperties properties;
-		private boolean moduleIsStarted;
-
-		public boolean isStarted(){return moduleIsStarted;}
-		public void setStarted(){this.moduleIsStarted = true;}
 	}
 }
