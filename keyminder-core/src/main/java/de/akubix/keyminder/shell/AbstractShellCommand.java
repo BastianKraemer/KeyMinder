@@ -25,6 +25,7 @@ import java.util.Map;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.shell.annotations.AllowCallWithoutArguments;
 import de.akubix.keyminder.shell.annotations.NoArgs;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
@@ -37,12 +38,13 @@ public abstract class AbstractShellCommand implements ShellCommand{
 	@Override
 	public CommandInput parseArguments(ApplicationInstance instance, List<String> args) throws CommandException {
 
-		if(getClass().getAnnotationsByType(RequireOpenedFile.class).length > 0 && instance.currentFile == null){
+		if(getClass().getAnnotation(RequireOpenedFile.class) != null && instance.currentFile == null){
 			throw new CommandException("Error: You have to open a password file before you can use this command.");
 		}
 
-		if(getClass().getAnnotationsByType(NoArgs.class).length > 0 && args.size() > 0){
-			throw new CommandException("Error: This command does not take any arguments.");
+		NoArgs noArgs = getClass().getAnnotation(NoArgs.class);
+		if(noArgs != null && args.size() > 0){
+				throw new CommandException("Error: This command does not take any arguments.");
 		}
 
 		Map<String, Option> knownOptions = new HashMap<>();
@@ -108,17 +110,19 @@ public abstract class AbstractShellCommand implements ShellCommand{
 			}
 		}
 
-		if(operands != null){
-			int hasOptionalNodeArg = (operands.nodeArgAt() >= 0 && operands.optionalNodeArg()) ? 1 : 0;
-			if(operandArgIndex < (operands.cnt() - hasOptionalNodeArg)){
-				// Not enough operands for this command
-				throw new CommandException("Cannot execute command: Missing operand. Try 'man <command>' for more information.");
+		if(args.size() > 0 || getClass().getAnnotation(AllowCallWithoutArguments.class) == null){
+			if(operands != null){
+				int hasOptionalNodeArg = (operands.nodeArgAt() >= 0 && operands.optionalNodeArg()) ? 1 : 0;
+				if(operandArgIndex < (operands.cnt() - hasOptionalNodeArg)){
+					// Not enough operands for this command
+					throw new CommandException("Cannot execute command: Missing operand. Try 'man <command>' for more information.");
+				}
 			}
-		}
 
-		for(String requiredSwitch: requiredOptions){
-			if(!parameters.containsKey(requiredSwitch)){
-				throw new CommandException(String.format("Required option '%s' is missing.", requiredSwitch));
+			for(String requiredSwitch: requiredOptions){
+				if(!parameters.containsKey(requiredSwitch)){
+					throw new CommandException(String.format("Required option '%s' is missing.", requiredSwitch));
+				}
 			}
 		}
 
