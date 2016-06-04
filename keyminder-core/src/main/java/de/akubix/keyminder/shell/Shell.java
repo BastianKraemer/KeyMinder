@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,8 +63,8 @@ public class Shell {
 
 	private ApplicationInstance instance;
 
-	Map<String, Class<? extends ShellCommand>> availableCommands = new HashMap<>();
-	Map<String, String> aliasMap = new HashMap<>();
+	private Map<String, Class<? extends ShellCommand>> availableCommands = new HashMap<>();
+	private Map<String, String> aliasMap = new HashMap<>();
 
 	/**
 	 * Create a new Shell instance
@@ -105,6 +107,14 @@ public class Shell {
 	 */
 	public void addAlias(String alias, String value){
 		aliasMap.put(alias, value);
+	}
+
+	public Set<String> getCommandSet(){
+		return this.availableCommands.keySet();
+	}
+
+	public Set<Entry<String, String>> getAliasSet(){
+		return this.aliasMap.entrySet();
 	}
 
 	@SuppressWarnings("unchecked")
