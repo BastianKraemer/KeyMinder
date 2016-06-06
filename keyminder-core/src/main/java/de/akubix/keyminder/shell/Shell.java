@@ -61,10 +61,10 @@ import de.akubix.keyminder.shell.parse.ShellExecOption;
  */
 public class Shell {
 
-	private ApplicationInstance instance;
+	private final ApplicationInstance instance;
 
-	private Map<String, Class<? extends ShellCommand>> availableCommands = new HashMap<>();
-	private Map<String, String> aliasMap = new HashMap<>();
+	private final Map<String, Class<? extends ShellCommand>> availableCommands = new HashMap<>();
+	private final Map<String, String> aliasMap = new HashMap<>();
 
 	/**
 	 * Create a new Shell instance
@@ -129,7 +129,7 @@ public class Shell {
 			}
 		} catch (ClassNotFoundException e){
 			if(KeyMinder.verbose_mode){
-				instance.printf("Cannot load command '%s'. Unable to find class '%s'", name, classPath);
+				instance.printf("Cannot load command '%s'. Unable to find class '%s'\n", name, classPath);
 			}
 		}
 	}
@@ -180,7 +180,27 @@ public class Shell {
 
 	/**
 	 * Executes a command string
-	 * @param commandLineInput
+	 * @param commandLineInput The command string
+	 * @throws CommandException
+	 * @throws UserCanceledOperationException when the user entered the 'exit' command
+	 */
+	public void runShellCommand(String commandLineInput) throws CommandException, UserCanceledOperationException {
+		runShellCommand(this.instance, commandLineInput);
+	}
+
+	/**
+	 * Checks whether a command exists or not
+	 * @param commandName
+	 * @return
+	 */
+	public boolean commandExists(String commandName){
+		return availableCommands.containsKey(commandName);
+	}
+
+	/**
+	 * Executes a command string
+	 * @param outWriter The output writer
+	 * @param commandLineInput The command string
 	 * @throws CommandException
 	 * @throws UserCanceledOperationException when the user entered the 'exit' command
 	 */

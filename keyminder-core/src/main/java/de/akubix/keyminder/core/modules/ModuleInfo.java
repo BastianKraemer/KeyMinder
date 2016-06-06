@@ -16,7 +16,7 @@ public class ModuleInfo {
 		this.moduleIsStarted = false;
 	}
 
-	protected Module getInstance(){
+	public Module getInstance(){
 		return this.moduleInstance;
 	}
 

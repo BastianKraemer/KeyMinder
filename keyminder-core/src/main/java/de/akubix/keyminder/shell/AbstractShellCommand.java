@@ -47,92 +47,97 @@ public abstract class AbstractShellCommand implements ShellCommand{
 				throw new CommandException("Error: This command does not take any arguments.");
 		}
 
-		Map<String, Option> knownOptions = new HashMap<>();
-		Map<String, String[]> parameters = new HashMap<>();
+		try{
+			Map<String, Option> knownOptions = new HashMap<>();
+			Map<String, String[]> parameters = new HashMap<>();
 
-		Operands operands = getOperandAnnotation();
-		Option[] optionList = getClass().getAnnotationsByType(Option.class);
-		List<String> requiredOptions = getRequiredOptionsList();
+			Operands operands = getOperandAnnotation();
+			Option[] optionList = getClass().getAnnotationsByType(Option.class);
+			List<String> requiredOptions = getRequiredOptionsList();
 
-		for(Option o: optionList){
-			knownOptions.put(o.name(), o);
-			for(String alias: o.alias()){
-				knownOptions.put(alias, o);
-			}
-		}
-
-		TreeNode node = instance.getTree().getSelectedNode();
-
-		int operandArgIndex = 0;
-
-		for(int i = 0; i < args.size(); i++){
-			// This could be a parameter
-			if(args.get(i).startsWith("-")){
-				if(knownOptions.containsKey(args.get(i))){
-					Option o = knownOptions.get(args.get(i));
-					String[] values = new String[o.paramCnt()];
-					for(int j = 0; j < o.paramCnt(); j++){
-						values[j] = args.get(++i);
-					}
-					parameters.put(o.name(), values);
-					continue;
+			for(Option o: optionList){
+				knownOptions.put(o.name(), o);
+				for(String alias: o.alias()){
+					knownOptions.put(alias, o);
 				}
-				// maybe it was not - try to use argument as command line option
 			}
 
-			// Are there any arguments without parameters?
-			if(operands == null || operandArgIndex >= operands.cnt()){
-				// To many anonymous arguments
-				throw new CommandException(String.format("Unknown argument '%s'.", args.get(i)));
-			}
-			else{
-				if(operands.nodeArgAt() == operandArgIndex){
-					TreeNode tmp = instance.getTree().getNodeByPath(args.get(i));
-					if(tmp != null){
-						parameters.put("$" + operandArgIndex, new String[]{args.get(i)});
-						node = tmp;
-					}
-					else{
-						if(operands.optionalNodeArg()){
-							// Set this argument as the value of the next operand
-							parameters.put("$" + (++operandArgIndex), new String[]{args.get(i)});
+			TreeNode node = instance.getTree().getSelectedNode();
+
+			int operandArgIndex = 0;
+
+			for(int i = 0; i < args.size(); i++){
+				// This could be a parameter
+				if(args.get(i).startsWith("-")){
+					if(knownOptions.containsKey(args.get(i))){
+						Option o = knownOptions.get(args.get(i));
+						String[] values = new String[o.paramCnt()];
+						for(int j = 0; j < o.paramCnt(); j++){
+							values[j] = args.get(++i);
 						}
-						else {
-							throw new CommandException(String.format("Node '%s' does not exist.", args.get(i)));
-						}
+						parameters.put(o.name(), values);
+						continue;
 					}
+					// maybe it was not - try to use argument as command line option
+				}
+
+				// Are there any arguments without parameters?
+				if(operands == null || operandArgIndex >= operands.cnt()){
+					// To many anonymous arguments
+					throw new CommandException(String.format("Unknown argument '%s'.", args.get(i)));
 				}
 				else{
-					parameters.put("$" + operandArgIndex, new String[]{args.get(i)});
+					if(operands.nodeArgAt() == operandArgIndex){
+						TreeNode tmp = instance.getTree().getNodeByPath(args.get(i));
+						if(tmp != null){
+							parameters.put("$" + operandArgIndex, new String[]{args.get(i)});
+							node = tmp;
+						}
+						else{
+							if(operands.optionalNodeArg()){
+								// Set this argument as the value of the next operand
+								parameters.put("$" + (++operandArgIndex), new String[]{args.get(i)});
+							}
+							else {
+								throw new CommandException(String.format("Node '%s' does not exist.", args.get(i)));
+							}
+						}
+					}
+					else{
+						parameters.put("$" + operandArgIndex, new String[]{args.get(i)});
+					}
+
+					operandArgIndex++;
+				}
+			}
+
+			if(args.size() > 0 || getClass().getAnnotation(AllowCallWithoutArguments.class) == null){
+				if(operands != null){
+					int hasOptionalNodeArg = (operands.nodeArgAt() >= 0 && operands.optionalNodeArg()) ? 1 : 0;
+					if(operandArgIndex < (operands.cnt() - hasOptionalNodeArg)){
+						// Not enough operands for this command
+						throw new CommandException("Cannot execute command: Missing operand. Try 'man <command>' for more information.");
+					}
 				}
 
-				operandArgIndex++;
-			}
-		}
-
-		if(args.size() > 0 || getClass().getAnnotation(AllowCallWithoutArguments.class) == null){
-			if(operands != null){
-				int hasOptionalNodeArg = (operands.nodeArgAt() >= 0 && operands.optionalNodeArg()) ? 1 : 0;
-				if(operandArgIndex < (operands.cnt() - hasOptionalNodeArg)){
-					// Not enough operands for this command
-					throw new CommandException("Cannot execute command: Missing operand. Try 'man <command>' for more information.");
+				for(String requiredSwitch: requiredOptions){
+					if(!parameters.containsKey(requiredSwitch)){
+						throw new CommandException(String.format("Required option '%s' is missing.", requiredSwitch));
+					}
 				}
 			}
 
-			for(String requiredSwitch: requiredOptions){
-				if(!parameters.containsKey(requiredSwitch)){
-					throw new CommandException(String.format("Required option '%s' is missing.", requiredSwitch));
+			for(Option o: optionList){
+				if(o.defaultValue().length > 0 && !parameters.containsKey(o.name())){
+					parameters.put(o.name(), o.defaultValue());
 				}
 			}
-		}
 
-		for(Option o: optionList){
-			if(o.defaultValue().length > 0 && !parameters.containsKey(o.name())){
-				parameters.put(o.name(), o.defaultValue());
-			}
+			return new CommandInput(parameters, node);
 		}
-
-		return new CommandInput(parameters, node);
+		catch(IndexOutOfBoundsException e){
+			throw new CommandException("Malformed command syntax. Try 'man <command>' for more information.");
+		}
 	}
 
 	private Operands getOperandAnnotation(){
@@ -173,6 +178,12 @@ public abstract class AbstractShellCommand implements ShellCommand{
 	protected static void printUnusableInputWarning(ShellOutputWriter out){
 		out.setColor(AnsiColor.YELLOW);
 		out.println("WARNING: Invalid input data for this command. Object type is not supported.");
+		out.setColor(AnsiColor.RESET);
+	}
+
+	protected static void printNoInputDataError(ShellOutputWriter out){
+		out.setColor(AnsiColor.RED);
+		out.println("ERROR: Referenced input data is not available.");
 		out.setColor(AnsiColor.RESET);
 	}
 }

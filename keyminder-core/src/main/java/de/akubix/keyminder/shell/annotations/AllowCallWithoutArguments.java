@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 
 /**
- * A shell {@link AbstractShellCommand} with this annotation can be called without arguments.
+ * An {@link AbstractShellCommand} annotated has this interface can be called without arguments.
  * Any defined {@link Operands} are missing in the parameter map in this case.
  */
 @Target(ElementType.TYPE)
