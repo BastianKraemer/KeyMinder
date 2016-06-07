@@ -28,13 +28,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.Command;
-import de.akubix.keyminder.core.interfaces.CommandOutputProvider;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.core.interfaces.events.BooleanEventHandler;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
@@ -44,6 +46,7 @@ import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.interfaces.events.SettingsEventHandler;
 import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.lib.sidebar.FxSidebar;
+import de.akubix.keyminder.shell.CommandException;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -98,7 +101,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 	private Map<String, CheckMenuItem> socksMenuItems = new HashMap<>();
 
 	private Menu socksMenu;
-	private List<AppStarter> appStarterList = new ArrayList<>();
+	private Map<String, AppStarter> appStarter = new HashMap<>();
 	private AppStarter socksAppStarter = null;
 
 	private static final String SETTINGS_KEY_SOCKS_ACTION = "sshtools.actionprofile_socks"; //Contains the path to the XML application profile for "Socks"
@@ -115,19 +118,24 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		if(!checkProfileSettings(SETTINGS_KEY_SOCKS_ACTION)){app.setSettingsValue(SETTINGS_KEY_SOCKS_ACTION, "default:putty_socks");}
 		if(!checkProfileSettings(SETTINGS_KEY_APP_PROFILES_PATH)){app.setSettingsValue(SETTINGS_KEY_APP_PROFILES_PATH, "./sshtools");}
 
-		provideSocksCommand();
+		app.getShell().addCommand("socks", getClass().getPackage().getName() + ".SocksCmd");
+		app.getShell().addCommand("run", getClass().getPackage().getName() + ".AppStartCmd");
 
 		if(app.isFxUserInterfaceAvailable()){
 			fxUI = app.getFxUserInterface();
 
-			FxSidebar sidebar = new FxSidebar(app, fxUI.getLocaleBundleString("module.sshtools.tabtitle"), true, new EventHandler<ActionEvent>() {
-				@Override
-				public void handle(ActionEvent event) {
-					app.execute("keyclip", app.getTree().getSelectedNode().getAttribute("ssh_user"),
-							 app.getTree().getSelectedNode().getAttribute("ssh_password"),
-							 "yes");
-				}}
-			);
+			EventHandler<ActionEvent> keyclipHandler = null;
+			if(app.getShell().commandExists("keyclip")){
+				keyclipHandler = (event) -> {
+					try {
+						app.getShell().runShellCommand("keyclip");
+					} catch (CommandException | UserCanceledOperationException e){
+						app.alert(e.getMessage());
+					}
+				};
+			}
+
+			FxSidebar sidebar = new FxSidebar(app, fxUI.getLocaleBundleString("module.sshtools.tabtitle"), true, keyclipHandler);
 			sidebar.addLabel(fxUI.getLocaleBundleString("module.sshtools.ssh_host"));
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextbox("ssh_host"), "ssh_host");
 
@@ -156,7 +164,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			if(KeyMinder.environment.containsKey("module.sshtools.etchosts")){
 				fxUI.addMenuEntry(de.akubix.keyminder.lib.Tools.createFxMenuItem(fxUI.getLocaleBundleString("module.sshtools.open_etchosts"), "", (event) -> {
 					try{
-						String[] cmd = de.akubix.keyminder.core.ApplicationInstance.splitParameters(KeyMinder.environment.get("module.sshtools.etchosts"));
+						String[] cmd = splitParameters(KeyMinder.environment.get("module.sshtools.etchosts"));
 
 						File f = new File(cmd[0]);
 						if(f.exists()){
@@ -166,8 +174,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 							fxUI.alert(String.format("Cannot execute file '%s': File does not exist.", cmd[0]));
 						}
 					}
-					catch(Exception ex)
-					{
+					catch(Exception ex){
 						fxUI.alert("Cannot execute etc hosts command: " + ex.getMessage());
 						if(de.akubix.keyminder.core.KeyMinder.verbose_mode){ex.printStackTrace();}
 					}
@@ -188,8 +195,8 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 
 	private void loadAllApplicationStarter(){
 
-		loadDefaultApplicationStarter("PuTTY", "sshtools.enable_putty", "default:putty");
-		loadDefaultApplicationStarter("WinSCP", "sshtools.enable_winscp", "default:winscp");
+		loadDefaultApplicationStarter("sshtools.enable_putty", "default:putty");
+		loadDefaultApplicationStarter("sshtools.enable_winscp", "default:winscp");
 
 		File dir = new File(app.getSettingsValue(SETTINGS_KEY_APP_PROFILES_PATH));
 		if(dir.exists()){
@@ -213,7 +220,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 						if(KeyMinder.verbose_mode){
 							app.printf(" - Loading application profile from file '%s'...\n", xmlFile);
 						}
-						appStarterList.add(as);
+						appStarter.put(as.getName(), as);
 					}
 					catch(IllegalArgumentException ex){
 						app.log(String.format("SSH-Tools: Cannot load AppStarter: %s\nXML-File: %s", ex.getMessage(), xmlFile.getAbsolutePath()));
@@ -223,7 +230,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		}
 	}
 
-	private void loadDefaultApplicationStarter(String name, String settings_value, String inputStreamSrc){
+	private void loadDefaultApplicationStarter(String settings_value, String inputStreamSrc){
 		try{
 			if(app.getSettingsValueAsBoolean(settings_value, false)){
 				AppStarter as = new AppStarter(app, this, () -> {try {
@@ -231,13 +238,13 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 					} catch (Exception e) {
 						throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
 				}});
-				appStarterList.add(as);
+				appStarter.put(as.getName(), as);
 			}
 		}
 		catch(IllegalArgumentException e){
 			e.printStackTrace();
 			// This will occur if a built-in profile has a syntax error
-			String message = String.format("Warning: Syntax error in application profile '%s.", name);
+			String message = String.format("Warning: Syntax error in application profile '%s.", inputStreamSrc);
 			if(KeyMinder.verbose_mode){app.alert(message);}else{app.log(message);}
 		}
 	}
@@ -271,10 +278,8 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 	}
 
 	private InputStream getXMLProfileInputStream(String path) throws FileNotFoundException{
-
 		InputStream in;
-		switch(path)
-		{
+		switch(path){
 			case "":
 				throw new FileNotFoundException("Path for XML application profile is not defined.");
 
@@ -370,50 +375,20 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		}
 	}
 
-	private void provideSocksCommand(){
-		app.provideNewCommand("socks", new Command() {
-			@Override
-			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(args.length == 2){
-					if(args[0].toLowerCase().equals("start")){
-						if(startSocksProfile(args[1])){
-							out.println("Socks-Profile started."); return "ok";
-						} else {
-							out.println("Start of Socks-Profile failed!"); return "failed";
-						}
-					}
-					else if(args[0].toLowerCase().equals("stop")){
-						if(socksProfileIDs.contains(args[1])){
-							out.println("Stopping Socksprofile...");
-							stopSocksProfile(args[1]);
-							return "ok";
-						} else {
-							out.println("Socksprofile '" + args[1] + " does not exist.");
-							return "Invalid profilename";
-						}
-					}
-				}
-				else if(args.length == 1){
-					if(args[0].toLowerCase().equals("status")){
-						out.println("All available Socks-Profiles: (" + socksProfileIDs.size() + ")");
-						for(String profile: socksProfileIDs)
-						{
-							out.println("	- " + profile);
-						}
+	public void forEachSocksProfile(Consumer<? super String> lambda){
+		socksProfileIDs.forEach(lambda);
+	}
 
-						out.println("\n\nCurrently running Socks-Profiles: (" + runningSocksProfiles.keySet().size() + ")");
-						for(String profile: runningSocksProfiles.keySet())
-						{
-							out.println("	- " + profile);
-						}
-						return null;
-					}
-				}
+	public void forEachActiveSocksProfile(BiConsumer<? super String, ? super Process> lambda){
+		runningSocksProfiles.forEach(lambda);
+	}
 
-				out.println("Usage: socks <start|stop> <socksprofile name>\n\tsocks status");
+	public boolean socksProfileExists(String profileName){
+		return socksProfileIDs.contains(profileName);
+	}
 
-				return null;
-			}}, "(Module SSH-Tools) Start a socks profile.\nUsage:\tsocks <start|stop> [socksprofile name]\n\tsocks status");
+	public AppStarter getAppStarterByName(String name){
+		return appStarter.get(name);
 	}
 
 	private void reloadSocksConfig(){
@@ -429,11 +404,11 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			socksMenuItems.clear();
 
 			if(socksProfileIDs.size() > 0){
-				appStarterList.forEach((as) -> as.clearSocksItems());
+				appStarter.forEach((key, as) -> as.clearSocksItems());
 				for(String profileId: socksProfileIDs)
 				{
 					final String text2display = app.fileSettingsContainsKey("sshtools.socksprofile:" + profileId + ".name") ? app.getFileSettingsValue("sshtools.socksprofile:" + profileId + ".name") : profileId;
-					appStarterList.forEach((as) -> as.createUsingSocksItem(profileId, text2display));
+					appStarter.forEach((key, as) -> as.createUsingSocksItem(profileId, text2display));
 
 					CheckMenuItem socksMainMenuProfileItem = new CheckMenuItem(text2display);
 
@@ -453,7 +428,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 					socksMenuItems.put(profileId, socksMainMenuProfileItem);
 
 					if(runningSocksProfiles.containsKey(profileId)){
-						appStarterList.forEach((as) -> as.enableSocksItem(profileId, true));
+						appStarter.forEach((key, as) -> as.enableSocksItem(profileId, true));
 						socksMainMenuProfileItem.setSelected(true);
 					}
 				}
@@ -560,7 +535,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 	 * @param socksProfileId
 	 * @return
 	 */
-	private boolean startSocksProfile(String socksProfileId){
+	public boolean startSocksProfile(String socksProfileId){
 		if(socksAppStarter == null){app.log("ERROR: Cannot start Profile - no application definied. Please update your settings."); return false;}
 
 		if(!runningSocksProfiles.containsKey(socksProfileId) && socksProfileIDs.contains(socksProfileId)){
@@ -574,7 +549,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 						runningSocksProfiles.put(socksProfileId, p);
 
 						if(fxUI != null){
-							appStarterList.forEach((as) -> as.enableSocksItem(socksProfileId, true));
+							appStarter.forEach((key, as) -> as.enableSocksItem(socksProfileId, true));
 							socksMenuItems.get(socksProfileId).setSelected(true);
 							fxUI.updateStatus(String.format(fxUI.getLocaleBundleString("module.sshtools.message.process_successfully_started"), cmd.get(0)));
 						}
@@ -587,7 +562,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 				}
 				else{
 					if(fxUI != null){
-						appStarterList.forEach((as) -> as.enableSocksItem(socksProfileId, false));
+						appStarter.forEach((key, as) -> as.enableSocksItem(socksProfileId, false));
 						socksMenuItems.get(socksProfileId).setSelected(false);
 					}
 				}
@@ -597,7 +572,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 				app.log(e.getMessage());
 				if(fxUI != null){
 					socksMenuItems.get(socksProfileId).setSelected(false);
-					appStarterList.forEach((as) -> as.enableSocksItem(socksProfileId, false));
+					appStarter.forEach((key, as) -> as.enableSocksItem(socksProfileId, false));
 				}
 				return false;
 			}
@@ -614,7 +589,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 	 * Stop a socks profile
 	 * @param socksProfileID
 	 */
-	private void stopSocksProfile(String socksProfileID){
+	public void stopSocksProfile(String socksProfileID){
 		Process socksProcess = runningSocksProfiles.get(socksProfileID);
 		boolean successfullyStopped = false;
 		if(socksProcess != null){
@@ -639,7 +614,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 
 		if(successfullyStopped && fxUI != null){
 			socksMenuItems.get(socksProfileID).setSelected(false);
-			appStarterList.forEach((as) -> as.enableSocksItem(socksProfileID, false));
+			appStarter.forEach((key, as) -> as.enableSocksItem(socksProfileID, false));
 		}
 	}
 
@@ -1120,6 +1095,36 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			}
 		}
 		return confirmed;
+	}
+
+	/**
+	 * Splits a String by spaces that are not quoted. 'This is "an example"' will return the result {'This', 'is', 'an example'}
+	 * @param paramString The string which should be split
+	 * @return The array that contains the split strings
+	 */
+	private static String[] splitParameters(String paramString){
+		/* The following code was written by StackOverflow (stackoverflow.com) user Jan Goyvaerts and is licensed under CC BY-SA 3.0
+		 * "Creative Commons Attribution-ShareAlike 3.0 Unported", http://creativecommons.org/licenses/by-sa/3.0/)
+		 *
+		 * Source: http://stackoverflow.com/questions/366202/regex-for-splitting-a-string-using-space-when-not-surrounded-by-single-or-double
+		 * The code hasn't been modified.
+		 */
+		List<String> matchList = new ArrayList<String>();
+		Pattern regex = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'");
+		Matcher regexMatcher = regex.matcher(paramString);
+		while (regexMatcher.find()) {
+			if (regexMatcher.group(1) != null) {
+				// Add double-quoted string without the quotes
+				matchList.add(regexMatcher.group(1));
+			} else if (regexMatcher.group(2) != null) {
+				// Add single-quoted string without the quotes
+				matchList.add(regexMatcher.group(2));
+			} else {
+				// Add unquoted word
+				matchList.add(regexMatcher.group());
+			}
+		}
+		return matchList.toArray(new String[matchList.size()]);
 	}
 
 	private interface TextFieldAdapter {

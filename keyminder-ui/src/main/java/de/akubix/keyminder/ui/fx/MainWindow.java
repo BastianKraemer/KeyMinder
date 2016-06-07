@@ -38,6 +38,7 @@ import de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler;
 import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.lib.gui.ImageSelector;
 import de.akubix.keyminder.lib.gui.StyleSelector;
+import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.fx.dialogs.FindAndReplaceDialog;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
 import de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result;
@@ -1131,21 +1132,17 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		});
 	}
 
-	private void goToFavoriteNode(byte index, boolean startKeyClip, boolean pressEnter)
+	private void goToFavoriteNode(byte index, boolean startKeyClip, boolean altKeyOption)
 	{
 		if(!app.getSettingsValueAsBoolean("nodes.disable_favorites", false)){
 			TreeNode n = app.getFavoriteNode(index);
 			if(n != null){
 				dataTree.setSelectedNode(n);
-				if(startKeyClip && app.commandAvailable("keyclip")){
-					if(pressEnter){
-						app.execute("keyclip", app.getTree().getSelectedNode().getAttribute("username"),
-															 app.getTree().getSelectedNode().getAttribute("password"),
-															 "yes");
-					}
-					else{
-						app.execute("keyclip", app.getTree().getSelectedNode().getAttribute("username"),
-															 app.getTree().getSelectedNode().getAttribute("password"));
+				if(startKeyClip && app.getShell().commandExists("keyclip")){
+					try {
+						app.getShell().runShellCommand("keyclip");
+					} catch (CommandException | UserCanceledOperationException e) {
+						app.alert(e.getMessage());
 					}
 				}
 			}
@@ -1489,7 +1486,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			hbox.getChildren().add(createFavNodeButton());
 		}
 
-		if(app.commandAvailable("keyclip")){
+		if(app.getShell().commandExists("keyclip")){
 			keyClipSidebarButton = createSmallButton("KeyClip", "icon_arrow-rotate-box", 24, null);
 			keyClipSidebarButton.disableProperty().bind(treeDependentElementsDisableProperty);
 			hbox.getChildren().add(keyClipSidebarButton);

@@ -1,5 +1,5 @@
 /*	KeyMinder
-	Copyright (C) 2015 Bastian Kraemer
+	Copyright (C) 2015-2016 Bastian Kraemer
 
 	Sidebar.java
 
@@ -19,7 +19,9 @@
 package de.akubix.keyminder.modules.sidebar;
 
 import de.akubix.keyminder.core.exceptions.ModuleStartupException;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.lib.sidebar.FxSidebar;
+import de.akubix.keyminder.shell.CommandException;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 
@@ -45,10 +47,12 @@ public class Sidebar implements de.akubix.keyminder.core.interfaces.Module {
 		sidebar = new FxSidebar(app, fxUI.getLocaleBundleString("module.sidebar.tabtitle"), true, new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-				app.execute("keyclip", app.getTree().getSelectedNode().getAttribute("username"),
-													 app.getTree().getSelectedNode().getAttribute("password"),
-													 "yes");
-			}});
+				try {
+					app.getShell().runShellCommand("keyclip");
+				} catch (CommandException | UserCanceledOperationException e){
+					app.alert(e.getMessage());
+				}
+		}});
 
 		sidebar.addLabel(fxUI.getLocaleBundleString("module.sidebar.username"));
 		sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextbox("username"), "username");
