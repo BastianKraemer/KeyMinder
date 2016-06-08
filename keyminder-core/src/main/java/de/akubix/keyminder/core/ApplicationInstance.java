@@ -19,19 +19,13 @@
 package de.akubix.keyminder.core;
 
 import java.io.File;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.management.modelmbean.XMLParseException;
 
@@ -42,12 +36,8 @@ import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.IllegalCallException;
 import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.Command;
-import de.akubix.keyminder.core.interfaces.CommandOutputProvider;
 import de.akubix.keyminder.core.interfaces.FxAdministrationInterface;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
-import de.akubix.keyminder.core.interfaces.Module;
-import de.akubix.keyminder.core.interfaces.ModuleProperties;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventHost;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
@@ -55,15 +45,19 @@ import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
 import de.akubix.keyminder.core.io.StorageManager;
+import de.akubix.keyminder.core.modules.ModuleLoader;
 import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.lib.XMLCore;
+import de.akubix.keyminder.shell.AnsiColor;
+import de.akubix.keyminder.shell.Shell;
+import de.akubix.keyminder.shell.io.ShellOutputWriter;
 import javafx.scene.control.TabPane;
 
 /**
  * This class is the core of this application, it provides all functions and methods for the whole event handling, manages the loading of all modules
  * and creates the database. Furthermore it is the only interface to load and store data from respectively into files.
  */
-public class ApplicationInstance implements EventHost, CommandOutputProvider {
+public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 	/* Static configurations variables */
 
@@ -92,11 +86,12 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 	public Map<String, String> settings = new HashMap<String, String>();
 	public FileConfiguration currentFile = null;
 
-	private Map<String, Command> commands = new HashMap<String, Command>();
-	private Map<String, String> commandManual = new HashMap<String, String>();
+	private Map<String, List<Object>> eventCollection = new HashMap<>();
 
 	private StandardTree tree;
-	private CommandOutputProvider outputRedirect = null;
+	private ShellOutputWriter outputRedirect = null;
+	private final Shell shell;
+	private final ModuleLoader moduleLoader;
 	public final StorageManager storageManager;
 	public final Locale applicationLocale;
 
@@ -150,10 +145,23 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 				applicationLocale = new Locale("en", "EN");
 			}
 		}
+
+		this.shell = new Shell(this);
+		shell.loadCommandsFromIniFile("/de/akubix/keyminder/shell/commands.ini");
+
+		this.moduleLoader = new ModuleLoader(this);
 	}
 
 	public Tree getTree(){
 		return tree;
+	}
+
+	public Shell getShell(){
+		return this.shell;
+	}
+
+	public ModuleLoader getModuleLoader(){
+		return this.moduleLoader;
 	}
 
 	/*
@@ -170,11 +178,8 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 	public void startup(boolean enableModuleLoading){
 
 		if(enableModuleLoading){
-			loadModules();
+			moduleLoader.loadModules();
 		}
-
-		provideCoreCommands();
-		ConsoleMode.provideDefaultCommands(this);
 
 		updateMainWindowTitle();
 
@@ -274,6 +279,13 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 		}
 	}
 
+	public void reloadSettings(){
+		settings.clear();
+		presetDefaultSettings();
+		loadSettingsFromXMLFile();
+		fireEvent(DefaultEvent.OnSettingsChanged);
+	}
+
 	public boolean settingsContainsKey(String name){
 		return settings.containsKey(name);
 	}
@@ -283,7 +295,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 	}
 
 	public String setSettingsValue(String name, String value) throws IllegalArgumentException, IllegalStateException {
-		if(!name.matches("[a-zA-Z0-9[_][:]\\.]*")){throw new IllegalArgumentException("The name for the settings value contains an illegal character. Allowed characters: 'A-Z', 'a-z', '0-9', '.', '_' and ':'.");}
+		if(!name.matches("[a-zA-Z0-9_:\\.]+")){throw new IllegalArgumentException("The name for the settings value contains an illegal character. Allowed characters: 'A-Z', 'a-z', '0-9', '.', '_' and ':'.");}
 		return settings.put(name, value);
 	}
 
@@ -291,6 +303,10 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 		if(!settings.containsKey(name)){return onNotExist;}
 		String value = settings.get(name).toLowerCase();
 		if(value.equals("yes") || value.equals("true") || value.equals("1")){return true;}else{return false;}
+	}
+
+	public boolean removeSettingsValue(String name){
+		return (settings.remove(name) != null);
 	}
 
 	public boolean fileSettingsContainsKey(String name){
@@ -312,16 +328,36 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 			throw new IllegalStateException("Unable to change the file settings if not file is opened!");
 		}
 
-		if(!name.matches("[a-zA-Z0-9[_][:]\\.]*")){
+		if(!name.matches("[a-zA-Z0-9_:\\.]+")){
 			throw new IllegalArgumentException("The name for the file settings value contains an illegal character. Allowed characters: 'A-Z', 'a-z', '0-9', '.', '_' and ':'.");
 		}
 		currentFile.fileSettings.put(name, value);
 	}
 
+	public boolean removeFileSettingsValue(String name){
+		if(currentFile == null){
+			throw new IllegalStateException("Unable to change the file settings if not file is opened!");
+		}
+
+		return (currentFile.fileSettings.remove(name) != null);
+	}
+
+	public Set<String> getSettingsKeySet(){
+		return settings.keySet();
+	}
+
+	public Set<String> getFileSettingsKeySet(){
+		if(currentFile == null){
+			throw new IllegalStateException("Unable to change the file settings if not file is opened!");
+		}
+
+		return currentFile.fileSettings.keySet();
+	}
+
 	/**
 	 * Tell the ApplicationInstance that some settings may have changed an fire the assigned events
 	 */
-	public void settingsHasBeenUpdated(){
+	public void saveSettings(){
 		XMLCore.saveMapAsXMLFile(settingsFile, settings, "keyminder_settings");
 		fireEvent(DefaultEvent.OnSettingsChanged);
 	}
@@ -710,178 +746,6 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 		fxInterface = fxUI;
 	}
 
-	private Map<String, ModuleInfo> allModules = new HashMap<String, ModuleInfo>();
-	private Map<String, List<Object>> eventCollection = new HashMap<>();
-
-	private void loadModules(){
-		List<String> enabledModules = Arrays.asList(settings.getOrDefault(SETTINGS_KEY_ENABLED_MODULES, "").split(";"));
-
-		Iterator<Module> moduleIterator = ServiceLoader.load(Module.class).iterator();
-		while (moduleIterator.hasNext()) {
-			Module m = (Module) moduleIterator.next();
-
-			//Get the module description by reading the class annotation
-			ModuleProperties moduleDescription = m.getClass().getAnnotation(de.akubix.keyminder.core.interfaces.ModuleProperties.class);
-
-			if(moduleDescription != null){
-				if(enabledModules.contains(moduleDescription.name())){
-					allModules.put(moduleDescription.name(), new ModuleInfo(m, moduleDescription, true));
-				}
-				else{
-					//Module is not enabled
-					allModules.put(moduleDescription.name(), new ModuleInfo(m, moduleDescription, false));
-				}
-			}
-		}
-
-		//Start all modules, observing their dependencies to other modules
-		for(String moduleName: enabledModules){
-			startModule(moduleName, new ArrayList<String>());
-		}
-	}
-
-	private void startModule(String moduleName, List<String> initiators){
-		if(!allModules.containsKey(moduleName)){return;}
-
-		ModuleInfo m = allModules.get(moduleName);
-		if(!m.isStarted() && m.isEnabled){
-			String dependencies = (m.properties == null ? "" : m.properties.dependencies().replace(" ", ""));
-			if(!dependencies.equals("")){
-				initiators.add(moduleName);
-				for(String dependent_module: dependencies.split(";")){
-					if(!initiators.contains(dependent_module)){
-						startModule(dependent_module, initiators);
-					}
-					else{
-						println(String.format("Warning: Cannot resolve module dependencies of '%s', because they are cyclic.", initiators.get(0)));
-					}
-				}
-				initiators.remove(moduleName);
-			}
-
-			if(startModule(moduleName, m.moduleInstance)){
-				m.setStarted();
-			}
-			else{
-				allModules.put(moduleName, new ModuleInfo(null, m.properties, true)); //Remove the instance from the module list
-			}
-		}
-	}
-
-	/**
-	 * Starts a module an handles the errors if the start fails
-	 * @param name
-	 * @param moduleInstance
-	 * @return {@code true} if the module has been successfully started, {@code false} if not
-	 */
-	private boolean startModule(String name, Module moduleInstance){
-		if(moduleInstance == null){return false;}
-		try {
-			if(KeyMinder.environment.containsKey("verbose_mode")){println(String.format("Starting module \"%s\"... ", name));}
-			moduleInstance.onStartup(this);
-			return true;
-
-		} catch (de.akubix.keyminder.core.exceptions.ModuleStartupException e) {
-			switch(e.getErrorLevel()){
-				case Critical:
-					println("Critical error while loading module \"" + name + "\": " +e.getMessage());
-					break;
-				case Default:
-					println("Cannot load module \"" + name + "\": " +e.getMessage());
-					break;
-				case FxUserInterfaceNotAvailable:
-				case OSNotSupported:
-					if(!KeyMinder.environment.containsKey("silent_mode")){
-						println("Cannot load module \"" + name + "\": " +e.getMessage());
-					}
-					break;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * Enable a module (will be loaded on next start)
-	 * @param moduleClassName class name of the module
-	 * @throws IllegalArgumentException if the module does not exist
-	 */
-	public void enableModule(String moduleClassName) throws IllegalArgumentException{
-		if(allModules.containsKey(moduleClassName)){
-			if(settings.containsKey(SETTINGS_KEY_ENABLED_MODULES)){
-				String currentlyEnabledModules = settings.get(SETTINGS_KEY_ENABLED_MODULES);
-				List<String> enabledModules = Arrays.asList(currentlyEnabledModules.split(";"));
-				if(!enabledModules.contains(moduleClassName)) {
-					if(currentlyEnabledModules.endsWith(";")) {
-						settings.put(SETTINGS_KEY_ENABLED_MODULES, currentlyEnabledModules + moduleClassName);
-					}
-					else {
-						settings.put(SETTINGS_KEY_ENABLED_MODULES, currentlyEnabledModules + ";" + moduleClassName);
-					}
-
-					allModules.get(moduleClassName).isEnabled = true;
-					settingsHasBeenUpdated();
-				}
-			}
-			else{
-				settings.put(SETTINGS_KEY_ENABLED_MODULES, moduleClassName);
-			}
-		}
-		else{
-			throw new IllegalArgumentException("Module does not exist.");
-		}
-	}
-
-	/**
-	 * Disable a module (won't be loaded on next start)
-	 * @param moduleClassName the class name of the module
-	 * @throws IllegalArgumentException if the module does not exist
-	 */
-	public void disableModule(String moduleClassName) throws IllegalArgumentException {
-		if(allModules.containsKey(moduleClassName)){
-			if(settings.containsKey(SETTINGS_KEY_ENABLED_MODULES)){
-				List<String> enabledModules = new ArrayList<>();
-				for(String s: settings.get(SETTINGS_KEY_ENABLED_MODULES).split(";")){
-					enabledModules.add(s);
-				}
-
-				if(enabledModules.contains(moduleClassName)){
-					enabledModules.remove(moduleClassName);
-
-					if(enabledModules.size() > 0){
-						StringBuilder sb = new StringBuilder("");
-						for(String moduleName: enabledModules){
-							sb.append(moduleName + ";");
-						}
-
-						settings.put(SETTINGS_KEY_ENABLED_MODULES, sb.toString());
-					}
-					allModules.get(moduleClassName).isEnabled = false;
-					settingsHasBeenUpdated();
-				}
-			}
-		}
-		else{
-			throw new IllegalArgumentException("Module does not exist.");
-		}
-	}
-
-	/**
-	 * Returns a list, respectively a Set of all modules
-	 * @return a list (as Set) of all modules
-	 */
-	public Set<String> getModules(){
-		return allModules.keySet();
-	}
-
-	/**
-	 * Returns the properties of a specific module
-	 * @param moduleName the name of the module
-	 * @return The ModuleInfo OR null if the module does not exist respectively the module does not have any properties
-	 */
-	public ModuleInfo getModuleInfo(String moduleName){
-		return allModules.get(moduleName);
-	}
-
 	@Override
 	/**
 	 * Adds an event handler. If the Java FX user interface is loaded. All events handlers will be called with the JavaFX Thread
@@ -1125,586 +989,7 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 
 	/*
 	 * ========================================================================================================================================================
-	 * Execute commands
-	 * ========================================================================================================================================================
-	 */
-
-	/**
-	 * Check if a command is available
-	 * @param commandName the name of the command
-	 * @return {@code true} if there is a command with this name, {@code} false if not
-	 */
-	public boolean commandAvailable(String commandName){
-		return commands.containsKey(commandName);
-	}
-
-	/**
-	 * Execute a command
-	 * @param commandName the name of the command
-	 * @return {@code null} if the command does not exist or the text that has been return from the command (note: this can be even {@code null})
-	 */
-	public String execute(String commandName){
-		return execute(this, commandName, new String[0]);
-	}
-
-	/**
-	 * Execute a command with parameters
-	 * @param commandName the name of the command
-	 * @param parameters the parameters for this command
-	 * @return {@code null} if the command does not exist or the text that has been return from the command (note: this can be even {@code null})
-	 */
-	public String execute(String commandName, String... parameters){
-		return execute(this, commandName, parameters);
-	}
-
-	/**
-	 * Execute a command with parameters
-	 * @param outputProvider the output provider for this command (by default the output provider is this class)
-	 * @param commandName the name of the command
-	 * @param args the parameters (or arguments) for this command
-	 * @return {@code null} if the command does not exist or the text that has been return from the command (note: this can be even {@code null})
-	 */
-	public synchronized String execute(CommandOutputProvider outputProvider, String commandName, String[] args){
-		if(commands.containsKey(commandName.toLowerCase())){
-			return commands.get(commandName.toLowerCase()).runCommand(outputProvider, this, args);
-		}
-		else{
-			return null;
-		}
-	}
-
-	/**
-	 * Splits a String by spaces that are not quoted. 'This is "an example"' will return the result {'This', 'is', 'an example'}
-	 * @param paramString The string which should be split
-	 * @return The array that contains the split strings
-	 */
-	public static String[] splitParameters(String paramString){
-		/* The following code was written by StackOverflow (stackoverflow.com) user Jan Goyvaerts and is licensed under CC BY-SA 3.0
-		 * "Creative Commons Attribution-ShareAlike 3.0 Unported", http://creativecommons.org/licenses/by-sa/3.0/)
-		 *
-		 * Source: http://stackoverflow.com/questions/366202/regex-for-splitting-a-string-using-space-when-not-surrounded-by-single-or-double
-		 * The code hasn't been modified.
-		 */
-
-		List<String> matchList = new ArrayList<String>();
-		Pattern regex = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'");
-		Matcher regexMatcher = regex.matcher(paramString);
-		while (regexMatcher.find()) {
-			if (regexMatcher.group(1) != null) {
-				// Add double-quoted string without the quotes
-				matchList.add(regexMatcher.group(1));
-			} else if (regexMatcher.group(2) != null) {
-				// Add single-quoted string without the quotes
-				matchList.add(regexMatcher.group(2));
-			} else {
-				// Add unquoted word
-				matchList.add(regexMatcher.group());
-			}
-		}
-		return matchList.toArray(new String[matchList.size()]);
-	}
-
-	public void provideNewCommand(String commandkey, Command kcmd){
-		commands.put(commandkey.toLowerCase(), kcmd);
-	}
-
-	public void provideNewCommand(String commandkey, Command kcmd, String manual){
-		commands.put(commandkey.toLowerCase(), kcmd);
-		if(manual != null){
-			if(!manual.equals("")){commandManual.put(commandkey.toLowerCase(), manual);}
-		}
-
-	}
-
-	public void provideCommandAlias(String alias, String commandkey){
-		provideNewCommand(alias, new Command() {
-			@Override
-			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				return instance.execute(out, commandkey, args);
-			}}, commandManual.get(alias));
-	}
-
-	private void provideCoreCommands(){
-		provideNewCommand("man", new Command() {
-			@Override
-			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(args.length == 1) {
-					if(commands.containsKey(args[0])){
-						if(commandManual.containsKey(args[0]))	{
-							out.println("Manual entry for command \"" + args[0] + "\":\n\n" + commandManual.get(args[0]));
-						}
-						else {
-							out.println("No manual entry for \"" + args[0] + "\" available.");
-						}
-					}
-					else{
-						out.println("Command \"" + args[0] + "\" is not available.");
-					}
-				}
-				else {
-					out.println("Usage: man <command>");
-				}
-				return null;
-			}}, "Displays a manual (if available) to a specific command.");
-
-		provideNewCommand("help", new Command() {
-			@Override
-			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				out.println("Available commands:\n");
-				Tools.asSortedList(commandManual.keySet()).forEach((cmd) -> out.println(cmd));
-				return null;
-			}}, "Displays a list of all possible commands.");
-
-		provideNewCommand("debug", new Command() {
-			@Override
-			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(args.length > 0){
-					String[] newargs = new String[args.length -1];
-					for(int i = 0; i < newargs.length; i++){newargs[i] = args[i + 1];}
-					String ret = instance.execute(args[0], newargs);
-					out.println((ret != null) ? "---\n" + ret : "The command returned nothing (null).");
-					return ret;
-				}
-				else{
-					return null;
-				}
-			}});
-
-		provideNewCommand("file", new Command() {
-			@Override
-			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(args.length > 0)
-				{
-					switch(args[0].toLowerCase())
-					{
-						case "create":
-						case "new":
-							if(args.length == 2){
-								File f = new File(args[1]);
-								instance.createNewFile(f, false);
-							}else if(args.length == 3){
-								File f = new File(args[1]);
-								instance.createNewFile(f, (args[2].toLowerCase().equals("-encrypt") || args[2].toLowerCase().equals("--encrypt")));
-							}
-							else{
-								println("Usage: file create [filepath] [-encrypt]");
-							}
-							return null;
-
-						case "open":
-							if(args.length == 2){
-								return openFile(new File(args[1])) ? "ok" : "failed";
-							} else if(args.length == 3) {
-								return openFile(new File(args[1]), args[2]) ? "ok" : "failed";
-							} else if(args.length == 4) {
-								return openFile(new File(args[1]), args[2], args[3]) ? "ok" : "failed";
-							}else {
-								println("Usage: file open <file> [password] [file type identifier*]\n\n* Use 'file types' to get help.");
-							}
-							return null;
-
-						case "save":
-							if(currentFile != null){
-								boolean status = saveFile();
-								out.println(status ? "File saved." : "Error: File couldn't be saved.");
-								return (status ? "ok" : "failed");
-							}
-							else{
-								out.println("Cannot save file: There is no file currently opened.");
-								return null;
-							}
-
-						case "saveas":
-						case "saveat":
-							if(currentFile != null){
-								if(args.length == 2 || args.length == 3){
-									if(args.length == 3){
-										try{
-											instance.currentFile.changeFileTypeIdentifier(instance, args[3]);
-										}
-										catch(IllegalArgumentException illArgeEx){
-											out.println(String.format("Unkonw file type identifier \"%s\".", args[3]));
-										}
-									}
-									else{
-										instance.currentFile.changeFileTypeIdentifier(instance, instance.storageManager.getIdentifierByExtension(Tools.getFileExtension(args[1]), instance.currentFile.getFileTypeIdentifier()));
-									}
-
-									instance.currentFile.changeFilepath(new File(args[1]));
-									boolean saveStatus = saveFile();
-									out.println(saveStatus ? "File saved." : "Error: File couldn't be saved.");
-									return (saveStatus ? "ok" : "failed");
-								}
-								else{
-									println("Usage: file saveAs <filepath> [file type identifier*]\n\n* Use 'file types' to get help.");
-									return null;
-								}
-							}
-							else{
-								out.println("Cannot save file: There is no file currently opened.");
-								return null;
-							}
-
-						case "close":
-							if(currentFile != null){
-								boolean closeStatus = closeFile();
-								out.println(closeStatus ? "File closed." : "The action has been canceled by a plugin or the user...");
-								return (closeStatus ? "ok" : "canceled");
-							}
-							else{
-								out.println("Cannot close any file: There is no file currently opened.");
-								return null;
-							}
-
-						case "info":
-							if(currentFile != null){
-								out.println("Filepath:\t" + currentFile.getFilepath().getAbsolutePath());
-								out.println("File type:\t" + currentFile.getFileTypeIdentifier());
-								out.println("Format version:\t" + currentFile.getFileFormatVersion());
-								out.println("Encryption:\t" + (currentFile.isEncrypted() ? currentFile.getEncryptionManager().getCipher().getCipherName() : "Disabled") + "\n");
-								return currentFile.getFilepath().getAbsolutePath();
-							}
-							else{
-								out.println("No file opened.");
-								return "";
-							}
-
-						case "types":
-							out.println("Supported file types:");
-							instance.storageManager.forEachFileType((str) -> out.print(str + " "));
-							out.print("\n\nKnown file extensions:\n");
-							instance.storageManager.forEachKnownExtension((extension, assignedType) -> out.println(String.format("%-16s\t%s", extension, assignedType)));
-							return "";
-
-						case "set-cipher":
-							if(currentFile != null){
-								if(args.length != 2){println("Usage: file set-cipher [cipher name]\n"); return "";}
-								try {
-									if(args[1].toLowerCase().equals("none")){
-										out.println("Please use the 'passwd reset' to disable the encryption of your password file.");
-										return "";
-									}
-									instance.currentFile.getEncryptionManager().setCipher(args[1]);
-									out.printf("Encryption alorithm has been changed to '%s'\nPlease save your password file to apply this change.", args[1]);
-									return "ok";
-								} catch (NoSuchAlgorithmException e) {
-									out.printf("Unknown encryption algorithm: '%s'.", args[1]);
-									return "cipher not found";
-								}
-							}
-							else{
-								out.println("No file opened.");
-								return "";
-							}
-					}
-				}
-
-				out.println("Invalid arguments: Type in 'man file' to get more information.");
-				return null;
-			}}, "You can use the file command with the following arguments:\n\n" +
-				"  file create		to create a new file.\n" +
-				"  file info		to show the currently opened password file.\n" +
-				"  file open 		to open a passowrd file.\n" +
-				"  file save		to write all changes to your harddisk.\n" +
-				"  file close		to close the currently opened password file.\n" +
-				"  file types		to print a list of all supported file types.\n"
-				+ "file set-cipher	to change the encryption algorithm of your file");
-
-		provideNewCommand("module", new Command() {
-			@Override
-			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(args.length == 2){
-					switch(args[0].toLowerCase()){
-						case "-info":
-						case "-about":
-							ModuleInfo m = allModules.get(args[1]);
-							if(m != null){
-								if(m.properties != null){
-									out.println(String.format(	"Modulename: \t%s\n" +
-																"Version: \t%s\n" +
-																"Author: \t%s\n" +
-																"Status: \t%s\n\n" +
-																"Description:\n%s",
-												m.properties.name(),
-												m.properties.version().equals(".") ? APP_VERSION : m.properties.version(),
-												m.properties.author(),
-												(m.isEnabled ? (m.isStarted() ? "ENABLED" : "ENABLED (Startup error)" ): "DISABLED"),
-												m.properties.description()));
-								}
-								else{
-									out.println("No information for module '" + args[0] + "' available");
-								}
-							}
-							else{
-								out.println("Cannot finde module '" + args[1] + "'. Maybe you did not observe to match the module names case?");
-							}
-							break;
-
-						case "-enable":
-						case "--enable":
-						case "/enable":
-							try{
-								enableModule(args[1]);
-							}
-							catch(IllegalArgumentException ex){
-								out.println("Cannot enable module: " + ex.getMessage());
-							}
-							break;
-
-						case "-disable":
-						case "--disable":
-						case "/disable":
-							try{
-								disableModule(args[1]);
-							}
-							catch(IllegalArgumentException ex){
-								out.println("Cannot enable module: " + ex.getMessage());
-							}
-							break;
-					}
-				}
-				else
-				{
-					out.println("Status\t\tModule name\n" +
-								"------\t\t-----------");
-
-					for(String name: allModules.keySet()){
-						out.println(String.format("%s%s",
-								(allModules.get(name).isEnabled ?
-										(allModules.get(name).isStarted() ? "ENABLED\t\t" : "ENABLED (!)\t") :
-										(allModules.get(name).isStarted() ? "ENABLED (-)\t" : "DISABLED\t")),
-								name));
-					}
-
-					out.println("\n(!) This module is currently not started, this could happen if the module crashed on startup or if it has enabled during this session.\n" +
-								"(-) This module will be disabled at the next start.");
-
-				}
-				return null;
-			}
-		}, "Enables or disables a Krytonit module.\n\n" +
-			"\tUsage: module [option] [modulename]\n\n" +
-			"Possible options are: '-about', '-enable' or '-disable'\n" +
-			"Its also possible to call 'module' without arguments to dislay a list of all modules.");
-
-		provideNewCommand("favorites", new Command() {
-			@Override
-			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(getSettingsValueAsBoolean("nodes.disable_favorites", false)){out.println("Favorite nodes are disabled."); return null;}
-
-				if(args.length == 0){
-					// Display all favorite nodes
-					int cnt = 0;
-					for(byte i = 0; i < favoriteNodes.length; i++){
-						if(favoriteNodes[i] > 0){
-							TreeNode node = getFavoriteNode(i);
-							if(node != null){
-								out.println(String.format("%d:\t%s", i, instance.tree.getNodePath(node, "/")));
-								cnt++;
-								continue;
-							}
-							else{
-								favoriteNodes[i] = 0;
-							}
-						}
-						out.println(String.format("%d:\t%s", i, "-"));
-					}
-
-					if(cnt == favoriteNodes.length){
-						out.println(String.format("\nYou cannot define more favorite nodes. The limit of %d is reached.", favoriteNodes.length));
-					}
-					else{
-						out.println(String.format("\nYou can define %d more favorite nodes.", favoriteNodes.length - cnt));
-					}
-				}
-				else if(args.length == 1){
-					if(args[0].toLowerCase().equals("update") || args[0].toLowerCase().equals("rebuild")){
-						// Update favorite node list
-						generateFavoriteNodeListFromTree();
-						out.println("Favorite node list successfully updated.");
-					}
-					else{
-						// Follow a favorite node link
-						try{
-							byte index = Byte.parseByte(args[0]);
-							TreeNode n = getFavoriteNode(index);
-							if(n != null){
-								tree.setSelectedNode(n);
-							}
-							else{
-								out.println("Cannot follow node link: Requested node does not exist.");
-							}
-						}
-						catch(NumberFormatException numFormatEx){
-							out.println(String.format("Cannot parse \"%s\".", args[0]));
-						}
-					}
-				}
-				else if(args.length == 2 || args.length == 3){
-					// Add or remove favorite node
-					TreeNode node = (args.length == 3 ? instance.getTree().getNodeByPath(args[2]) : instance.getTree().getSelectedNode());
-					if(node != null){
-						byte index;
-
-						try {
-							index = Byte.parseByte(args[1]);
-						}
-						catch(NumberFormatException numFormatEx){
-							out.println(String.format("Cannot parse \"%s\".", args[0]));
-							return null;
-						}
-
-						if(args[0].toLowerCase().equals("set")){
-							out.print(String.format("Adding \"%s\" to favorite nodes... %s", node.getText(), setFavoriteNode(node, index, true) ? "done." : "failed!"));
-						}
-						else if(args[0].toLowerCase().equals("rm") || args[0].toLowerCase().equals("remove")){
-							removeFavoriteNode(index);
-						}
-					}
-					else{
-						out.println("Cannot find node" + (args.length == 3 ? ": \"" + args[2] + "\"" : "."));
-					}
-				}
-				else{
-					out.println("Syntax error. Use 'man favorites' for help.");
-				}
-
-				return null;
-			}
-		}, "Define your ten favorite nodes.\n\n" +
-			"Usage:\n" +
-			"\tTo display all defined favorite nodes:\n\t\tfavorites\n\n" +
-			"\tTo set a node as favorite node:\n\t\tfavorites set <0-9> [tree node]\n\n" +
-			"\tTo remove a node from the favorite list:\n\t\tfavorites rm <0-9>\n\n" +
-			"\tTo update the list if you changed something manually:\n\t\tfavorites update ");
-
-		provideCommandAlias("fav", "favorites");
-
-		/*
-		 * ================================================ settings ================================================
-		 */
-		provideNewCommand("config", new Command() {
-			@Override
-			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(args.length == 0){
-					printHashMap(out, instance.settings);
-				}
-				else if(args.length == 1){
-					if(args[0].toLowerCase().equals("save")){
-						instance.settingsHasBeenUpdated();
-					}
-					else if(args[0].toLowerCase().equals("reload")){
-						settings.clear();
-						presetDefaultSettings();
-						loadSettingsFromXMLFile();
-						fireEvent(DefaultEvent.OnSettingsChanged);
-					}
-					else{
-						out.println("Unkown parameter: " + args[0]);
-					}
-				}
-				else if(args.length == 2 && (args[0].toLowerCase().equals("-d") || args[0].toLowerCase().equals("--d"))){
-
-					// Remove a key from the settings hash
-					if(instance.settings.containsKey(args[1])){
-						instance.settings.remove(args[1]);
-						fireEvent(DefaultEvent.OnSettingsChanged);
-					}
-					else{
-						out.println(String.format("Settings key '%s' does not exist.", args[1]));
-					}
-				}
-				else if(args.length == 2 || (args.length == 3 && (args[0].toLowerCase().equals("-s") || args[0].toLowerCase().equals("--s")))){
-					int index = (args.length == 3) ? 1 : 0; // If there is a "-s" then the index is "1", not "0"
-					if(args[index].matches("[a-zA-Z0-9[_][:]\\.]*")){
-						instance.setSettingsValue(args[index], args[index + 1]);
-
-						if(args.length == 3){instance.settingsHasBeenUpdated();}else{fireEvent(DefaultEvent.OnSettingsChanged);}
-					}
-					else{
-						out.println("Invalid key characters. Valid characters are only \"A-Z\", \"a-z\", \"0-9\", \".\", \"_\" and \":\".");
-					}
-				}
-				else{
-					out.println("Syntax error. Use 'man config' for help.");
-				}
-
-				return null;
-			}}, "View or modify the application settings\n\n" +
-				"Usage:\n" +
-				"\tDisplay all settings:\n\t\tconfig\n\n" +
-				"\tChange a settings value\n\t\tconfig <key> <value>\n\n" +
-				"\tRemove a setting:\n\t\tconfig -d <key>\n\n" +
-				"\tSave all changed settings to your harddisk\n\t\tconfig save\n\n" +
-				"\tChange a settings value and directly save it\n\t\tconfig -s <key> <value>\n\n" +
-				"\tReload the configuration from the settings file\n\t\tconfig reload");
-
-		provideNewCommand("fileconfig", new Command() {
-			@Override
-			public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-				if(currentFile == null){out.println("No file opened!"); return null;}
-				if(args.length == 0){
-					printHashMap(out, instance.currentFile.fileSettings);
-				}
-				else if(args.length == 2 && (args[0].toLowerCase().equals("-d") || args[0].toLowerCase().equals("--d"))){
-					// Remove a key from the settings hash
-					if(instance.currentFile.fileSettings.containsKey(args[1])){
-						instance.currentFile.fileSettings.remove(args[1]);
-						fireEvent(DefaultEvent.OnFileSettingsChanged);
-					}
-					else{
-						out.println(String.format("File settings key '%s' does not exist.", args[1]));
-					}
-				}
-				else if(args.length == 2 || (args.length == 3 && (args[0].toLowerCase().equals("-s") || args[0].toLowerCase().equals("--s")))){
-					int index = (args.length == 3) ? 1 : 0; // If there is a "-s" then the index is "1", not "0"
-					if(args[index].matches("[a-zA-Z0-9[_][:]\\.]*")){
-						instance.setFileSettingsValue(args[index], args[index + 1]);
-
-						if(args.length == 3){instance.fileSettingsHasBeenUpdated();}else{fireEvent(DefaultEvent.OnFileSettingsChanged);}
-					}
-					else{
-						out.println("Invalid key characters. Valid characters are only \"A-Z\", \"a-z\", \"0-9\", \".\", \"_\" and \":\".");
-					}
-				}
-				else{
-					out.println("Syntax error. Use 'man fileconfig' for help.");
-				}
-
-				return null;
-			}}, "View or modify the file settings\n" +
-				"WARNING: You should be VERY CAREFUL if you want do change any value!\n\n" +
-				"Usage:\n" +
-				"\tDisplay all file settings:\n\t\tfileconfig\n\n" +
-				"\tChange a file setting value\n\t\tfileconfig <key> <value>\n\n" +
-				"\tRemove a file setting:\n\t\tconfig -d <key>\n\n" +
-				"\tChange a file settings value and directly save your file\n\t\tconfig -s <key> <value>\n\n");
-	}
-
-	private static void printHashMap(CommandOutputProvider out, Map<String, String> hash){
-		Tools.asSortedList(hash.keySet()).forEach((String key) -> {
-			String value = hash.get(key);
-			if(value.contains("\n")){
-				out.println(String.format("%s = ", key));
-				for(String str: value.split("\n")){
-					out.println(String.format("    %s", str));
-				}
-			}
-			else{
-				String lCaseKey = key.toLowerCase();
-				if(lCaseKey.contains("password") || lCaseKey.contains("pw") || lCaseKey.contains("paswd")){
-					out.println(String.format("%s = *****", key));
-				}
-				else{
-					out.println(String.format("%s = %s", key, value));
-				}
-			}
-		});
-	}
-
-	/*
-	 * ========================================================================================================================================================
-	 * Interface CommandOutputProvider
+	 * Interface ShellOutputWriter
 	 * ========================================================================================================================================================
 	 */
 	@Override
@@ -1732,13 +1017,25 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 		this.print(String.format(text, args));
 	}
 
-	public void tryToEstablishOutputRedirect(CommandOutputProvider redirectTo){
+	@Override
+	public void setColor(AnsiColor color){
+		if(outputRedirect == null){
+			if(KeyMinder.enableColoredOutput){
+				this.print(color.getAnsiCode());
+			}
+		}
+		else{
+			outputRedirect.setColor(color);
+		}
+	}
+
+	public void tryToEstablishOutputRedirect(ShellOutputWriter redirectTo){
 		if(!KeyMinder.environment.containsKey("disable_output_redirect")){
 			if(redirectTo != this && outputRedirect == null){outputRedirect = redirectTo;}
 		}
 	}
 
-	public void terminateOutputRedirect(CommandOutputProvider currentOwner){
+	public void terminateOutputRedirect(ShellOutputWriter currentOwner){
 		if(outputRedirect == currentOwner){outputRedirect = null;}
 	}
 
@@ -1755,26 +1052,5 @@ public class ApplicationInstance implements EventHost, CommandOutputProvider {
 			fireEvent(DefaultEvent.OnExit);
 			System.exit(0);
 		}
-	}
-
-	/*
-	 * ========================================================================================================================================================
-	 * Module Information Class
-	 * ========================================================================================================================================================
-	 */
-	public class ModuleInfo{
-		public ModuleInfo(Module instance, ModuleProperties moduleProperties, boolean isEnabled){
-			this.moduleInstance = instance;
-			this.isEnabled = isEnabled;
-			this.properties = moduleProperties;
-			this.moduleIsStarted = false;
-		}
-		public final Module moduleInstance;
-		public boolean isEnabled;
-		public final ModuleProperties properties;
-		private boolean moduleIsStarted;
-
-		public boolean isStarted(){return moduleIsStarted;}
-		public void setStarted(){this.moduleIsStarted = true;}
 	}
 }

@@ -37,8 +37,8 @@ public class AppStarter {
 	private ApplicationInstance app;
 	private Supplier<org.w3c.dom.Document> xmldocument;
 	private Menu contextMenuItemUsingSocks;
-	public final boolean socksSupport;
-	public final String socksProfileId;
+	private final boolean socksSupport;
+	private final String name;
 	private final SSHTools sshtools;
 	private final boolean enableMenuItems;
 
@@ -56,20 +56,18 @@ public class AppStarter {
 
 		Node attrib = xmldocument.get().getDocumentElement().getAttributes().getNamedItem("name");
 		if(attrib != null){
-
+			name = attrib.getNodeValue().toLowerCase();
 			String icon = "";
 			Node iconAttrib = xmldocument.get().getDocumentElement().getAttributes().getNamedItem("icon");
 			if(iconAttrib != null){icon = iconAttrib.getNodeValue();}
 
 			Node canBeUsedWithSocks = xmldocument.get().getDocumentElement().getAttributes().getNamedItem("socks");
 			if(canBeUsedWithSocks != null){
-				socksProfileId = canBeUsedWithSocks.getNodeValue();
 				socksSupport = true;
 				socksItems = new HashMap<>();
 			}
 			else{
 				contextMenuItemUsingSocks = null;
-				socksProfileId = null;
 				socksSupport = false;
 			}
 			if(!noItemsAndCommands){
@@ -88,38 +86,15 @@ public class AppStarter {
 						app.getFxUserInterface().addMenuEntry(contextMenuItemUsingSocks, MenuEntryPosition.CONTEXTMENU, true);
 					}
 				}
-
-				Node commandNameAttribute = xmldocument.get().getDocumentElement().getAttributes().getNamedItem("command");
-				String cmdName = commandNameAttribute == null ? attrib.getNodeValue().toLowerCase() : commandNameAttribute.getNodeValue();
-
-				app.provideNewCommand(cmdName, (out, appInstance, args) -> {
-					TreeNode node = null;
-					if(args.length > 0){
-						if(!args[0].startsWith("--")){
-							node = appInstance.getTree().getNodeByPath(args[0]);
-						}
-					}
-					else if(node == null){
-						node = appInstance.getTree().getSelectedNode();
-					}
-
-					boolean ignoreForward = (de.akubix.keyminder.lib.Tools.arrayIndexOf(args, "--noforward", true) != -1);
-					int socksprofileArgIndex = socksSupport ? de.akubix.keyminder.lib.Tools.arrayIndexOf(args, "--socks", true) : -1;
-					if(socksprofileArgIndex != -1 && args.length > ++socksprofileArgIndex){
-						out.println(sshtools.startApplication(this, node, ignoreForward, args[socksprofileArgIndex]));
-					}
-					else
-					{
-						out.println(sshtools.startApplication(this, node, ignoreForward, null));
-					}
-					return null;
-				}, "(Module SSH-Tools) Starts the application " + cmdName + " using parameters stored in a treenode.\n" +
-				   "Usage: " + cmdName + " [nodename] [--noforward] " + (socksSupport ? "[--socks socksprofile]" : ""));
 			}
 		}
 		else{
 			throw new IllegalArgumentException("Invalid XML-Document, the execution profile must have a \"name\" attribute.");
 		}
+	}
+
+	public String getName(){
+		return this.name;
 	}
 
 	public List<String> getCommandLineArgs(Map<String, String> predefinedVariables, String id, TreeNode treeNode) throws IllegalArgumentException{

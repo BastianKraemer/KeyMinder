@@ -18,7 +18,6 @@
 */
 package de.akubix.keyminder.modules.deadline;
 
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -34,7 +33,6 @@ import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.etc.MenuEntryPosition;
 import de.akubix.keyminder.core.exceptions.ModuleStartupException;
-import de.akubix.keyminder.core.interfaces.CommandOutputProvider;
 import de.akubix.keyminder.core.interfaces.Module;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
@@ -75,8 +73,8 @@ import javafx.stage.Stage;
 		dependencies = "",
 		author="Bastian Kraemer")
 public class Deadline implements Module {
-	private static final String nodeExpirationAttribute = "expiration_date";
-	private static final String warningDifferenceSettingsValue = "deadline.warndifference";
+	protected static final String NODE_EXPIRATION_ATTRIBUTE = "expiration_date";
+	private static final String WARNING_DIFFERENCE_SETTINGS_VALUE = "deadline.warndifference";
 	private static long warningDifferenceInMilliseconds;
 	private static int warningDifferenceInDays;
 	private ApplicationInstance app;
@@ -151,14 +149,14 @@ public class Deadline implements Module {
 				post.setStyle(pre.getStyle());
 				hbox.getChildren().addAll(pre, numberField, post);
 
-				if(settings.containsKey(warningDifferenceSettingsValue)){
+				if(settings.containsKey(WARNING_DIFFERENCE_SETTINGS_VALUE)){
 					try{
-						((IntegerSpinnerValueFactory) numberField.getValueFactory()).setValue(Integer.parseInt(settings.get(warningDifferenceSettingsValue)));
+						((IntegerSpinnerValueFactory) numberField.getValueFactory()).setValue(Integer.parseInt(settings.get(WARNING_DIFFERENCE_SETTINGS_VALUE)));
 					}
 					catch(NumberFormatException numEx){} //Keep default value
 				}
 
-				numberField.valueProperty().addListener((obs, oldValue, newValue) -> settings.put(warningDifferenceSettingsValue, Integer.toString(newValue)));
+				numberField.valueProperty().addListener((obs, oldValue, newValue) -> settings.put(WARNING_DIFFERENCE_SETTINGS_VALUE, Integer.toString(newValue)));
 
 				ScrollPane sp = (ScrollPane) tabControl.getTabs().get(0).getContent();
 				VBox vbox = (VBox) sp.getContent();
@@ -171,91 +169,20 @@ public class Deadline implements Module {
 		});
 
 		/* ==========================================================================================================================================
-			Add some commands to interact with this module via Kryptonit Bash or ConsoleMode
+			Add some commands to interact with this module via KeyMinder Shell (ConsoleMode or Terminal)
 		   ========================================================================================================================================== */
 
-		app.provideNewCommand("deadline", (CommandOutputProvider out, ApplicationInstance myInstance, String[] args) -> {
-			TreeNode node;
-			int dateIndex;
-			if(args.length == 1){
-				if(args[0].equals("check")){
-					checkForExpiredNodes(true);
-					return "ok";
-				}
-				else{
-				node = myInstance.getTree().getSelectedNode();
-				dateIndex = 0;
-				}
-			}
-			else if(args.length == 2){
-				node = instance.getTree().getNodeByPath(args[0]);
-				if(node == null){out.println("Cannot find node: " + args[0]); return null;}
-				dateIndex = 1;
-			}
-			else{
-				out.println("Syntax error. Usage: 'deadline [node] <date>' or 'deadline [node] reset'\n");
-				return null;
-			}
-
-			if(args[dateIndex].equals("none") || args[dateIndex].equals("reset") || args[dateIndex].equals("-")){
-				node.removeAttribute(nodeExpirationAttribute);
-				out.println(String.format("Deadline of '%s' removed.", node.getText()));
-				return "ok";
-			}
-			else{
-				try {
-					SimpleDateFormat sda = new SimpleDateFormat("dd.MM.yyyy");
-					node.setAttribute(nodeExpirationAttribute, Long.toString(sda.parse(args[dateIndex]).toInstant().atZone(ZoneId.systemDefault()).toEpochSecond() * 1000));
-					out.println("Deadline successfully added.");
-					return "ok";
-				} catch (Exception e) {
-					out.println("Unable to parse date (dd.MM.yyyy).");
-					return null;
-				}
-			}
-
-		}, "Adds or removes a deadline (e.g an expiration date) to a tree node. Usage:\nTo set a deadline:\n\t'deadline [node] <date>' or 'deadline [node] reset'\nTo run a check for expired nodes:\n\t'deadline check'");
-
-		// This command is useful if you take a look at the node attributes
-		app.provideNewCommand("epoch2date", (CommandOutputProvider out, ApplicationInstance myInstance, String[] args) -> {
-				if(args.length == 1){
-					try	{
-						String value = Instant.ofEpochMilli(Long.parseLong(args[0])).atZone(ZoneId.systemDefault()).toLocalDate().format(dateTimeFormatter);
-						out.println(value);
-						return value;
-					}
-					catch(NumberFormatException nuFormatEx){
-						out.println("Argument 1 is not a number!");
-					}
-				}
-				else
-				{
-					out.println("Usage: epoch2date [milliseconds since 1.1.1970]");
-				}
-				return null;
-			}, "Converts a number of milliseconds since 1.1.1970 to a real date");
-
-		// This command is useful if you take a look at the node attributes
-		app.provideNewCommand("date2epoch", (CommandOutputProvider out, ApplicationInstance myInstance, String[] args) -> {
-			if(args.length == 1){
-				try	{
-					SimpleDateFormat sda = new SimpleDateFormat("dd.MM.yyyy");
-					long value = sda.parse(args[0]).toInstant().atZone(ZoneId.systemDefault()).toEpochSecond() * 1000;
-					out.println(Long.toString(value));
-					return Long.toString(value);
-				}
-				catch(Exception ex){
-					out.println("Unable to parse date (dd.MM.yyyy).");
-				}
-			}
-			return null;
-		}, "Converts a date [dd.MM.yyyy] into the number of milliseconds since 1.1.1970.");
+		String packageName = getClass().getPackage().getName();
+		app.getShell().addCommand("deadline", packageName + ".DeadlineCmd");
+		app.getShell().addCommand("dateconv", packageName + ".DateConv");
+		app.getShell().addAlias("date2epoch", "dateconv -d2e");
+		app.getShell().addAlias("epoch2date", "dateconv -e2d");
 	}
 
 	/* =========================================================== load settings e.g. default values =============================================================== */
 
 	private void loadWarnDiffFromSettings(ApplicationInstance instance){
-		String value = instance.getSettingsValue(warningDifferenceSettingsValue);
+		String value = instance.getSettingsValue(WARNING_DIFFERENCE_SETTINGS_VALUE);
 		if(value.equals("")){
 			setWarnDiffDefaultValues();
 		}
@@ -304,7 +231,7 @@ public class Deadline implements Module {
 		}
 	}
 
-	private void checkForExpiredNodes(boolean forceConsoleOutput){
+	public void checkForExpiredNodes(boolean forceConsoleOutput){
 		List<ExpiredNodeData> expiredNodes = new ArrayList<>();
 		List<ExpiredNodeData> nearlyExpiredNodes = new ArrayList<>();
 		if(KeyMinder.verbose_mode || forceConsoleOutput){app.println("Checking for expired nodes...");}
@@ -351,9 +278,9 @@ public class Deadline implements Module {
 	private void checkForExpiredNodes(Tree tree, long now, List<ExpiredNodeData> expiredNodes, List<ExpiredNodeData> nearlyExpiredNodes, boolean enableLiveLog){
 		tree.allNodes((TreeNode node) -> {
 			if(Thread.interrupted()){return;}
-			if(node.hasAttribute(nodeExpirationAttribute)){
+			if(node.hasAttribute(NODE_EXPIRATION_ATTRIBUTE)){
 				try{
-					long value = Long.parseLong(node.getAttribute(nodeExpirationAttribute));
+					long value = Long.parseLong(node.getAttribute(NODE_EXPIRATION_ATTRIBUTE));
 					long diff = value - now;
 					if(diff < 0){
 						// has been expired
@@ -410,9 +337,9 @@ public class Deadline implements Module {
 		DatePicker datePicker = new DatePicker();
 		datePicker.setMinWidth(290);
 		vbox.setPadding(new Insets(4,0,0,0));
-		if(node.hasAttribute(nodeExpirationAttribute)){
+		if(node.hasAttribute(NODE_EXPIRATION_ATTRIBUTE)){
 			try{
-				datePicker.setValue(Instant.ofEpochMilli(Long.parseLong(node.getAttribute(nodeExpirationAttribute))).atZone(ZoneId.systemDefault()).toLocalDate());
+				datePicker.setValue(Instant.ofEpochMilli(Long.parseLong(node.getAttribute(NODE_EXPIRATION_ATTRIBUTE))).atZone(ZoneId.systemDefault()).toLocalDate());
 			}
 			catch(NumberFormatException nuFormatEx){
 				app.alert(String.format(app.getFxUserInterface().getLocaleBundleString("module.deadline.dialog.number_format_exception_message"), node.getText()));
@@ -435,11 +362,11 @@ public class Deadline implements Module {
 		Button acceptButton = new Button(app.getFxUserInterface().getLocaleBundleString("module.deadline.dialog.button_accept"));
 		acceptButton.setOnAction((ActionEvent ae) -> {
 			if(activate.isSelected()){
-				node.setAttribute(nodeExpirationAttribute, Long.toString(datePicker.getValue().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().getEpochSecond() * 1000));
+				node.setAttribute(NODE_EXPIRATION_ATTRIBUTE, Long.toString(datePicker.getValue().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().getEpochSecond() * 1000));
 			}
 			else{
-				if(node.hasAttribute(nodeExpirationAttribute)){
-					node.removeAttribute(nodeExpirationAttribute);
+				if(node.hasAttribute(NODE_EXPIRATION_ATTRIBUTE)){
+					node.removeAttribute(NODE_EXPIRATION_ATTRIBUTE);
 				}
 			}
 			me.close();

@@ -22,7 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.lib.Tools;
+import de.akubix.keyminder.shell.AnsiColor;
+import de.akubix.keyminder.shell.CommandException;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
@@ -35,7 +38,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
 
-public class Terminal implements de.akubix.keyminder.core.interfaces.CommandOutputProvider {
+public class Terminal implements de.akubix.keyminder.shell.io.ShellOutputWriter {
 	private Stage terminalwindow;
 	private TextArea output;
 	private TextField input;
@@ -128,23 +131,19 @@ public class Terminal implements de.akubix.keyminder.core.interfaces.CommandOutp
 
 	private void runCommand(String line){
 		if(!line.equals("")){
-			String cmd;
-			String[] param;
-			if(line.contains(" ")){
-				String[] splitstr = line.split(" ", 2);
-				cmd = splitstr[0];
-				param = de.akubix.keyminder.core.ApplicationInstance.splitParameters(splitstr[1]);
-			}
-			else{
-				cmd = line;
-				param = new String[0];
-			}
-			if(cmd.toLowerCase().equals("exit")){terminalwindow.close(); return;}
 
 			print("\n$ " + line + "\n");
 			history.add(line);
 			currentHistoryIndex = history.size();
-			if(app.commandAvailable(cmd)){app.execute(this, cmd, param);}else{println("Unknown command: '" + cmd + "'");}
+
+			try {
+				app.getShell().runShellCommand(this, line);
+			} catch (CommandException e) {
+				println(e.getMessage());
+			} catch (UserCanceledOperationException e) {
+				terminalwindow.close();
+				return;
+			}
 		}
 		else{
 			println("$");
@@ -174,6 +173,10 @@ public class Terminal implements de.akubix.keyminder.core.interfaces.CommandOutp
 	@Override
 	public void printf(String text, Object...  args){
 		this.print(String.format(text, args));
+	}
+
+	@Override
+	public void setColor(AnsiColor color) {
 	}
 
 	private void printAsFxThread(String str){

@@ -27,6 +27,7 @@ public class KeyMinder {
 	public static final Map<String, String> environment = new HashMap<String, String>();
 	public static boolean environment_isLinux = false;
 	public static boolean verbose_mode = false;
+	public static boolean enableColoredOutput = false;
 
 	/* Environment: Predefined may available items.
 	 * os: Contains "Linux", "Windows" or "Unknown"
@@ -38,7 +39,7 @@ public class KeyMinder {
 
 		// Prepare environment
 		final String os = System.getProperty("os.name").toLowerCase();
-		if(os.indexOf("linux") >= 0){environment.put("os", "Linux"); environment_isLinux = true;}
+		if(os.indexOf("linux") >= 0){environment.put("os", "Linux"); environment_isLinux = true; enableColoredOutput = true;}
 		else if(os.indexOf("win") >= 0){environment.put("os", "Windows");}
 		else {environment.put("os", "Unknown");}
 
@@ -121,6 +122,16 @@ public class KeyMinder {
 							case "no-redirect":
 							case "noredirect":
 								environment.put("disable_output_redirect", "true");
+								break;
+
+							case "color":
+								if(args[i+1].toLowerCase().equals("on")){
+									enableColoredOutput = true;
+								}
+								else if(args[i+1].toLowerCase().equals("off")){
+									enableColoredOutput = false;
+								}
+								i++;
 								break;
 
 							case "version":

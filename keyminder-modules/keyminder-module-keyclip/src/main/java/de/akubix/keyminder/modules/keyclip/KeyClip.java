@@ -1,5 +1,5 @@
 /*	KeyMinder
-	Copyright (C) 2015 Bastian Kraemer
+	Copyright (C) 2015-2016 Bastian Kraemer
 
 	KeyClip.java
 
@@ -24,8 +24,6 @@ import java.awt.event.MouseListener;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.exceptions.ModuleStartupException;
-import de.akubix.keyminder.core.interfaces.Command;
-import de.akubix.keyminder.core.interfaces.CommandOutputProvider;
 import javafx.scene.control.Alert.AlertType;
 
 @de.akubix.keyminder.core.interfaces.ModuleProperties(
@@ -50,29 +48,7 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 			this.fxUI = instance.getFxUserInterface();
 
 			// Provide the KeyClip feature as command
-			instance.provideNewCommand("keyclip", new Command() {
-				@Override
-				public String runCommand(CommandOutputProvider out, ApplicationInstance instance, String[] args) {
-					if(args.length == 0){
-						de.akubix.keyminder.core.db.TreeNode n = instance.getTree().getSelectedNode();
-						copyUserAndPassword(n.getAttribute("username"), n.getAttribute("password"));
-					}
-					else if(args.length == 1)
-					{
-						copyUserAndPassword(args[0], "");
-					}
-					else if (args.length == 2){
-						copyUserAndPassword(args[0], args[1]);
-					}
-					else if (args.length == 3){
-						copyUserAndPassword(args[0], args[1]);
-					}
-					else {
-						out.println("Usage: keyclip <username> <password>");
-						return "failed";
-					}
-					return "ok";
-				}});
+			instance.getShell().addCommand("keyclip", getClass().getPackage().getName() + ".KeyClipCmd");
 		}
 		else{
 			throw new ModuleStartupException("JavaFX User Interface is not available.", ModuleStartupException.ModuleErrorLevel.FxUserInterfaceNotAvailable);
@@ -95,7 +71,7 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 		}
 	}
 
-	public void createSystemTrayIcon(){
+	private void createSystemTrayIcon(){
 		if (java.awt.SystemTray.isSupported()) {
 
 			java.awt.SystemTray tray = java.awt.SystemTray.getSystemTray();
