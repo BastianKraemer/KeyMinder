@@ -11,7 +11,6 @@ import org.junit.Test;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinderInstanceBuilder;
-import de.akubix.keyminder.shell.commands.EchoCmd;
 import de.akubix.keyminder.shell.commands.NoArgsCmd;
 import de.akubix.keyminder.shell.commands.SwitchTestCmd;
 import de.akubix.keyminder.shell.commands.TestCmd;
@@ -89,16 +88,6 @@ public class ShellCommandTest {
 	@Test(expected=CommandException.class)
 	public void testSwitchAnnotation3() throws CommandException {
 		run(new SwitchTestCmd(), new String[]{"-required", "req", "-optional2", "abc", "def"});
-	}
-
-	@Test
-	public void testSwitchAnnotation4() throws CommandException {
-		assertEquals("hello world",
-			run(new EchoCmd(), new String[]{"hello world"}));
-
-		assertEquals("hello world\n",
-			run(new EchoCmd(), new String[]{"--newline", "hello world"}));
-
 	}
 
 	// Helper methods
