@@ -27,7 +27,7 @@ import de.akubix.keyminder.core.interfaces.ModuleProperties;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.modules.ModuleInfo;
 import de.akubix.keyminder.core.modules.ModuleLoader;
-import de.akubix.keyminder.lib.Tools;
+import de.akubix.keyminder.lib.gui.ImageSelector;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -156,7 +156,7 @@ public class SettingsDialog {
 		//Set position of second window, related to primary window.
 		me.setResizable(false);
 		me.initModality( Modality.APPLICATION_MODAL );
-		Tools.addDefaultIconsToStage(me);
+		ImageSelector.addDefaultIconsToStage(me);
 		me.showAndWait();
 
 		return saveSettings;

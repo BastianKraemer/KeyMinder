@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -47,7 +46,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 
 /**
  * This class is just a collection of some useful methods
@@ -212,12 +210,6 @@ public class Tools {
 		Label l = new Label(text);
 		l.getStyleClass().add(styleClass);
 		return l;
-	}
-
-	public static void addDefaultIconsToStage(Stage stage){
-		stage.getIcons().addAll(new Image(ApplicationInstance.APP_ICON_16),
-								new Image(ApplicationInstance.APP_ICON_32),
-								new Image(ApplicationInstance.APP_ICON_256));
 	}
 
 	public static boolean isYes(String s){

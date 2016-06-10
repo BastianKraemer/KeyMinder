@@ -24,7 +24,7 @@ import java.util.List;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.lib.Tools;
+import de.akubix.keyminder.lib.gui.ImageSelector;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.CommandException;
 import javafx.application.Platform;
@@ -111,7 +111,7 @@ public class Terminal implements de.akubix.keyminder.shell.io.ShellOutputWriter 
 		terminalwindow.setScene(myScene);
 
 		terminalwindow.setResizable(true);
-		Tools.addDefaultIconsToStage(terminalwindow);
+		ImageSelector.addDefaultIconsToStage(terminalwindow);
 		terminalwindow.setMinWidth(560);
 		terminalwindow.setMinHeight(240);
 

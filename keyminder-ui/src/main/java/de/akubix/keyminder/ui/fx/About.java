@@ -21,7 +21,6 @@ package de.akubix.keyminder.ui.fx;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
-import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.lib.gui.ImageSelector;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -93,7 +92,7 @@ public class About {
 		aboutWindow.setScene(myScene);
 
 		aboutWindow.setResizable(false);
-		Tools.addDefaultIconsToStage(aboutWindow);
+		ImageSelector.addDefaultIconsToStage(aboutWindow);
 
 		aboutWindow.show();
 	}

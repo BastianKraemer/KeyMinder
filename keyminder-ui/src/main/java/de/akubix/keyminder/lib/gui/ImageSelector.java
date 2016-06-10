@@ -5,6 +5,7 @@ import java.util.Properties;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
 
 /**
  * This class offers a possibility to access all provided icons in a secure way using keywords
@@ -62,5 +63,16 @@ public class ImageSelector {
 		else {
 			return null;
 		}
+	}
+
+	/**
+	 * Adds the KeyMinder icons with the sizes 16x16, 32x32 and 256x256 pixels to a stage
+	 * @param stage
+	 */
+	public static void addDefaultIconsToStage(Stage stage){
+		loadProperties();
+		stage.getIcons().addAll(new Image((String) imageMap.get("appicon_16")),
+								new Image((String) imageMap.get("appicon_32")),
+								new Image((String) imageMap.get("appicon")));
 	}
 }

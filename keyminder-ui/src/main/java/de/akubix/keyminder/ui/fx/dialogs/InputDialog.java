@@ -21,7 +21,7 @@ package de.akubix.keyminder.ui.fx.dialogs;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
-import de.akubix.keyminder.lib.Tools;
+import de.akubix.keyminder.lib.gui.ImageSelector;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -144,7 +144,7 @@ public class InputDialog {
 		inputDialog.setScene(myScene);
 
 		inputDialog.initModality( Modality.APPLICATION_MODAL );
-		Tools.addDefaultIconsToStage(inputDialog);
+		ImageSelector.addDefaultIconsToStage(inputDialog);
 	}
 
 	public String getInput() throws UserCanceledOperationException {

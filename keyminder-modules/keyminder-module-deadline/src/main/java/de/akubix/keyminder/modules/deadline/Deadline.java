@@ -37,7 +37,7 @@ import de.akubix.keyminder.core.interfaces.Module;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
-import de.akubix.keyminder.lib.Tools;
+import de.akubix.keyminder.lib.gui.ImageSelector;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -392,7 +392,7 @@ public class Deadline implements Module {
 		me.initModality( Modality.APPLICATION_MODAL );
 		me.setScene(myScene);
 		me.setResizable(false);
-		Tools.addDefaultIconsToStage(me);
+		ImageSelector.addDefaultIconsToStage(me);
 
 		me.showAndWait();
 	}
@@ -447,7 +447,7 @@ public class Deadline implements Module {
 
 		me.setScene(myScene);
 		me.setResizable(false);
-		Tools.addDefaultIconsToStage(me);
+		ImageSelector.addDefaultIconsToStage(me);
 
 		me.show();
 	}

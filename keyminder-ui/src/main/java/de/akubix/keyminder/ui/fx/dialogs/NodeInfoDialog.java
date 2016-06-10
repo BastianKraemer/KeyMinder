@@ -18,7 +18,7 @@
 */
 package de.akubix.keyminder.ui.fx.dialogs;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.lib.Tools;
+import de.akubix.keyminder.lib.gui.ImageSelector;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -109,17 +109,17 @@ public class NodeInfoDialog {
 		me.initOwner(owner);
 		me.initModality( Modality.APPLICATION_MODAL );
 		me.setTitle(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.title"));
-	 	me.setResizable(false);
-	 	Tools.addDefaultIconsToStage(me);
-	 	me.setWidth(400);
-	 	me.setHeight(420);
+		me.setResizable(false);
+		ImageSelector.addDefaultIconsToStage(me);
+		me.setWidth(400);
+		me.setHeight(420);
 
 		BorderPane root = new BorderPane();
 		//root.setPadding(new Insets(4, 4, 4, 4));
 
-	 	Scene myScene = new Scene(root);
+		Scene myScene = new Scene(root);
 		me.setScene(myScene);
-	 	de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
+		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
 
 		tableView.setEditable(true);
 		Callback<TableColumn<Record, String>, TableCell<Record, String>> cellFactory =
