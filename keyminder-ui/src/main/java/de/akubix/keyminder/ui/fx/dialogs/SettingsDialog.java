@@ -27,7 +27,8 @@ import de.akubix.keyminder.core.interfaces.ModuleProperties;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.modules.ModuleInfo;
 import de.akubix.keyminder.core.modules.ModuleLoader;
-import de.akubix.keyminder.lib.gui.ImageSelector;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
+import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -149,14 +150,14 @@ public class SettingsDialog {
 		BorderPane.setMargin(bottom, new Insets(8,8,8,8));
 
 		Scene myScene = new Scene(root, size_x, size_y);
-		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
+		StylesheetMap.assignStylesheets(myScene);
 
 		me.setScene(myScene);
 
 		//Set position of second window, related to primary window.
 		me.setResizable(false);
 		me.initModality( Modality.APPLICATION_MODAL );
-		ImageSelector.addDefaultIconsToStage(me);
+		ImageMap.addDefaultIconsToStage(me);
 		me.showAndWait();
 
 		return saveSettings;

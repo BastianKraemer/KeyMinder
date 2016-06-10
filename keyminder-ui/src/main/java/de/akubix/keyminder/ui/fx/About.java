@@ -21,7 +21,8 @@ package de.akubix.keyminder.ui.fx;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
-import de.akubix.keyminder.lib.gui.ImageSelector;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
+import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -51,7 +52,7 @@ public class About {
 		BorderPane root = new BorderPane();
 		root.setId("Body");
 
-		ImageView appIcon = ImageSelector.getFxImageView("appicon");
+		ImageView appIcon = ImageMap.getFxImageView("appicon");
 		Pane imageContainer = new Pane(appIcon);
 		appIcon.setId("AppIcon");
 		imageContainer.setId("AppIconContainer");
@@ -87,12 +88,12 @@ public class About {
 		Stage aboutWindow = new Stage();
 		Scene myScene = new Scene(root, WINDOW_WIDTH, 250);
 
-		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene, de.akubix.keyminder.lib.gui.StyleSelector.WindowSelector.About);
+		StylesheetMap.assignStylesheet(myScene, StylesheetMap.WindowSelector.About);
 		aboutWindow.setTitle(fxUI.getLocaleBundleString("about.title"));
 		aboutWindow.setScene(myScene);
 
 		aboutWindow.setResizable(false);
-		ImageSelector.addDefaultIconsToStage(aboutWindow);
+		ImageMap.addDefaultIconsToStage(aboutWindow);
 
 		aboutWindow.show();
 	}

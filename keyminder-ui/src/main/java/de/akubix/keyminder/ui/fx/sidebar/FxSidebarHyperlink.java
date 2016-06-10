@@ -1,4 +1,4 @@
-package de.akubix.keyminder.lib.sidebar;
+package de.akubix.keyminder.ui.fx.sidebar;
 
 import java.awt.Desktop;
 import java.io.IOException;
@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
@@ -32,7 +33,7 @@ public abstract class FxSidebarHyperlink implements FxSidebarElement {
 		hyperlink.prefWidthProperty().bind(instance.getFxUserInterface().getSidbarWidthProperty().subtract(12));
 		hyperlink.setMinHeight(24);
 
-		Button edit = new Button("", de.akubix.keyminder.lib.gui.ImageSelector.getFxImageView(("icon_edit")));
+		Button edit = new Button("", ImageMap.getFxImageView(("icon_edit")));
 		edit.setMinWidth(16);
 		edit.setMaxWidth(16);
 		edit.setTooltip(new Tooltip(useMailTo ?

@@ -1,4 +1,4 @@
-package de.akubix.keyminder.lib.sidebar;
+package de.akubix.keyminder.ui.fx.sidebar;
 
 import de.akubix.keyminder.core.db.TreeNode;
 import javafx.event.ActionEvent;

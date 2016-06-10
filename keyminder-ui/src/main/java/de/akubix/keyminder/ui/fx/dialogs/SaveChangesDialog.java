@@ -21,7 +21,8 @@ package de.akubix.keyminder.ui.fx.dialogs;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
-import de.akubix.keyminder.lib.gui.ImageSelector;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
+import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -114,7 +115,7 @@ public class SaveChangesDialog {
 		BorderPane.setMargin(bottom, new Insets(0,10,10,10));
 
 		Scene myScene = new Scene(root, sceneWidth, sceneHeight);
-		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
+		StylesheetMap.assignStylesheets(myScene);
 
 		dialog = new Stage();
 		dialog.setTitle(ApplicationInstance.APP_NAME + fxUI.getLocaleBundleString("dialogs.savechanges.title"));
@@ -125,7 +126,7 @@ public class SaveChangesDialog {
 			dialog.setResizable(false); //Workaround, otherwise the window will "jump" a bit over the screen
 		}
 		dialog.initModality( Modality.APPLICATION_MODAL );
-		ImageSelector.addDefaultIconsToStage(dialog);
+		ImageMap.addDefaultIconsToStage(dialog);
 	}
 
 	public Result getInput(){

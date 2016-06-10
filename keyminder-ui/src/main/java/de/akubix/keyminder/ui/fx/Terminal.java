@@ -24,9 +24,10 @@ import java.util.List;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.lib.gui.ImageSelector;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.CommandException;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
+import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
@@ -69,7 +70,7 @@ public class Terminal implements de.akubix.keyminder.shell.io.ShellOutputWriter 
 		root.setBottom(hbox);
 
 		Scene myScene = new Scene(root, 640, 320);
-		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene, de.akubix.keyminder.lib.gui.StyleSelector.WindowSelector.Terminal);
+		StylesheetMap.assignStylesheet(myScene, StylesheetMap.WindowSelector.Terminal);
 
 		input.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
 			@Override
@@ -111,7 +112,7 @@ public class Terminal implements de.akubix.keyminder.shell.io.ShellOutputWriter 
 		terminalwindow.setScene(myScene);
 
 		terminalwindow.setResizable(true);
-		ImageSelector.addDefaultIconsToStage(terminalwindow);
+		ImageMap.addDefaultIconsToStage(terminalwindow);
 		terminalwindow.setMinWidth(560);
 		terminalwindow.setMinHeight(240);
 

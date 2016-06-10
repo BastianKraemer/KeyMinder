@@ -1,4 +1,4 @@
-package de.akubix.keyminder.lib.gui;
+package de.akubix.keyminder.ui.fx.utils;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -10,7 +10,7 @@ import javafx.stage.Stage;
 /**
  * This class offers a possibility to access all provided icons in a secure way using keywords
  */
-public class ImageSelector {
+public class ImageMap {
 	private static Properties imageMap = null;
 	private static final String IMAGE_LIST_PROPERTIES_FILE = "/de/akubix/keyminder/images/images.properties";
 
@@ -18,7 +18,7 @@ public class ImageSelector {
 		if(imageMap == null){
 			try {
 				imageMap = new Properties();
-				imageMap.load(ImageSelector.class.getResourceAsStream(IMAGE_LIST_PROPERTIES_FILE));
+				imageMap.load(ImageMap.class.getResourceAsStream(IMAGE_LIST_PROPERTIES_FILE));
 			} catch (IOException e){
 				System.err.println("Properties file '" + IMAGE_LIST_PROPERTIES_FILE +"' not found inside jar file.");
 			}

@@ -18,7 +18,8 @@
 */
 package de.akubix.keyminder.ui.fx.dialogs;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.lib.gui.ImageSelector;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
+import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -110,7 +111,7 @@ public class NodeInfoDialog {
 		me.initModality( Modality.APPLICATION_MODAL );
 		me.setTitle(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.title"));
 		me.setResizable(false);
-		ImageSelector.addDefaultIconsToStage(me);
+		ImageMap.addDefaultIconsToStage(me);
 		me.setWidth(400);
 		me.setHeight(420);
 
@@ -119,7 +120,7 @@ public class NodeInfoDialog {
 
 		Scene myScene = new Scene(root);
 		me.setScene(myScene);
-		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
+		StylesheetMap.assignStylesheets(myScene);
 
 		tableView.setEditable(true);
 		Callback<TableColumn<Record, String>, TableCell<Record, String>> cellFactory =

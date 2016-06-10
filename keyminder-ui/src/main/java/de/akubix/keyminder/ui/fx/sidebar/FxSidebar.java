@@ -16,7 +16,7 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-package de.akubix.keyminder.lib.sidebar;
+package de.akubix.keyminder.ui.fx.sidebar;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -22,7 +22,8 @@ import java.time.ZoneId;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.Tree;
-import de.akubix.keyminder.lib.gui.ImageSelector;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
+import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -176,7 +177,7 @@ public class FindAndReplaceDialog {
 		BorderPane.setMargin(bottom, new Insets(0,10,10,10));
 
 		Scene myScene = new Scene(root, 300, 270);
-		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
+		StylesheetMap.assignStylesheets(myScene);
 
 		me = new Stage();
 		me.setTitle(ApplicationInstance.APP_NAME + " - " + fxUI.getLocaleBundleString("dialogs.findreplace.title"));
@@ -184,7 +185,7 @@ public class FindAndReplaceDialog {
 
 		me.setResizable(false);
 		//me.initModality( Modality.NONE );
-		ImageSelector.addDefaultIconsToStage(me);
+		ImageMap.addDefaultIconsToStage(me);
 
 		me.setOnCloseRequest(new EventHandler<WindowEvent>() {
 			@Override

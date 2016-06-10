@@ -1,6 +1,7 @@
-package de.akubix.keyminder.lib.sidebar;
+package de.akubix.keyminder.ui.fx.sidebar;
 
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
@@ -45,7 +46,7 @@ public abstract class FxSidebarPasswordbox implements FxSidebarElement {
 
 		row.setBottom(showPw);
 
-		Button copy = new Button("", de.akubix.keyminder.lib.gui.ImageSelector.getFxImageView(("icon_copy")));
+		Button copy = new Button("", ImageMap.getFxImageView(("icon_copy")));
 		copy.setMinWidth(16);
 		copy.setMaxWidth(16);
 		copy.setTooltip(new Tooltip(instance.getFxUserInterface().getLocaleBundleString("mainwindow.menu.edit.copy_text")));

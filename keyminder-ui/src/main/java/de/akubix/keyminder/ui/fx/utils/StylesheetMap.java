@@ -1,10 +1,10 @@
-package de.akubix.keyminder.lib.gui;
+package de.akubix.keyminder.ui.fx.utils;
 
 import javafx.scene.Scene;
 
-public class StyleSelector {
+public class StylesheetMap {
 	public static void assignStylesheets(Scene scene){
-		assignStylesheets(scene, WindowSelector.Other);
+		assignStylesheet(scene, WindowSelector.Other);
 	}
 	private static final String defaultCSSFile = "/de/akubix/keyminder/ui/css/style.css";
 
@@ -12,7 +12,7 @@ public class StyleSelector {
 		scene.getStylesheets().add(defaultCSSFile);
 	}
 
-	public static void assignStylesheets(Scene scene, WindowSelector window){
+	public static void assignStylesheet(Scene scene, WindowSelector window){
 		switch(window){
 			case MainWindow:
 				scene.getStylesheets().addAll(defaultCSSFile, "/de/akubix/keyminder/ui/css/treeview.css");

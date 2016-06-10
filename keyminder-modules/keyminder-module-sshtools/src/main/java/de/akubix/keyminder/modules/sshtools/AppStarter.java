@@ -29,7 +29,7 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.etc.MenuEntryPosition;
 import de.akubix.keyminder.lib.Tools;
-import de.akubix.keyminder.lib.gui.ImageSelector;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 
@@ -72,7 +72,7 @@ public class AppStarter {
 			}
 			if(!noItemsAndCommands){
 				if(app.isFxUserInterfaceAvailable()){
-					MenuItem contextMenuItem = Tools.createFxMenuItem(attrib.getNodeValue(), ImageSelector.getIcon(icon), (event) -> app.getFxUserInterface().updateStatus(sshtools.startApplication(this, false, null)));
+					MenuItem contextMenuItem = Tools.createFxMenuItem(attrib.getNodeValue(), ImageMap.getIcon(icon), (event) -> app.getFxUserInterface().updateStatus(sshtools.startApplication(this, false, null)));
 					app.getFxUserInterface().addMenuEntry(contextMenuItem, MenuEntryPosition.CONTEXTMENU, true);
 
 					if(socksSupport){
@@ -80,7 +80,7 @@ public class AppStarter {
 							contextMenuItemUsingSocks = new Menu(attrib.getNodeValue() + " using socks");
 						}
 						else{
-							contextMenuItemUsingSocks = new Menu(attrib.getNodeValue() + " using socks", ImageSelector.getFxImageView(icon));
+							contextMenuItemUsingSocks = new Menu(attrib.getNodeValue() + " using socks", ImageMap.getFxImageView(icon));
 						}
 
 						app.getFxUserInterface().addMenuEntry(contextMenuItemUsingSocks, MenuEntryPosition.CONTEXTMENU, true);

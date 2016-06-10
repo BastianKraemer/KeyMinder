@@ -21,7 +21,8 @@ package de.akubix.keyminder.ui.fx.dialogs;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
-import de.akubix.keyminder.lib.gui.ImageSelector;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
+import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -73,7 +74,7 @@ public class InputDialog {
 			if(!defaultValueOrPasswordHint.equals("")){
 				Tooltip tooltip = new Tooltip(fxUI.getLocaleBundleString("dialogs.inputdialog.passwordhint") + ":\n" + defaultValueOrPasswordHint);
 				Label l = new Label();
-				l.setGraphic(new ImageView(de.akubix.keyminder.lib.gui.ImageSelector.getIcon("icon_help_white")));
+				l.setGraphic(new ImageView(ImageMap.getIcon("icon_help_white")));
 				l.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
 				top.setRight(l);
 				BorderPane.setAlignment(l, Pos.CENTER);
@@ -133,7 +134,7 @@ public class InputDialog {
 		BorderPane.setMargin(bottom, new Insets(0,10,10,10));
 
 		Scene myScene = new Scene(root, sceneWidth, sceneHeight);
-		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
+		StylesheetMap.assignStylesheets(myScene);
 
 		inputDialog = new Stage();
 		if(!KeyMinder.environment_isLinux){
@@ -144,7 +145,7 @@ public class InputDialog {
 		inputDialog.setScene(myScene);
 
 		inputDialog.initModality( Modality.APPLICATION_MODAL );
-		ImageSelector.addDefaultIconsToStage(inputDialog);
+		ImageMap.addDefaultIconsToStage(inputDialog);
 	}
 
 	public String getInput() throws UserCanceledOperationException {

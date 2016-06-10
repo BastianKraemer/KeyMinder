@@ -24,6 +24,7 @@ import java.awt.event.MouseListener;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.exceptions.ModuleStartupException;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.scene.control.Alert.AlertType;
 
 @de.akubix.keyminder.core.interfaces.ModuleProperties(
@@ -75,7 +76,7 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 		if (java.awt.SystemTray.isSupported()) {
 
 			java.awt.SystemTray tray = java.awt.SystemTray.getSystemTray();
-			java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(getClass().getResource(de.akubix.keyminder.lib.gui.ImageSelector.getIcon("appicon_16")));
+			java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(getClass().getResource(ImageMap.getIcon("appicon_16")));
 
 			final java.awt.TrayIcon trayIcon = new java.awt.TrayIcon(image, ApplicationInstance.APP_NAME + " KeyClip");
 			trayIcon.addMouseListener(new MouseListener() {

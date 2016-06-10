@@ -20,8 +20,8 @@ package de.akubix.keyminder.modules.sidebar;
 
 import de.akubix.keyminder.core.exceptions.ModuleStartupException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.lib.sidebar.FxSidebar;
 import de.akubix.keyminder.shell.CommandException;
+import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 

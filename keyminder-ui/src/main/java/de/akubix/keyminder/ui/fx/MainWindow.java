@@ -35,12 +35,12 @@ import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
 import de.akubix.keyminder.core.interfaces.events.HotKeyEvent;
 import de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler;
-import de.akubix.keyminder.lib.gui.ImageSelector;
-import de.akubix.keyminder.lib.gui.StyleSelector;
 import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.fx.dialogs.FindAndReplaceDialog;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
 import de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
+import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -317,7 +317,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			// Generate the whole graphical user interface
 			buildUI(rootPanel);
 
-			StyleSelector.assignStylesheets(scene, de.akubix.keyminder.lib.gui.StyleSelector.WindowSelector.MainWindow);
+			StylesheetMap.assignStylesheet(scene, StylesheetMap.WindowSelector.MainWindow);
 			me.setScene(scene);
 			me.setMinWidth(640);
 			me.setMinHeight(400);
@@ -390,7 +390,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 			if(!de.akubix.keyminder.lib.AESCore.isAES256Supported()){
 					// Important security note
-					Button notification = new Button("", ImageSelector.getFxImageView(("icon_warning")));
+					Button notification = new Button("", ImageMap.getFxImageView(("icon_warning")));
 					notification.setMinWidth(24);
 					notification.setMaxWidth(24);
 					Tooltip tooltip = new Tooltip(localeBundle.getString("security.aes_warning_title"));
@@ -427,7 +427,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			app.startup(true);
 
 			// Show the main window
-			ImageSelector.addDefaultIconsToStage(me);
+			ImageMap.addDefaultIconsToStage(me);
 
 			me.show();
 
@@ -524,22 +524,22 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		// --- Menu File
 		menu_File = new Menu(localeBundle.getString("mainwindow.menu.file"));
 
-		Menu file_new = new Menu(localeBundle.getString("mainwindow.menu.file.new"), ImageSelector.getFxImageView("icon_newfile"));
-		file_new.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new.encrypted_file"), ImageSelector.getIcon("icon_new_encrypted_file"),
+		Menu file_new = new Menu(localeBundle.getString("mainwindow.menu.file.new"), ImageMap.getFxImageView("icon_newfile"));
+		file_new.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new.encrypted_file"), ImageMap.getIcon("icon_new_encrypted_file"),
 											  (event) -> showCreateNewFileDialog(true), false));
 
-		file_new.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new.regular_file"), ImageSelector.getIcon("icon_newfile"),
+		file_new.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new.regular_file"), ImageMap.getIcon("icon_newfile"),
 				  (event) -> showCreateNewFileDialog(false), false));
 
 		menu_File.getItems().add(file_new);
 
 
 		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.open"),
-												ImageSelector.getIcon("icon_openfile"),
+												ImageMap.getIcon("icon_openfile"),
 												(event) -> initalizeOpenFile(), false));
 
 		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.save"),
-												ImageSelector.getIcon("icon_save"),
+												ImageMap.getIcon("icon_save"),
 												(event) -> app.saveFile(), true));
 
 		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.saveas"), "",
@@ -576,7 +576,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		// --- Menu Edit
 		menu_Edit = new Menu(localeBundle.getString("mainwindow.menu.edit"));
 
-		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.settings"), ImageSelector.getIcon("icon_settings"), new EventHandler<ActionEvent>() {
+		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.settings"), ImageMap.getIcon("icon_settings"), new EventHandler<ActionEvent>() {
 			@Override public void handle(ActionEvent e){
 				de.akubix.keyminder.ui.fx.dialogs.SettingsDialog sd = new de.akubix.keyminder.ui.fx.dialogs.SettingsDialog(me, app);
 				sd.show();
@@ -587,23 +587,23 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 												(event) -> duplicateNode(getSelectedTreeNode(), true), true));
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.copy_text"),
-												ImageSelector.getIcon("icon_copy"),
+												ImageMap.getIcon("icon_copy"),
 												(event) -> setClipboardText(getSelectedTreeNode().getText()), true));
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.insert_text"),	"",
 												(event) -> InsertNodeFromClipboard(), true));
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.find"),
-												ImageSelector.getIcon("icon_find"), (event) -> showSearchBar(!searchBoardIsVisible), true));
+												ImageMap.getIcon("icon_find"), (event) -> showSearchBar(!searchBoardIsVisible), true));
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.find_replace"), "",
 												(ActionEvent e) -> FindAndReplaceDialog.showInstance(me, dataTree, this), true));
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.add_root_node"),
-												ImageSelector.getIcon("icon_add"), (event) -> showAddTreeNodeDialog(true), true));
+												ImageMap.getIcon("icon_add"), (event) -> showAddTreeNodeDialog(true), true));
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.undo"),
-												ImageSelector.getIcon("icon_undo"), (event) -> undo(), true));
+												ImageMap.getIcon("icon_undo"), (event) -> undo(), true));
 
 		// Menu entry to format nodes (bold, italic, strikeout)
 		Menu nodeFontSettings = new Menu(localeBundle.getString("mainwindow.menu.edit.style"));
@@ -634,47 +634,47 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		// Sort nodes
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.sort"),
-												ImageSelector.getIcon("icon_sort"),
+												ImageMap.getIcon("icon_sort"),
 												(event) -> dataTree.sortChildNodes(getSelectedTreeNode(), false), true));
 
 		// Menu entry for vertical node moving
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.move_node_up"),
-												ImageSelector.getIcon("icon_up"),
+												ImageMap.getIcon("icon_up"),
 												(event) -> dataTree.moveNodeVertical(dataTree.getSelectedNode(), -1), true));
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.move_node_down"),
-												ImageSelector.getIcon("icon_down"),
+												ImageMap.getIcon("icon_down"),
 												(event) -> dataTree.moveNodeVertical(dataTree.getSelectedNode(), 1), true));
 
 		// --- Menu View
 		menu_View = new Menu(localeBundle.getString("mainwindow.menu.view"));
 
 		menu_View.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.view.expand"),
-												ImageSelector.getIcon("icon_add"),
+												ImageMap.getIcon("icon_add"),
 												(event) -> getSelectedTreeItem().setExpanded(true), true));
 
 		menu_View.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.view.collapse"),
-												ImageSelector.getIcon("icon_remove"),
+												ImageMap.getIcon("icon_remove"),
 												(event) -> getSelectedTreeItem().setExpanded(false), true));
 
 		// --- Menu Tools
 		menu_Tools = new Menu(localeBundle.getString("mainwindow.menu.tools"));
 		menu_Tools.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.tools.terminal"),
-												 ImageSelector.getIcon("icon_bash"),
+												 ImageMap.getIcon("icon_bash"),
 												 (event) -> new Terminal(app).show(), false));
 
 		// --- Menu Extras
 		menu_Extras = new Menu(localeBundle.getString("mainwindow.menu.extras"));
 		menu_Extras.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.extras.nodeinfo"),
-												  ImageSelector.getIcon("icon_info"),
+												  ImageMap.getIcon("icon_info"),
 												  (event) -> {
 													  new de.akubix.keyminder.ui.fx.dialogs.NodeInfoDialog(dataTree.getSelectedNode(), app).show(me);
 													  me.requestFocus();
 												  }, true));
 
 		menu_Extras.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.extras.appinfo"),
-				  ImageSelector.getIcon("icon_star_filled"),
+				  ImageMap.getIcon("icon_star_filled"),
 				  (event) -> {new de.akubix.keyminder.ui.fx.About(app).show();}, false));
 
 		menuBar.getMenus().addAll(menu_File, menu_Edit, menu_View, menu_Extras, menu_Tools);
@@ -802,10 +802,10 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		// Tree - Contextmenu
 		treeContextMenu = new ContextMenu();
 
-		treeContextMenu.getItems().add(createMenuItem(localeBundle.getString("mainwindow.contextmenu.add"), ImageSelector.getIcon("icon_add"), (event) -> showAddTreeNodeDialog(false), true));
-		treeContextMenu.getItems().add(createMenuItem(localeBundle.getString("mainwindow.contextmenu.edit"), ImageSelector.getIcon("icon_edit"), (event) -> showEditCurrentNodeDialog(), true));
-		treeContextMenu.getItems().add(createMenuItem(localeBundle.getString("mainwindow.contextmenu.remove"), ImageSelector.getIcon("icon_delete"),(event) -> removeNode(getSelectedTreeItem()), true));
-		Menu colorNodeItems = new Menu(localeBundle.getString("mainwindow.contextmenu.color"), ImageSelector.getFxImageView("icon_color"));
+		treeContextMenu.getItems().add(createMenuItem(localeBundle.getString("mainwindow.contextmenu.add"), ImageMap.getIcon("icon_add"), (event) -> showAddTreeNodeDialog(false), true));
+		treeContextMenu.getItems().add(createMenuItem(localeBundle.getString("mainwindow.contextmenu.edit"), ImageMap.getIcon("icon_edit"), (event) -> showEditCurrentNodeDialog(), true));
+		treeContextMenu.getItems().add(createMenuItem(localeBundle.getString("mainwindow.contextmenu.remove"), ImageMap.getIcon("icon_delete"),(event) -> removeNode(getSelectedTreeItem()), true));
+		Menu colorNodeItems = new Menu(localeBundle.getString("mainwindow.contextmenu.color"), ImageMap.getFxImageView("icon_color"));
 		colorNodeItems.disableProperty().bind(treeDependentElementsDisableProperty);
 
 		colorNodeItems.getItems().addAll( createColorContextMenu(localeBundle.getString("mainwindow.contextmenu.color.blue"), "icon_color_blue", "#00a1e7"),
@@ -823,7 +823,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		treeContextMenu.getItems().add(colorNodeItems);
 
 		treeContextMenu.getItems().add(createMenuItem(localeBundle.getString("mainwindow.contextmenu.copy"),
-													  ImageSelector.getIcon("icon_copy"),
+													  ImageMap.getIcon("icon_copy"),
 													  (event) -> setClipboardText(getSelectedTreeNode().getText()), true));
 
 		treeContextMenu.getItems().add(createMenuItem(localeBundle.getString("mainwindow.contextmenu.copy_node"), "",
@@ -904,7 +904,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 	private MenuItem createColorContextMenu(String colorName, String iconKeyWord, String colorHTMLValue)
 	{
-		return createMenuItem(colorName, ImageSelector.getIcon(iconKeyWord), new EventHandler<ActionEvent>() {
+		return createMenuItem(colorName, ImageMap.getIcon(iconKeyWord), new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent e) {
 				getSelectedTreeNode().setColor(colorHTMLValue);
@@ -1506,7 +1506,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 * @return a button with your preferences
 	 */
 	public static Button createSmallButton(String tooltip, String icon, double size, EventHandler<ActionEvent> onClick){
-		Button b = new Button("", ImageSelector.getFxImageView((icon)));
+		Button b = new Button("", ImageMap.getFxImageView((icon)));
 		b.setMinWidth(size);
 		b.setMaxWidth(size);
 		b.setTooltip(new Tooltip(tooltip));
@@ -1575,8 +1575,8 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 
 	private Button createFavNodeButton(){
-		ImageView imgview_notStarred = new ImageView(ImageSelector.getIcon("icon_star"));
-		ImageView imgview_starred = new ImageView(ImageSelector.getIcon("icon_star_filled"));
+		ImageView imgview_notStarred = new ImageView(ImageMap.getIcon("icon_star"));
+		ImageView imgview_starred = new ImageView(ImageMap.getIcon("icon_star_filled"));
 		Button b = new Button("", imgview_notStarred);
 		b.setMinWidth(24);
 		b.setMaxWidth(24);
@@ -1753,9 +1753,9 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		msg.setHeaderText(headline);
 		msg.setContentText(text);
 		Stage s = (Stage) msg.getDialogPane().getScene().getWindow();
-		ImageSelector.addDefaultIconsToStage(s);
+		ImageMap.addDefaultIconsToStage(s);
 		s.initOwner(me);
-		StyleSelector.assignDefaultStylesheet(s.getScene());
+		StylesheetMap.assignDefaultStylesheet(s.getScene());
 		msg.showAndWait();
 	}
 
@@ -1846,8 +1846,8 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		alert.setHeaderText(headline);
 		alert.setContentText(contentText);
 		Stage s = (Stage) alert.getDialogPane().getScene().getWindow();
-		ImageSelector.addDefaultIconsToStage(s);
-		StyleSelector.assignDefaultStylesheet(alert.getDialogPane().getScene());
+		ImageMap.addDefaultIconsToStage(s);
+		StylesheetMap.assignDefaultStylesheet(alert.getDialogPane().getScene());
 		s.initOwner(me);
 
 		ButtonType buttonYes = new ButtonType(localeBundle.getString("yes"), ButtonData.YES);

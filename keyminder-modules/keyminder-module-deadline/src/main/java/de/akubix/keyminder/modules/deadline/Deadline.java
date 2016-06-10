@@ -37,7 +37,8 @@ import de.akubix.keyminder.core.interfaces.Module;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
-import de.akubix.keyminder.lib.gui.ImageSelector;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
+import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -111,13 +112,13 @@ public class Deadline implements Module {
 		if(instance.isFxUserInterfaceAvailable()){
 			instance.getFxUserInterface().addMenuEntry(
 					de.akubix.keyminder.lib.Tools.createFxMenuItem(instance.getFxUserInterface().getLocaleBundleString("module.deadline.menu_set_expiration_date"),
-							de.akubix.keyminder.lib.gui.ImageSelector.getIcon("icon_waiting"),
+							ImageMap.getIcon("icon_waiting"),
 							(ActionEvent ae) -> showSetExpireDateWindow(instance.getTree().getSelectedNode())),
 							MenuEntryPosition.TOOLS, true);
 
 			instance.getFxUserInterface().addMenuEntry(
 					de.akubix.keyminder.lib.Tools.createFxMenuItem(instance.getFxUserInterface().getLocaleBundleString("module.deadline.menu_show_expired_nodes"),
-							de.akubix.keyminder.lib.gui.ImageSelector.getIcon("icon_deadline"),
+							ImageMap.getIcon("icon_deadline"),
 							(ActionEvent ae) -> showExpiredNodesList()),
 							MenuEntryPosition.TOOLS, true);
 		}
@@ -242,7 +243,7 @@ public class Deadline implements Module {
 		if(expiredNodes.size() > 0 || nearlyExpiredNodes.size() > 0){
 			if(app.isFxUserInterfaceAvailable() && !forceConsoleOutput){
 				Runnable run = () -> {
-					Button notification = new Button("", de.akubix.keyminder.lib.gui.ImageSelector.getFxImageView(("icon_warning")));
+					Button notification = new Button("", ImageMap.getFxImageView(("icon_warning")));
 					notification.setMinWidth(24);
 					notification.setMaxWidth(24);
 					Tooltip tooltip = new Tooltip(	app.getFxUserInterface().getLocaleBundleString("module.deadline.report.title") + "\n" +
@@ -387,12 +388,12 @@ public class Deadline implements Module {
 		BorderPane.setMargin(bottom, new Insets(0,10,10,10));
 
 		Scene myScene = new Scene(root, 300, 120);
-		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
+		StylesheetMap.assignStylesheets(myScene);
 
 		me.initModality( Modality.APPLICATION_MODAL );
 		me.setScene(myScene);
 		me.setResizable(false);
-		ImageSelector.addDefaultIconsToStage(me);
+		ImageMap.addDefaultIconsToStage(me);
 
 		me.showAndWait();
 	}
@@ -443,11 +444,11 @@ public class Deadline implements Module {
 		BorderPane.setMargin(okButton, new Insets(4));
 
 		Scene myScene = new Scene(root, windowWidth, 320);
-		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
+		StylesheetMap.assignStylesheets(myScene);
 
 		me.setScene(myScene);
 		me.setResizable(false);
-		ImageSelector.addDefaultIconsToStage(me);
+		ImageMap.addDefaultIconsToStage(me);
 
 		me.show();
 	}

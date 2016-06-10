@@ -27,8 +27,8 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
-import de.akubix.keyminder.lib.gui.ImageSelector;
-import de.akubix.keyminder.lib.gui.StyleSelector;
+import de.akubix.keyminder.ui.fx.utils.ImageMap;
+import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -136,14 +136,14 @@ public class FileSettingsDialog {
 		BorderPane.setMargin(bottom, new Insets(8,8,8,8));
 
 		Scene myScene = new Scene(root, size_x, size_y);
-		de.akubix.keyminder.lib.gui.StyleSelector.assignStylesheets(myScene);
+		StylesheetMap.assignStylesheets(myScene);
 
 		me.setScene(myScene);
 
 		//Set position of second window, related to primary window.
 		me.setResizable(false);
 		me.initModality(Modality.APPLICATION_MODAL);
-		ImageSelector.addDefaultIconsToStage(me);
+		ImageMap.addDefaultIconsToStage(me);
 		me.showAndWait();
 
 		return saveSettings;
@@ -273,9 +273,9 @@ public class FileSettingsDialog {
 					alert.getButtonTypes().setAll(buttonYes, buttonNo, buttonCancel);
 
 					Stage s = (Stage) alert.getDialogPane().getScene().getWindow();
-					ImageSelector.addDefaultIconsToStage(s);
+					ImageMap.addDefaultIconsToStage(s);
 					s.initOwner(me);
-					StyleSelector.assignDefaultStylesheet(s.getScene());
+					StylesheetMap.assignDefaultStylesheet(s.getScene());
 
 					if(alert.showAndWait().get() == buttonYes){
 						try {
