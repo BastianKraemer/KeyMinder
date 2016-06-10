@@ -60,9 +60,6 @@ import javafx.scene.control.TabPane;
 public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 	/* Static configurations variables */
-
-	public static String APP_VERSION = "0.2-SNAPSHOT";
-
 	public static final String APP_ICON_16 = "/de/akubix/keyminder/images/app/AppIcon16.png";
 	public static final String APP_ICON_32 = "/de/akubix/keyminder/images/app/AppIcon32.png";
 	public static final String APP_ICON_256 = "/de/akubix/keyminder/images/app/AppIcon256.png";
@@ -96,11 +93,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	public final Locale applicationLocale;
 
 	public ApplicationInstance(){
-		Package p = getClass().getPackage();
-		if(p.getImplementationVersion() != null){
-			APP_VERSION = p.getImplementationVersion();
-		}
-
 		tree = new StandardTree(this);
 		storageManager = new StorageManager();
 
@@ -568,7 +560,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		if (isFxUserInterfaceAvailable()){
 			fxInterface.setTitle(APP_NAME +
 								 ((getSettingsValueAsBoolean("windowtitle.showfilename", true) && currentFile != null) ? " - " + currentFile.getFilepath().getName() : "") +
-								 (getSettingsValueAsBoolean("windowtitle.showversion", false) ? " (Version " + APP_VERSION + ")" : ""));
+								 (getSettingsValueAsBoolean("windowtitle.showversion", false) ? " (Version " + KeyMinder.getApplicationVersion() + ")" : ""));
 		}
 	}
 

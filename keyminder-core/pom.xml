@@ -11,6 +11,11 @@
 	<name>KeyMinder Core</name>
 	<packaging>jar</packaging>
 
+	<properties>
+		<build.timestamp>${maven.build.timestamp} UTC</build.timestamp>
+		<maven.build.timestamp.format>yyyy-MM-dd HH:mm:ss</maven.build.timestamp.format>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -19,4 +24,21 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources/</directory>
+			</resource>
+			<resource>
+				<directory>src/main/resources/de/akubix/keyminder</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>build.properties</include>
+				</includes>
+				<targetPath>de/akubix/keyminder</targetPath>
+			</resource>
+		</resources>
+	</build>
+	
 </project>

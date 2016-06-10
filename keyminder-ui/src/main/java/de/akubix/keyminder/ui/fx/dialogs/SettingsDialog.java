@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.interfaces.ModuleProperties;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.modules.ModuleInfo;
@@ -291,7 +292,7 @@ public class SettingsDialog {
 				cb.setTooltip(new Tooltip(String.format(fxUI.getLocaleBundleString("settings.modules.moduleinfo_author") + ": %s\n" +
 														fxUI.getLocaleBundleString("settings.modules.moduleinfo_version") + "%s\n\n%s",
 														mp.author(),
-														mp.version().equals(".") ? de.akubix.keyminder.core.ApplicationInstance.APP_VERSION : moduleInfo.getProperties().version(),
+														mp.version().equals(".") ? KeyMinder.getApplicationVersion() : moduleInfo.getProperties().version(),
 														de.akubix.keyminder.lib.Tools.forceLineBreak(mp.description(), 60))));
 			}
 			else{

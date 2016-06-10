@@ -19,6 +19,7 @@
 package de.akubix.keyminder.ui.fx;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.lib.gui.ImageSelector;
@@ -69,7 +70,7 @@ public class About {
 		Label appName = new Label(ApplicationInstance.APP_NAME);
 
 		appName.setId("AppName");
-		Label appVersion = new Label("Version " + ApplicationInstance.APP_VERSION);
+		Label appVersion = new Label("Version " + KeyMinder.getApplicationVersion());
 		appVersion.setId("AppVersion");
 		headlineContainer.getChildren().addAll(appName, appVersion);
 		contentPane.setTop(headlineContainer);

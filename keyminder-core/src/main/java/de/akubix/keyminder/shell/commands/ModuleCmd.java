@@ -19,6 +19,7 @@
 package de.akubix.keyminder.shell.commands;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.modules.ModuleInfo;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
@@ -73,7 +74,7 @@ public final class ModuleCmd extends AbstractShellCommand {
 													"Status: \t%s\n\n" +
 													"Description:\n%s",
 									m.getProperties().name(),
-									m.getProperties().version().equals(".") ? ApplicationInstance.APP_VERSION : m.getProperties().version(),
+									m.getProperties().version().equals(".") ? KeyMinder.getApplicationVersion() : m.getProperties().version(),
 									m.getProperties().author(),
 									(m.isEnabled() ? (m.isStarted() ? "ENABLED" : "ENABLED (Startup error)" ): "DISABLED"),
 									m.getProperties().description()));

@@ -18,9 +18,11 @@
 */
 package de.akubix.keyminder.core;
 
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public class KeyMinder {
 
@@ -28,6 +30,8 @@ public class KeyMinder {
 	public static boolean environment_isLinux = false;
 	public static boolean verbose_mode = false;
 	public static boolean enableColoredOutput = false;
+
+	private static String keyminderVersion = null;
 
 	/* Environment: Predefined may available items.
 	 * os: Contains "Linux", "Windows" or "Unknown"
@@ -45,6 +49,16 @@ public class KeyMinder {
 
 		// Initialize EncryptionManager
 		de.akubix.keyminder.core.encryption.EncryptionManager.loadDefaultCiphers();
+
+		final String buildPropertiesFile = "/de/akubix/keyminder/build.properties";
+
+		try {
+			Properties keyminderProperties = new Properties();
+			keyminderProperties.load(KeyMinder.class.getResourceAsStream(buildPropertiesFile));
+			keyminderVersion = keyminderProperties.getProperty("keyminder.version");
+		} catch (IOException e) {
+			throw new IllegalStateException("Properties file '" + buildPropertiesFile + "' not found inside jar file.");
+		}
 
 		// Read command line parameters an store them in the "environment" hash
 		parseCommandlineArgs(args);
@@ -65,6 +79,10 @@ public class KeyMinder {
 
 		// Initialize application core (but not "startup" it)
 		return new ApplicationInstance();
+	}
+
+	public static String getApplicationVersion(){
+		return keyminderVersion;
 	}
 
 	public static void setVerboseMode(boolean value){
@@ -135,7 +153,7 @@ public class KeyMinder {
 								break;
 
 							case "version":
-								System.out.println(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " Version " + de.akubix.keyminder.core.ApplicationInstance.APP_VERSION);
+								System.out.println(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " Version " + getApplicationVersion());
 								System.exit(0);
 								break;
 

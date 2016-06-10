@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.shell.AnsiColor;
@@ -124,7 +125,7 @@ public class Terminal implements de.akubix.keyminder.shell.io.ShellOutputWriter 
 		println(" #  #     #          #     #       #   #   #  # #  #    #  #       #####");
 		println(" #   #    #          #     #       #   #   #   ##  #    #  #       #   #");
 		println(" #    #   ######     #     #       #   #   #    #  #####   ######  #    #");
-		println("\nVersion: " + de.akubix.keyminder.core.ApplicationInstance.APP_VERSION + "\n\n");
+		println("\nVersion: " + KeyMinder.getApplicationVersion() + "\n\n");
 
 		app.tryToEstablishOutputRedirect(this);
 	}
