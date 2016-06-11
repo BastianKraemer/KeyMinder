@@ -233,7 +233,7 @@ public final class FileCmd extends AbstractShellCommand {
 					// let the user enter his current password (if the file is encrypted)
 					if(!enableChangePw){
 						enableChangePw = (instance.currentFile.getEncryptionManager().checkPassword(
-											instance.requestStringInput("Change file password", "Please enter your current file password: ", "", true).toCharArray()));
+											instance.requestPasswordInput("Change file password", "Please enter your current file password: ", "")));
 					}
 
 					if(enableChangePw){
@@ -280,7 +280,7 @@ public final class FileCmd extends AbstractShellCommand {
 
 				try {
 					if(instance.currentFile.getEncryptionManager().checkPassword(
-							instance.requestStringInput("Change file password", "Please enter your current file password: ", "", true).toCharArray())){
+							instance.requestPasswordInput("Change file password", "Please enter your current file password: ", ""))){
 						instance.currentFile.disableEncryption();
 						out.println("Encryption of passwordfile disabled (not recommended).");
 						out.setColor(AnsiColor.CYAN);

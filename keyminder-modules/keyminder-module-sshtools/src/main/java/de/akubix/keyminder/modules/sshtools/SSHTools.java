@@ -885,8 +885,8 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 				@Override
 				public void handle(ActionEvent event) {
 					try{
-						String input = fxUI.showInputDialog(fxUI.getLocaleBundleString("module.sshtools.addsocksprofile.title"),
-															fxUI.getLocaleBundleString("module.sshtools.addsocksprofile.text"), "", false);
+						String input = fxUI.getStringInput(	fxUI.getLocaleBundleString("module.sshtools.addsocksprofile.title"),
+															fxUI.getLocaleBundleString("module.sshtools.addsocksprofile.text"), "");
 
 						if(!isEmpty(input)){
 							if(input.matches("[a-zA-Z0-9[_]]*")){

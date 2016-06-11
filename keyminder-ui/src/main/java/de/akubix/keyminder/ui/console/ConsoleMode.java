@@ -16,36 +16,37 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-package de.akubix.keyminder.core;
+package de.akubix.keyminder.ui.console;
 
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.core.interfaces.UserInterface;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
+import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.CommandException;
 
 /**
  * ConsoleMode for this application. This is an alternative user interface for using this with a console only.
  */
-public class ConsoleMode {
+public class ConsoleMode implements UserInterface {
 
-	private ApplicationInstance app;
+	private final ApplicationInstance app;
+	private final Scanner in;
 
-	public ConsoleMode(ApplicationInstance instance){
-		this.app = instance;
+	public ConsoleMode(){
+		this.app = new ApplicationInstance(this);
+		this.in =  new Scanner(System.in);
 	}
-
-	private static Scanner in;
 
 	public void start(){
 		try{
-			in = new Scanner(System.in);
-
-			System.out.println("\nKeyMinder\tCopyright (C) 2015-2016  Bastian Kraemer\n\n"
-							 + "This program comes with ABSOLUTELY NO WARRANTY; for details type 'license -w'.\n"
-							 + "This is free software, and you are welcome to redistribute it under certain conditions; type 'license' for details.\n\n");
+			app.println("\nKeyMinder\tCopyright (C) 2015-2016  Bastian Kraemer\n\n" +
+						"This program comes with ABSOLUTELY NO WARRANTY; for details type 'license -w'.\n" +
+						"This is free software, and you are welcome to redistribute it under certain conditions; type 'license' for details.\n\n");
 
 			app.startup(true);
 
@@ -87,26 +88,68 @@ public class ConsoleMode {
 		catch (NoSuchElementException ex){} // Program has been terminated by using CTRL+C
 	}
 
-	public static boolean askYesNo(String question){
+	@Override
+	public String getStringInput(String title, String text, String defaultValue) throws UserCanceledOperationException {
+		if(text != null && !text.equals("")){
+			app.println(text);
+		}
+		return readLineFromSystemIn();
+	}
+
+	@Override
+	public char[] getPasswordInput(String title, String text, String passwordHint) throws UserCanceledOperationException {
+		if(text != null && !text.equals("")){
+			app.println(text);
+		}
+		if(passwordHint != null && !passwordHint.equals("")){
+			app.println("Hint: " + passwordHint);
+		}
+		return readPasswordFromSystemIn();
+	}
+
+	@Override
+	public boolean getYesNoChoice(String title, String headline, String question) {
+		if(headline != null && !headline.equals("")){
+			app.println(headline);
+		}
+
 		if(in == null){System.err.println(ApplicationInstance.APP_NAME + " console interface is not initialized."); return false;}
-		System.out.print(question + "\n[Yes/No]: ");
+		app.print(question + "\n[Yes/No]: ");
+
 		String input = in.nextLine().toLowerCase();
 		if(input.equals("y") || input.equals("yes") || input.equals("j") || input.equals("ja")){return true;}
 		return false;
 	}
 
-	public static String readLineFromSystemIn(){
-		if(in == null){System.err.println(ApplicationInstance.APP_NAME + " console interface is not initialized."); return "";}
-		String input = in.nextLine();
-		return input;
+	@Override
+	public void updateStatus(String text) {
+		app.setColor(AnsiColor.CYAN);
+		app.println(text);
+		app.setColor(AnsiColor.RESET);
 	}
 
-	public static String readPasswordFromSystemIn(){
+	@Override
+	public void log(String text) {
+		app.printf("LOG: %s\n", text);
+	}
+
+	@Override
+	public void alert(String text) {
+		app.setColor(AnsiColor.YELLOW);
+		app.println(text);
+		app.setColor(AnsiColor.RESET);
+	}
+
+	private String readLineFromSystemIn(){
+		return in.nextLine();
+	}
+
+	private char[] readPasswordFromSystemIn(){
 		try{
-			return new String(System.console().readPassword());
+			return System.console().readPassword();
 		}
 		catch(NullPointerException nullPointEx){
-			return readLineFromSystemIn();
+			return readLineFromSystemIn().toCharArray();
 		}
 	}
 

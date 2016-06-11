@@ -36,12 +36,12 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.ConsoleMode;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.lib.XMLCore;
+import de.akubix.keyminder.ui.console.ConsoleMode;
 import javafx.stage.FileChooser;
 
 /**
@@ -385,7 +385,7 @@ public class XMLApplicationProfileParser
 					return (f != null) ? f.getAbsolutePath() : "";
 				}
 				else{
-					return app.requestStringInput("Please enter a filename", "Please enter a filename:", "", false);
+					return new String(app.requestPasswordInput("Please enter a filename", "Please enter a filename:", ""));
 				}
 			}
 
@@ -398,7 +398,7 @@ public class XMLApplicationProfileParser
 					return (f != null) ? f.getAbsolutePath() : "";
 				}
 				else{
-					return app.requestStringInput("Please enter a filename", "Please enter a filename:", "", false);
+					return new String(app.requestPasswordInput("Please enter a filename", "Please enter a filename:", ""));
 				}
 			}
 		}

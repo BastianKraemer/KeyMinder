@@ -99,11 +99,10 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 	private HashMap<TreeNode, TreeItem<TreeNode>> treeNodeTranslator = new HashMap<>();
 
-	private static ApplicationInstance app;
+	private ApplicationInstance app;
 	private de.akubix.keyminder.core.db.Tree dataTree;
 
-	public static void init(String[] args, ApplicationInstance instance) {
-		app = instance;
+	public static void init(String[] args){
 		launch(args);
 	}
 
@@ -299,6 +298,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			rootPanel = new BorderPane();
 			Scene scene = new Scene(rootPanel, 680, 420);
 
+			app = new ApplicationInstance(this);
 			dataTree = app.getTree();
 
 			/* ================================================================================================================
@@ -1760,9 +1760,15 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	}
 
 	@Override
-	public String showInputDialog(String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog) throws UserCanceledOperationException{
-		InputDialog id = new InputDialog(me, this, windowTitle, labelText, defaultValueOrPasswordHint, useAsPasswordDialog);
+	public String getStringInput(String windowTitle, String labelText, String defaultValue) throws UserCanceledOperationException{
+		InputDialog id = new InputDialog(me, this, windowTitle, labelText, defaultValue, false);
 		return id.getInput();
+	}
+
+	@Override
+	public char[] getPasswordInput(String title, String text, String passwordHint) throws UserCanceledOperationException {
+		InputDialog id = new InputDialog(me, this, title, text, passwordHint, false);
+		return id.getInput().toCharArray();
 	}
 
 	/*
@@ -1840,7 +1846,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	 * Display a simple yes/no dialog to the user
 	 * @return TRUE if the user has clicked "YES", false if she/he chooses "No"
 	 **/
-	public boolean showYesNoDialog(String windowTitle, String headline, String contentText){
+	public boolean getYesNoChoice(String windowTitle, String headline, String contentText){
 		Alert alert = new Alert(AlertType.CONFIRMATION);
 		alert.setTitle(windowTitle);
 		alert.setHeaderText(headline);

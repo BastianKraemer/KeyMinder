@@ -128,7 +128,7 @@ public class Terminal implements de.akubix.keyminder.shell.io.ShellOutputWriter 
 		println(" #    #   ######     #     #       #   #   #    #  #####   ######  #    #");
 		println("\nVersion: " + KeyMinder.getApplicationVersion() + "\n\n");
 
-		app.tryToEstablishOutputRedirect(this);
+		app.startOutputRedirect(this);
 	}
 
 	private void runCommand(String line){

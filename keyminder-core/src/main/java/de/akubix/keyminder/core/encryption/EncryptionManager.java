@@ -203,9 +203,9 @@ public class EncryptionManager {
 	public boolean requestPasswordInputWithConfirm(de.akubix.keyminder.core.ApplicationInstance instance, String windowTitle, String labelText, String labelTextConfirm) throws UserCanceledOperationException {
 		char[] pw = null;
 		try{
-			pw = instance.requestStringInput(windowTitle, labelText, "", true).toCharArray();
+			pw = instance.requestPasswordInput(windowTitle, labelText, "");
 			if(pw.length > 0){
-				char[] pw_confirm = instance.requestStringInput(windowTitle, labelTextConfirm, "", true).toCharArray();
+				char[] pw_confirm = instance.requestPasswordInput(windowTitle, labelTextConfirm, "");
 				if(comparePasswords(pw, pw_confirm)){
 					clearArray(pw_confirm);
 					clearArray(this.password); // clear the current password...

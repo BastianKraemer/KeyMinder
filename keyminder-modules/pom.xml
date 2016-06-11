@@ -27,5 +27,12 @@
 			<artifactId>keyminder-core</artifactId>
 			<version>${keyminder.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>de.akubix.keyminder</groupId>
+			<artifactId>keyminder-core</artifactId>
+			<version>${keyminder.version}</version>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 </project>

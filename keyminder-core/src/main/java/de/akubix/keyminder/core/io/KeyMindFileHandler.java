@@ -192,16 +192,15 @@ public class KeyMindFileHandler implements StorageHandler {
 									// Decrypt data...
 									fileIsEncrypted = true;
 
-									String pw;
+									char[] pw;
 									if(filepassword.equals("")){
 										String txt = app.isFxUserInterfaceAvailable() ? app.getFxUserInterface().getLocaleBundleString("decryption.input_password_label") : "Please enter your password:";
-										pw = app.requestStringInput(ApplicationInstance.APP_NAME, txt,
-																	fileAttributes.containsKey("PasswordHint") ? fileAttributes.get("PasswordHint") : "", true);
+										pw = app.requestPasswordInput(ApplicationInstance.APP_NAME, txt, fileAttributes.containsKey("PasswordHint") ? fileAttributes.get("PasswordHint") : "");
 
 										if(pw.equals("")){throw new UserCanceledOperationException("The user canceled the operation.");}
 									}
 									else{
-										pw = filepassword;
+										pw = filepassword.toCharArray();
 										filepassword = "";
 									}
 
@@ -209,7 +208,7 @@ public class KeyMindFileHandler implements StorageHandler {
 									Node saltAttribute = dataNode.getAttributes().getNamedItem("salt");
 									if(saltAttribute != null){salt = AESCore.bytesFromBase64String(saltAttribute.getNodeValue());}
 
-									EncryptionManager em = new EncryptionManager(cipherName, pw.toCharArray(), aesIV, salt);
+									EncryptionManager em = new EncryptionManager(cipherName, pw, aesIV, salt);
 
 									Document xmldoc = XMLCore.loadDocumentFromString(em.decrypt(dataNode.getTextContent()));
 

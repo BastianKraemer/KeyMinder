@@ -1,7 +1,7 @@
 /*	KeyMinder
-	Copyright (C) 2015 Bastian Kraemer
+	Copyright (C) 2015-2016 Bastian Kraemer
 
-	Launcher.java
+	KeyMinder.java
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -24,22 +24,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+import de.akubix.keyminder.core.encryption.EncryptionManager;
+import de.akubix.keyminder.lib.AESCore;
+
 public class KeyMinder {
 
 	public static final Map<String, String> environment = new HashMap<String, String>();
 	public static boolean environment_isLinux = false;
 	public static boolean verbose_mode = false;
 	public static boolean enableColoredOutput = false;
-
 	private static String keyminderVersion = null;
 
-	/* Environment: Predefined may available items.
-	 * os: Contains "Linux", "Windows" or "Unknown"
-	 * console_mode: If this property is available, the console mode is active - don't care about its value
-	 * silent_mode: If this property is available, the user told this application to be silent - don't care about its value
-	 */
-
-	public static ApplicationInstance init(String[] args) {
+	public static void prepareEnvironment(String[] args) {
 
 		// Prepare environment
 		final String os = System.getProperty("os.name").toLowerCase();
@@ -48,7 +44,7 @@ public class KeyMinder {
 		else {environment.put("os", "Unknown");}
 
 		// Initialize EncryptionManager
-		de.akubix.keyminder.core.encryption.EncryptionManager.loadDefaultCiphers();
+		EncryptionManager.loadDefaultCiphers();
 
 		final String buildPropertiesFile = "/de/akubix/keyminder/build.properties";
 
@@ -65,7 +61,7 @@ public class KeyMinder {
 
 		// Test available encryption methods - and print a warning if there is only AES-128 available
 		try {
-			if(!de.akubix.keyminder.lib.AESCore.isAES256EncryptionAvailable()){
+			if(!AESCore.isAES256EncryptionAvailable()){
 				if(!environment.containsKey("silent_mode")){
 					System.out.println("Important security warning: AES-256 Encryption is NOT supported on this system.\nUsing fallback to AES-128, which provides less security.\n\n"
 									 + "Please upgrade your Java installation using the \"Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files\" "
@@ -76,9 +72,6 @@ public class KeyMinder {
 			System.err.println("Important security warning: AES Encryption is NOT supported on this system!\n\t-> You wont be able to open encrypted files");
 			System.exit(2);
 		}
-
-		// Initialize application core (but not "startup" it)
-		return new ApplicationInstance();
 	}
 
 	public static String getApplicationVersion(){

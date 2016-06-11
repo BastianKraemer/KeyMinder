@@ -1,22 +1,43 @@
 package de.akubix.keyminder.core;
 
+import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.core.interfaces.UserInterface;
+
 public class KeyMinderInstanceBuilder {
+	public static ApplicationInstance getNewInstance(){
+		return getNewInstance("./keyminder_settings.xml");
+	}
 	public static ApplicationInstance getNewInstance(String settingsFile){
-		// Prepare environment
-		final String os = System.getProperty("os.name").toLowerCase();
-		if(os.indexOf("linux") >= 0){KeyMinder.environment.put("os", "Linux"); KeyMinder.environment_isLinux = true;}
-		else if(os.indexOf("win") >= 0){KeyMinder.environment.put("os", "Windows");}
-		else {KeyMinder.environment.put("os", "Unknown");}
 
-		if(settingsFile != null){
-			KeyMinder.environment.put("cmd.settingsfile", settingsFile);
-		}
-
-		// Initialize EncryptionManager
-		de.akubix.keyminder.core.encryption.EncryptionManager.loadDefaultCiphers();
-
-		ApplicationInstance app = new ApplicationInstance();
+		KeyMinder.prepareEnvironment(new String[]{});
+		ApplicationInstance app = new ApplicationInstance(new TestInputSourceProvider());
 		app.startup(false);
 		return app;
 	}
+
+	private static class TestInputSourceProvider implements UserInterface {
+		@Override
+		public void updateStatus(String text) {}
+
+		@Override
+		public void log(String text) {}
+
+		@Override
+		public boolean getYesNoChoice(String title, String headline, String contentText) {
+			return false;
+		}
+
+		@Override
+		public String getStringInput(String title, String text, String defaultValue) throws UserCanceledOperationException {
+			return "";
+		}
+
+		@Override
+		public char[] getPasswordInput(String title, String text, String passwordHint) throws UserCanceledOperationException {
+			return new char[]{};
+		}
+
+		@Override
+		public void alert(String text) {}
+	};
 }

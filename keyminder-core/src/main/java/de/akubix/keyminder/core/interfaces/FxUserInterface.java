@@ -16,7 +16,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
 import javafx.stage.FileChooser;
 
-public interface FxUserInterface {
+public interface FxUserInterface extends UserInterface {
 
 	// Additional FX Components
 	public javafx.scene.control.Tab addSidebarPanel(String tabtitle, Node panel, SidebarNodeChangeEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked);
@@ -37,9 +37,6 @@ public interface FxUserInterface {
 	public void setClipboardText(String text);
 
 	// Text output
-	public void updateStatus(String text);
-	public void log(String text);
-	public void alert(String text);
 	public void alert(AlertType type, String title, String headline, String contentText);
 
 	// Hotkeys
@@ -53,8 +50,6 @@ public interface FxUserInterface {
 	 * @throws UserCanceledOperationException if the user has pressed the "Cancel" button
 	 */
 	public boolean showSaveChangesDialog() throws UserCanceledOperationException;
-	public String showInputDialog(String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog) throws UserCanceledOperationException;
-	public boolean showYesNoDialog(String windowTitle, String headline, String contentText);
 
 	public File showOpenFileDialog(String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions);
 	public File showSaveFileDialog(String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions);

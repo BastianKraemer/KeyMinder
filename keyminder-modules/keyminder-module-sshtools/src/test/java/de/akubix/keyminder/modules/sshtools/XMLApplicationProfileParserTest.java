@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
+import de.akubix.keyminder.core.KeyMinderInstanceBuilder;
 import de.akubix.keyminder.core.db.StandardTree;
 import de.akubix.keyminder.core.db.TreeNode;
 
@@ -56,7 +57,7 @@ public class XMLApplicationProfileParserTest {
 							"	</Configuration>" +
 							"</ApplicationProfile>";
 
-		ApplicationInstance app = new ApplicationInstance();
+		ApplicationInstance app = KeyMinderInstanceBuilder.getNewInstance();
 		StandardTree tree = new StandardTree(app);
 		KeyMinder.setVerboseMode(false);
 		TreeNode node = tree.createNode("Test");

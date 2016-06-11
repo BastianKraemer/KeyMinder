@@ -21,6 +21,7 @@ package de.akubix.keyminder.core;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -38,6 +39,7 @@ import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.FxAdministrationInterface;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
+import de.akubix.keyminder.core.interfaces.UserInterface;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventHost;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
@@ -75,6 +77,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	/* Other variables */
 
 	private File settingsFile;
+	private UserInterface inputSourceProvider;
 	private FxAdministrationInterface fxInterface = null;
 
 	public Map<String, String> settings = new HashMap<String, String>();
@@ -83,13 +86,19 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	private Map<String, List<Object>> eventCollection = new HashMap<>();
 
 	private StandardTree tree;
-	private ShellOutputWriter outputRedirect = null;
 	private final Shell shell;
 	private final ModuleLoader moduleLoader;
 	public final StorageManager storageManager;
 	public final Locale applicationLocale;
 
-	public ApplicationInstance(){
+	private final Set<ShellOutputWriter> outputWriter;
+
+	public ApplicationInstance(UserInterface inputSource){
+		this.inputSourceProvider = inputSource;
+
+		outputWriter = new HashSet<>();
+		outputWriter.add(new ConsoleOutput());
+
 		tree = new StandardTree(this);
 		storageManager = new StorageManager();
 
@@ -172,8 +181,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 		updateMainWindowTitle();
 
-		if(isFxUserInterfaceAvailable())
-		{
+		if(isFxUserInterfaceAvailable()){
 			DefaultEventHandler eventHandler = new DefaultEventHandler() {
 				@Override
 				public void eventFired() {
@@ -489,7 +497,9 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 					}
 				}
 				else{
-					if(!ConsoleMode.askYesNo("Do you want do discard your changes?")){return false;}
+					if(!inputSourceProvider.getYesNoChoice(null, null, "Do you want do discard your changes?")){
+						return false;
+					}
 				}
 			}
 
@@ -898,40 +908,36 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 	/**
 	 * Request a (single line) text input dialog (if the JavaFX user interface is loaded it will be shown as graphical dialog)
-	 * @param windowTitle the window title
-	 * @param labelText the label text
+	 * @param title the window title (this value is ignored in ConsoleMode)
+	 * @param text the label text
 	 * @param defaultValue the default value
-	 * @param useAsPasswordDialog show as password dialog?
 	 * @return the string entered by the user
 	 * @throws UserCanceledOperationException if the user canceled the operation
 	 */
-	public String requestStringInput(String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog) throws UserCanceledOperationException{
-		if(isFxUserInterfaceAvailable()){
-			return fxInterface.showInputDialog(windowTitle, labelText, defaultValue, useAsPasswordDialog);
-		}
-		else{
-			println("\n" + labelText + (defaultValue.equals("") ? "" : " [" + defaultValue + "]"));
-			if(!useAsPasswordDialog){
-				return ConsoleMode.readLineFromSystemIn();
-			}
-			else{
-				return ConsoleMode.readPasswordFromSystemIn();
-			}
-		}
+	public String requestStringInput(String title, String text, String defaultValue) throws UserCanceledOperationException{
+		return inputSourceProvider.getStringInput(title, text, defaultValue);
 	}
+
+	/**
+	 * Requests password input (if the JavaFX user interface is loaded it will be shown as graphical dialog)
+	 * @param title the window title (this value is ignored in ConsoleMode)
+	 * @param text the label text
+	 * @param passwordHint the password hint (if any)
+	 * @return The password as char array
+	 * @throws UserCanceledOperationException
+	 */
+	public char[] requestPasswordInput(String title, String text, String passwordHint) throws UserCanceledOperationException {
+		return inputSourceProvider.getPasswordInput(title, text, passwordHint);
+	}
+
 	/**
 	 * Request a yes no input dialog (if the JavaFX user interface is loaded it will be shown as graphical dialog)
 	 * @param windowTitle the window title
 	 * @param labelText the label text
 	 * @return {@code true} if the user clicked "yes", {@code false} if it was "no"
 	 */
-	public boolean requestYesNoDialog(String windowTitle, String labelText){
-		if(isFxUserInterfaceAvailable()){
-			return fxInterface.showYesNoDialog(windowTitle, null, labelText);
-		}
-		else{
-			return ConsoleMode.askYesNo(labelText);
-		}
+	public boolean requestYesNoDialog(String title, String text) {
+		return inputSourceProvider.getYesNoChoice(title, null, text);
 	}
 
 	/*
@@ -955,12 +961,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param text the text you want to log
 	 */
 	public void log(String text){
-		if(isFxUserInterfaceAvailable()){
-			fxInterface.log(text);
-		}
-		else{
-			println(text);
-		}
+		inputSourceProvider.log(text);
 	}
 
 	/**
@@ -968,12 +969,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param text the text you want to display
 	 */
 	public void alert(String text){
-		if(isFxUserInterfaceAvailable()){
-			fxInterface.alert(text);
-		}
-		else{
-			println(" > " + text);
-		}
+		inputSourceProvider.alert(text);
 	}
 
 	/*
@@ -983,49 +979,30 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 */
 	@Override
 	public void print(String text) {
-		if(outputRedirect == null){
-			System.out.print(text);
-		}
-		else{
-			outputRedirect.print(text);
-		}
+		outputWriter.forEach((out) -> out.print(text));
 	}
 
 	@Override
 	public void println(String text) {
-		if(outputRedirect == null){
-			System.out.println(text);
-		}
-		else{
-			outputRedirect.println(text);
-		}
+		outputWriter.forEach((out) -> out.println(text));
 	}
 
 	@Override
 	public void printf(String text, Object... args){
-		this.print(String.format(text, args));
+		outputWriter.forEach((out) -> out.printf(text, args));
 	}
 
 	@Override
 	public void setColor(AnsiColor color){
-		if(outputRedirect == null){
-			if(KeyMinder.enableColoredOutput){
-				this.print(color.getAnsiCode());
-			}
-		}
-		else{
-			outputRedirect.setColor(color);
-		}
+		outputWriter.forEach((out) -> out.setColor(color));
 	}
 
-	public void tryToEstablishOutputRedirect(ShellOutputWriter redirectTo){
-		if(!KeyMinder.environment.containsKey("disable_output_redirect")){
-			if(redirectTo != this && outputRedirect == null){outputRedirect = redirectTo;}
-		}
+	public void startOutputRedirect(ShellOutputWriter target){
+		outputWriter.add(target);
 	}
 
-	public void terminateOutputRedirect(ShellOutputWriter currentOwner){
-		if(outputRedirect == currentOwner){outputRedirect = null;}
+	public void terminateOutputRedirect(ShellOutputWriter writer){
+		outputWriter.remove(writer);
 	}
 
 	/*
