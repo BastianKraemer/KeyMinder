@@ -37,6 +37,7 @@ import de.akubix.keyminder.core.interfaces.Module;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
+import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.event.ActionEvent;
@@ -111,13 +112,13 @@ public class Deadline implements Module {
 
 		if(instance.isFxUserInterfaceAvailable()){
 			instance.getFxUserInterface().addMenuEntry(
-					de.akubix.keyminder.lib.Tools.createFxMenuItem(instance.getFxUserInterface().getLocaleBundleString("module.deadline.menu_set_expiration_date"),
+					FxCommons.createFxMenuItem(instance.getFxUserInterface().getLocaleBundleString("module.deadline.menu_set_expiration_date"),
 							ImageMap.getIcon("icon_waiting"),
 							(ActionEvent ae) -> showSetExpireDateWindow(instance.getTree().getSelectedNode())),
 							MenuEntryPosition.TOOLS, true);
 
 			instance.getFxUserInterface().addMenuEntry(
-					de.akubix.keyminder.lib.Tools.createFxMenuItem(instance.getFxUserInterface().getLocaleBundleString("module.deadline.menu_show_expired_nodes"),
+					FxCommons.createFxMenuItem(instance.getFxUserInterface().getLocaleBundleString("module.deadline.menu_show_expired_nodes"),
 							ImageMap.getIcon("icon_deadline"),
 							(ActionEvent ae) -> showExpiredNodesList()),
 							MenuEntryPosition.TOOLS, true);
@@ -425,9 +426,9 @@ public class Deadline implements Module {
 		expiredNodesList.forEach(c);
 		nearlyExpiredNodesList.forEach(c);
 
-		vbox.getChildren().addAll(	de.akubix.keyminder.lib.Tools.createFxLabelWithStyleClass(app.getFxUserInterface().getLocaleBundleString("module.deadline.uireport.label_expired"), "h2"),
+		vbox.getChildren().addAll(	FxCommons.createFxLabelWithStyleClass(app.getFxUserInterface().getLocaleBundleString("module.deadline.uireport.label_expired"), "h2"),
 									createScrollPane(expired), new Separator(Orientation.HORIZONTAL),
-									de.akubix.keyminder.lib.Tools.createFxLabelWithStyleClass(app.getFxUserInterface().getLocaleBundleString("module.deadline.uireport.label_nearly_expired"), "h2"),
+									FxCommons.createFxLabelWithStyleClass(app.getFxUserInterface().getLocaleBundleString("module.deadline.uireport.label_nearly_expired"), "h2"),
 									createScrollPane(nearlyExpired));
 
 		BorderPane.setMargin(vbox, new Insets(4,10,0,10));

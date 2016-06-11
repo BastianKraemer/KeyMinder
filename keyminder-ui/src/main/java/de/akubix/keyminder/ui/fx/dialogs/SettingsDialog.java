@@ -27,6 +27,7 @@ import de.akubix.keyminder.core.interfaces.ModuleProperties;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.modules.ModuleInfo;
 import de.akubix.keyminder.core.modules.ModuleLoader;
+import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.beans.value.ChangeListener;
@@ -239,7 +240,7 @@ public class SettingsDialog {
 				}
 			}});
 
-		Parent browserFileInputField = de.akubix.keyminder.lib.Tools.createFxFileInputField(webBrowserPathTextField, fxUI);
+		Parent browserFileInputField = FxCommons.createFxFileInputField(webBrowserPathTextField, fxUI);
 
 		final CheckBox useOtherWebBrowserCheckBox = new CheckBox(fxUI.getLocaleBundleString("settings.general.label_otherwebbrowser"));
 		boolean useOtherBrowserValue = app.getSettingsValueAsBoolean(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_USE_OTHER_WEB_BROWSER, false);
@@ -254,7 +255,7 @@ public class SettingsDialog {
 			}
 		});
 
-		vbox.getChildren().addAll(title, new Label(fxUI.getLocaleBundleString("settings.general.label_defaultfile")), de.akubix.keyminder.lib.Tools.createFxFileInputField(defaultFile, fxUI),
+		vbox.getChildren().addAll(title, new Label(fxUI.getLocaleBundleString("settings.general.label_defaultfile")), FxCommons.createFxFileInputField(defaultFile, fxUI),
 								  createSeperator(), windowTitleFilename, windowTitleVersion, useFavorites, hideEmptySidebar,
 								  createSeperator(), useOtherWebBrowserCheckBox, browserFileInputField);
 

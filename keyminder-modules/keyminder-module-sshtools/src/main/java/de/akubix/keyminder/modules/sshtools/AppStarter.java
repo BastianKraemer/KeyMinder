@@ -28,7 +28,7 @@ import org.w3c.dom.Node;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.etc.MenuEntryPosition;
-import de.akubix.keyminder.lib.Tools;
+import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
@@ -72,7 +72,7 @@ public class AppStarter {
 			}
 			if(!noItemsAndCommands){
 				if(app.isFxUserInterfaceAvailable()){
-					MenuItem contextMenuItem = Tools.createFxMenuItem(attrib.getNodeValue(), ImageMap.getIcon(icon), (event) -> app.getFxUserInterface().updateStatus(sshtools.startApplication(this, false, null)));
+					MenuItem contextMenuItem = FxCommons.createFxMenuItem(attrib.getNodeValue(), ImageMap.getIcon(icon), (event) -> app.getFxUserInterface().updateStatus(sshtools.startApplication(this, false, null)));
 					app.getFxUserInterface().addMenuEntry(contextMenuItem, MenuEntryPosition.CONTEXTMENU, true);
 
 					if(socksSupport){
@@ -105,7 +105,7 @@ public class AppStarter {
 
 	public void createUsingSocksItem(String socksProfileId, String socksProfileName){
 		if(socksSupport && enableMenuItems){
-			MenuItem m = Tools.createFxMenuItem(socksProfileName, "", (event) -> app.getFxUserInterface().updateStatus(sshtools.startApplication(this, false, socksProfileId)));
+			MenuItem m = FxCommons.createFxMenuItem(socksProfileName, "", (event) -> app.getFxUserInterface().updateStatus(sshtools.startApplication(this, false, socksProfileId)));
 			contextMenuItemUsingSocks.getItems().add(m);
 			m.setDisable(true);
 			socksItems.put(socksProfileId, m);

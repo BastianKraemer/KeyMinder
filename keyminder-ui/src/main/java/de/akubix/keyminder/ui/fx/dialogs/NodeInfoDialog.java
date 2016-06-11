@@ -18,6 +18,7 @@
 */
 package de.akubix.keyminder.ui.fx.dialogs;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.beans.property.SimpleStringProperty;
@@ -190,7 +191,7 @@ public class NodeInfoDialog {
 
 		accordion.setExpandedPane(nodePropertiesPart);
 
-		Label titleLabel = de.akubix.keyminder.lib.Tools.createFxLabelWithStyleClass(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.title"), "h2");
+		Label titleLabel = FxCommons.createFxLabelWithStyleClass(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.title"), "h2");
 		titleLabel.setAlignment(Pos.CENTER_LEFT);
 		Pane top = new Pane(titleLabel);
 		top.getStyleClass().add("header");

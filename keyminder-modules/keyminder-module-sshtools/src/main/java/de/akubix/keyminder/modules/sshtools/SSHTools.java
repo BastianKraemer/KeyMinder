@@ -47,6 +47,7 @@ import de.akubix.keyminder.core.interfaces.events.SettingsEventHandler;
 import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
+import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -162,7 +163,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			// Add etc hosts menu item
 
 			if(KeyMinder.environment.containsKey("module.sshtools.etchosts")){
-				fxUI.addMenuEntry(de.akubix.keyminder.lib.Tools.createFxMenuItem(fxUI.getLocaleBundleString("module.sshtools.open_etchosts"), "", (event) -> {
+				fxUI.addMenuEntry(FxCommons.createFxMenuItem(fxUI.getLocaleBundleString("module.sshtools.open_etchosts"), "", (event) -> {
 					try{
 						String[] cmd = splitParameters(KeyMinder.environment.get("module.sshtools.etchosts"));
 
@@ -663,7 +664,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 					disableTextField = false;
 				}
 
-				HBox hbox = de.akubix.keyminder.lib.Tools.createFxFileInputField(customProfileTextfield, fxUI);
+				HBox hbox = FxCommons.createFxFileInputField(customProfileTextfield, fxUI);
 				hbox.setPadding(new Insets(2, 2, 2, 28));
 				container.getChildren().addAll(customProfileRadioButton, hbox);
 			}
@@ -825,7 +826,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		TextField textField = new TextField(app.getSettingsValue(settingsKey));
 		textField.addEventFilter(KeyEvent.KEY_RELEASED, (event) -> generalSettings.put(settingsKey, textField.getText()));
 
-		return de.akubix.keyminder.lib.Tools.createFxFileInputField(textField, fxUI);
+		return FxCommons.createFxFileInputField(textField, fxUI);
 	}
 
 	/**
@@ -861,7 +862,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 
 			defaultUserInput.setText(app.getFileSettingsValue("sshtools.defaultusername"));
 
-			BorderPane defaultPwInput = de.akubix.keyminder.lib.Tools.createFxPasswordField(new EventHandler<KeyEvent>() {
+			BorderPane defaultPwInput = FxCommons.createFxPasswordField(new EventHandler<KeyEvent>() {
 				@Override
 				public void handle(KeyEvent event) {
 					fileSettings.put("sshtools.defaultpassword", ((javafx.scene.control.TextInputControl) event.getSource()).getText());
@@ -962,7 +963,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			HBox.setHgrow(profileSelection, Priority.ALWAYS);
 
 			VBox socksConfigGroupBoxContent = new VBox(4);
-			socksConfigGroupBoxContent.getChildren().addAll(de.akubix.keyminder.lib.Tools.createFxLabelWithStyleClass(fxUI.getLocaleBundleString("module.sshtools.socksconfig.headline"), "h3"), hbox);
+			socksConfigGroupBoxContent.getChildren().addAll(FxCommons.createFxLabelWithStyleClass(fxUI.getLocaleBundleString("module.sshtools.socksconfig.headline"), "h3"), hbox);
 
 			// Define all text fields for a Socks-Profile
 
@@ -1003,9 +1004,9 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 			// -----------------------------------
 
 			VBox defaultParamsConfigBoxContent = new VBox(4);
-			defaultParamsConfigBoxContent.getChildren().addAll(	de.akubix.keyminder.lib.Tools.createFxLabelWithStyleClass(fxUI.getLocaleBundleString("module.sshtools.filesettings.default_user"), "h3"),
+			defaultParamsConfigBoxContent.getChildren().addAll(	FxCommons.createFxLabelWithStyleClass(fxUI.getLocaleBundleString("module.sshtools.filesettings.default_user"), "h3"),
 																defaultUserInput,
-																de.akubix.keyminder.lib.Tools.createFxLabelWithStyleClass(fxUI.getLocaleBundleString("module.sshtools.filesettings.default_password"), "h3"),
+																FxCommons.createFxLabelWithStyleClass(fxUI.getLocaleBundleString("module.sshtools.filesettings.default_password"), "h3"),
 																defaultPwInput);
 
 			// ...and append them to a TitledPane
@@ -1141,7 +1142,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 				t1 = new TextField();
 				if(createPasswordField){
 					t2 = new PasswordField();
-					container.getChildren().add(de.akubix.keyminder.lib.Tools.createFxPasswordField(onKeyReleased, t1, t2, true, fxUI));
+					container.getChildren().add(FxCommons.createFxPasswordField(onKeyReleased, t1, t2, true, fxUI));
 				}
 				else{
 					t1.addEventFilter(KeyEvent.KEY_RELEASED, onKeyReleased);
