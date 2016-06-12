@@ -1,5 +1,5 @@
 /*	KeyMinder
-	Copyright (C) 2015 Bastian Kraemer
+	Copyright (C) 2015-2016 Bastian Kraemer
 
 	MainWindow.java
 
@@ -97,6 +97,8 @@ import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 
 public class MainWindow extends Application implements de.akubix.keyminder.core.interfaces.FxAdministrationInterface {
+
+	public static final String LANGUAGE_BUNDLE_KEY = "fxUI";
 
 	private HashMap<TreeNode, TreeItem<TreeNode>> treeNodeTranslator = new HashMap<>();
 
@@ -308,6 +310,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			 */
 
 			localeBundle = LocaleLoader.loadLanguagePack("ui", "fxUI", app.getLocale());
+			LocaleLoader.provideBundle(LANGUAGE_BUNDLE_KEY, localeBundle);
 
 			/* ================================================================================================================
 			 * Build user interface

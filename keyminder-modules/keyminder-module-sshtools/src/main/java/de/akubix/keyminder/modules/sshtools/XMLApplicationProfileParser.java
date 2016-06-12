@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.ResourceBundle;
 import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,7 +42,9 @@ import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.lib.XMLCore;
+import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.ui.console.ConsoleMode;
+import de.akubix.keyminder.ui.fx.MainWindow;
 import javafx.stage.FileChooser;
 
 /**
@@ -59,6 +62,7 @@ public class XMLApplicationProfileParser
 	private Map<String, String> variables;
 	private List<String> commandLineArguments = new ArrayList<>();
 	private boolean requirementsChecked = false;
+	private final ResourceBundle locale;
 
 	public XMLApplicationProfileParser(ApplicationInstance app, Document xmldoc){
 		this(app, xmldoc, new HashMap<>());
@@ -68,6 +72,7 @@ public class XMLApplicationProfileParser
 		this.app = app;
 		this.xmldoc = xmldoc;
 		this.variables = variables;
+		this.locale = LocaleLoader.getBundle(MainWindow.LANGUAGE_BUNDLE_KEY);
 	}
 
 	/**
@@ -379,9 +384,9 @@ public class XMLApplicationProfileParser
 			if(varName.equals("_openfiledialog_")){
 				if(app.isFxUserInterfaceAvailable()){
 					FxUserInterface fxUI = app.getFxUserInterface();
-					java.io.File f = fxUI.showOpenFileDialog(fxUI.getLocaleBundleString("filebrowser.dialogtitle"), "", null,
+					java.io.File f = fxUI.showOpenFileDialog(locale.getString("filebrowser.dialogtitle"), "", null,
 															 new FileChooser.ExtensionFilter[]{
-																	new FileChooser.ExtensionFilter(fxUI.getLocaleBundleString("filebrowser.allfiles_selector"), "*.*")});
+																	new FileChooser.ExtensionFilter(locale.getString("filebrowser.allfiles_selector"), "*.*")});
 					return (f != null) ? f.getAbsolutePath() : "";
 				}
 				else{
@@ -392,9 +397,9 @@ public class XMLApplicationProfileParser
 			if(varName.equals("_savefiledialog_")){
 				if(app.isFxUserInterfaceAvailable()){
 					FxUserInterface fxUI = app.getFxUserInterface();
-					java.io.File f = fxUI.showSaveFileDialog(fxUI.getLocaleBundleString("filebrowser.dialogtitle"), "", null,
+					java.io.File f = fxUI.showSaveFileDialog(locale.getString("filebrowser.dialogtitle"), "", null,
 															 new FileChooser.ExtensionFilter[]{
-																	new FileChooser.ExtensionFilter(fxUI.getLocaleBundleString("filebrowser.allfiles_selector"), "*.*")});
+																	new FileChooser.ExtensionFilter(locale.getString("filebrowser.allfiles_selector"), "*.*")});
 					return (f != null) ? f.getAbsolutePath() : "";
 				}
 				else{
