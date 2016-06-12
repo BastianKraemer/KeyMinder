@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -50,6 +51,7 @@ import de.akubix.keyminder.core.io.StorageManager;
 import de.akubix.keyminder.core.modules.ModuleLoader;
 import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.lib.XMLCore;
+import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.Shell;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
@@ -89,11 +91,15 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	private final Shell shell;
 	private final ModuleLoader moduleLoader;
 	public final StorageManager storageManager;
-	public final Locale applicationLocale;
+	private final ResourceBundle locale;
 
 	private final Set<ShellOutputWriter> outputWriter;
 
-	public ApplicationInstance(UserInterface inputSource){
+	public ApplicationInstance(UserInterface inputSourceProvider){
+		this(inputSourceProvider, false);
+	}
+
+	public ApplicationInstance(UserInterface inputSource, boolean forceEnglishLocale){
 		this.inputSourceProvider = inputSource;
 
 		outputWriter = new HashSet<>();
@@ -121,28 +127,30 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		presetDefaultSettings();
 		loadSettingsFromXMLFile();
 
-		if(settings.containsKey("language")){
-			String language = settings.get("language").toLowerCase();
-			if(language.equals("de")){
-				applicationLocale = new Locale("de", "DE");
-			}
-			else if(language.equals("en")){
-				applicationLocale = new Locale("en", "EN");
-			}
-			else{
-				if(KeyMinder.verbose_mode){printf("Unsupported locale: '%s'. Using 'en/EN' instead...\n", language);}
-				applicationLocale = new Locale("en", "EN");
-			}
-		}
-		else{
-			Locale systemDefaultLocale = Locale.getDefault();
-			if(systemDefaultLocale.getLanguage().matches("en|de")){
-				applicationLocale = systemDefaultLocale;
+		Locale applicationLocale = Locale.ENGLISH;
+
+		if(!forceEnglishLocale){
+			if(settings.containsKey("language")){
+				String language = settings.get("language").toLowerCase();
+				if(!language.equals("en")){
+					if(language.equals("de")){
+						applicationLocale = Locale.GERMAN;
+					}
+					else{
+						if(KeyMinder.verbose_mode){printf("Unsupported locale: '%s'. Using 'en/EN' instead...\n", language);}
+						applicationLocale = Locale.ENGLISH;
+					}
+				}
 			}
 			else{
-				applicationLocale = new Locale("en", "EN");
+				Locale systemDefaultLocale = Locale.getDefault();
+				if(systemDefaultLocale.getLanguage().matches("en|de")){
+					applicationLocale = systemDefaultLocale;
+				}
 			}
 		}
+
+		this.locale = LocaleLoader.loadLanguagePack("core", "core", applicationLocale);
 
 		this.shell = new Shell(this);
 		shell.loadCommandsFromIniFile("/de/akubix/keyminder/shell/commands.ini");
@@ -156,6 +164,10 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 	public Shell getShell(){
 		return this.shell;
+	}
+
+	public Locale getLocale(){
+		return locale.getLocale();
 	}
 
 	public ModuleLoader getModuleLoader(){
@@ -405,20 +417,12 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 			prepareAppForFileOpened();
 
-			updateStatus(String.format((
-					isFxUserInterfaceAvailable() ?
-					fxInterface.getLocaleBundleString("application.file_opened") :
-					"File '%s' successfully opened."
-				), file.getName()));
+			updateStatus(String.format(locale.getString("application.file_opened"), file.getName()));
 
 			return true;
 		} catch (StorageException e) {
 			if(e.getReason() != de.akubix.keyminder.core.exceptions.StorageExceptionType.UserCancelation){
-				alert(String.format((
-							isFxUserInterfaceAvailable() ?
-							fxInterface.getLocaleBundleString("application.unable_to_open_file") :
-							"Unable to open file '%s':\n%s"
-						), file.getName(), e.getMessage()));
+				alert(String.format(locale.getString("application.unable_to_open_file"), file.getName(), e.getMessage()));
 			}
 
 			return false;
@@ -447,20 +451,12 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 			if(currentFile != null) {
 				storageManager.getStorageHandler(currentFile.getFileTypeIdentifier()).save(currentFile, tree, this);
 				tree.setTreeChangedStatus(false);
-				updateStatus(String.format((
-								isFxUserInterfaceAvailable() ?
-								fxInterface.getLocaleBundleString("application.file_saved") :
-								"File '%s' has been saved."
-							), currentFile.getFilepath().getName()));
+				updateStatus(String.format(locale.getString("application.file_saved"), currentFile.getFilepath().getName()));
 			}
 			return true;
 		} catch (IllegalArgumentException e) {
-			if(requestYesNoDialog(APP_NAME, String.format((
-						isFxUserInterfaceAvailable() ?
-							fxInterface.getLocaleBundleString("application.invalid_file_type") :
-							"Invalid file type: \"%s\"\nDo you want to save your file as \"KeyMind XML File (xml/keymindfile)\"?"
-						), currentFile.getFileTypeIdentifier()))){
-
+			if(requestYesNoDialog(APP_NAME,	String.format(locale.getString("application.invalid_file_type"),
+														  currentFile.getFileTypeIdentifier()))){
 				currentFile.changeFileTypeIdentifier(this, StorageManager.defaultFileType);
 				return saveFile();
 			}
@@ -469,11 +465,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 			}
 
 		} catch (StorageException e) {
-			alert(String.format((
-					isFxUserInterfaceAvailable() ?
-					fxInterface.getLocaleBundleString("application.unable_to_save_file") :
-					"Unable to save file: %s"
-				), e.getMessage()));
+			alert(String.format(locale.getString("application.unable_to_save_file"), e.getMessage()));
 			return false;
 		}
 	}
@@ -513,7 +505,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 			tree.enableEventFireing(true);
 			fireEvent(DefaultEvent.OnFileClosed);
 
-			updateStatus(isFxUserInterfaceAvailable() ?	fxInterface.getLocaleBundleString("application.file_closed") :	"File closed.");
+			updateStatus(locale.getString("application.file_closed"));
 			return true;
 		}
 		else{
@@ -525,7 +517,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		return createNewFile(file, StorageManager.defaultFileType, encryptFileWithDefaultCipher);
 	}
 
-	public synchronized boolean createNewFile(File file, String fileTypeIdentifier, boolean encryptFileWithDefaultCipher){
+	public synchronized boolean createNewFile(File file, String fileTypeIdentifier, boolean encryptFileWithDefaultCipher) {
 		if(currentFile != null){
 			if(!closeFile()){return false;}
 		}
@@ -535,11 +527,10 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		if(encryptFileWithDefaultCipher){
 			try {
 				if(!currentFile.getEncryptionManager().requestPasswordInputWithConfirm(this,
-					isFxUserInterfaceAvailable() ? fxInterface.getLocaleBundleString("mainwindow.createfile.setpassword.headline") : "Set Password...",
-					isFxUserInterfaceAvailable() ? fxInterface.getLocaleBundleString("mainwindow.createfile.setpassword.text") : "Please enter a password for your new file:",
-					isFxUserInterfaceAvailable() ? fxInterface.getLocaleBundleString("mainwindow.createfile.setpassword.confirmtext") : "Please enter the password again:"))
-				{
-					alert(isFxUserInterfaceAvailable() ? fxInterface.getLocaleBundleString("mainwindow.createfile.setpassword.passwords_not_equal") : "The entered passwords doesn't match.");
+						locale.getString("application.createfile.setpassword.headline"),
+						locale.getString("application.createfile.setpassword.text"),
+						locale.getString("application.createfile.setpassword.confirmtext"))){
+					alert(isFxUserInterfaceAvailable() ? fxInterface.getLocaleBundleString("application.createfile.setpassword.passwords_not_equal") : "The entered passwords doesn't match.");
 					return createNewFile(file, fileTypeIdentifier, encryptFileWithDefaultCipher);
 				}
 
@@ -554,11 +545,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 		prepareAppForFileOpened();
 
-		updateStatus(String.format((
-				isFxUserInterfaceAvailable() ?
-				fxInterface.getLocaleBundleString("application.file_created") :
-				"File '%s' created."
-			), file.getName()));
+		updateStatus(String.format(locale.getString("application.file_created"), file.getName()));
 		return true;
 	}
 
@@ -951,9 +938,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param text the text that will be displayed in the status bar
 	 */
 	public void updateStatus(String text){
-		if(isFxUserInterfaceAvailable()){
-			fxInterface.updateStatus(text);
-		}
+		inputSourceProvider.updateStatus(text);
 	}
 
 	/**

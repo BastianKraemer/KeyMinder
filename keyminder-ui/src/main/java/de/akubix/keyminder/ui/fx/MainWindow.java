@@ -35,6 +35,7 @@ import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
 import de.akubix.keyminder.core.interfaces.events.HotKeyEvent;
 import de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler;
+import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.fx.dialogs.FindAndReplaceDialog;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
@@ -306,8 +307,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			 * ================================================================================================================
 			 */
 
-			localeBundle = ResourceBundle.getBundle("de.akubix.keyminder.bundles.LangPackBundle", app.applicationLocale);
-			//localeBundle = ResourceBundle.getBundle("bundles.LangBundle", new Locale("en", "EN"));
+			localeBundle = LocaleLoader.loadLanguagePack("ui", "fxUI", app.getLocale());
 
 			/* ================================================================================================================
 			 * Build user interface
@@ -1767,7 +1767,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 	@Override
 	public char[] getPasswordInput(String title, String text, String passwordHint) throws UserCanceledOperationException {
-		InputDialog id = new InputDialog(me, this, title, text, passwordHint, false);
+		InputDialog id = new InputDialog(me, this, title, text, passwordHint, true);
 		return id.getInput().toCharArray();
 	}
 

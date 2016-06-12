@@ -38,7 +38,7 @@ public class ConsoleMode implements UserInterface {
 	private final Scanner in;
 
 	public ConsoleMode(){
-		this.app = new ApplicationInstance(this);
+		this.app = new ApplicationInstance(this, true);
 		this.in =  new Scanner(System.in);
 	}
 
