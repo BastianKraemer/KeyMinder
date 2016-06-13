@@ -18,8 +18,12 @@
 */
 package de.akubix.keyminder.modules.sidebar;
 
+import java.util.ResourceBundle;
+
+import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.exceptions.ModuleStartupException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import javafx.event.ActionEvent;
@@ -33,18 +37,20 @@ import javafx.event.EventHandler;
 		author="Bastian Kraemer")
 public class Sidebar implements de.akubix.keyminder.core.interfaces.Module {
 
-	private de.akubix.keyminder.core.ApplicationInstance app;
-	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI;
+	private ApplicationInstance app;
+	private ResourceBundle locale;
 
 	@Override
-	public void onStartup(de.akubix.keyminder.core.ApplicationInstance instance) throws de.akubix.keyminder.core.exceptions.ModuleStartupException{
+	public void onStartup(ApplicationInstance instance) throws ModuleStartupException{
+		if(!instance.isFxUserInterfaceAvailable()){
+			throw new ModuleStartupException("JavaFX Interface not available", ModuleStartupException.ModuleErrorLevel.FxUserInterfaceNotAvailable);
+		}
 
-		if(!instance.isFxUserInterfaceAvailable()){throw new de.akubix.keyminder.core.exceptions.ModuleStartupException("JavaFX Interface not available", ModuleStartupException.ModuleErrorLevel.FxUserInterfaceNotAvailable);}
 		this.app = instance;
-		this.fxUI = instance.getFxUserInterface();
+		this.locale = LocaleLoader.loadLanguagePack("modules", "sidebar", app.getLocale());
 
 		FxSidebar sidebar;
-		sidebar = new FxSidebar(app, fxUI.getLocaleBundleString("module.sidebar.tabtitle"), true, new EventHandler<ActionEvent>() {
+		sidebar = new FxSidebar(app, locale.getString("module.sidebar.tabtitle"), true, new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
 				try {
@@ -54,20 +60,20 @@ public class Sidebar implements de.akubix.keyminder.core.interfaces.Module {
 				}
 		}});
 
-		sidebar.addLabel(fxUI.getLocaleBundleString("module.sidebar.username"));
+		sidebar.addLabel(locale.getString("module.sidebar.username"));
 		sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextbox("username"), "username");
 
-		sidebar.addLabel(fxUI.getLocaleBundleString("module.sidebar.password"));
+		sidebar.addLabel(locale.getString("module.sidebar.password"));
 		sidebar.addElementToSidebar(sidebar.createDefaultSidebarPasswordbox("password"), "password");
 		sidebar.addSeperator();
 
-		sidebar.addLabel(fxUI.getLocaleBundleString("module.sidebar.email"));
+		sidebar.addLabel(locale.getString("module.sidebar.email"));
 		sidebar.addElementToSidebar(sidebar.createDefaultSidebarHyperlink("email", true), "email");
 
-		sidebar.addLabel(fxUI.getLocaleBundleString("module.sidebar.website"));
+		sidebar.addLabel(locale.getString("module.sidebar.website"));
 		sidebar.addElementToSidebar(sidebar.createDefaultSidebarHyperlink("url", false), "url");
 
-		sidebar.addLabel(fxUI.getLocaleBundleString("module.sidebar.etc"));
+		sidebar.addLabel(locale.getString("module.sidebar.etc"));
 		sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextarea("etc"), "etc");
 	}
 }

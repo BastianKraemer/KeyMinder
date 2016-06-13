@@ -24,6 +24,7 @@ import java.awt.event.MouseListener;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.exceptions.ModuleStartupException;
+import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.scene.control.Alert.AlertType;
 
@@ -38,7 +39,8 @@ import javafx.scene.control.Alert.AlertType;
  */
 public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 
-	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI;
+	private FxUserInterface fxUI;
+	private ApplicationInstance app;
 	private boolean trayItemCreated = false;
 	private String pw = "";
 
@@ -47,6 +49,7 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 
 		if(instance.isFxUserInterfaceAvailable()){
 			this.fxUI = instance.getFxUserInterface();
+			this.app = instance;
 
 			// Provide the KeyClip feature as command
 			instance.getShell().addCommand("keyclip", getClass().getPackage().getName() + ".KeyClipCmd");
@@ -99,32 +102,37 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 						trayItemCreated = false;
 					}
 					else{
-				    	if(trayItemCreated){
-				    		  trayItemCreated = false;
-				    		  fxUI.setClipboardText(pw);
-				    		  tray.remove(trayIcon);
-				    	}
+						if(trayItemCreated){
+							trayItemCreated = false;
+							fxUI.setClipboardText(pw);
+							tray.remove(trayIcon);
+						}
 					}
 				}
 			});
 
-		    // set the TrayIcon properties
-		    trayIcon.addActionListener((e) -> {
-		    	if(trayItemCreated){
-		    		  trayItemCreated = false;
-		    		  fxUI.setClipboardText(pw);
-		    		  tray.remove(trayIcon);
-		    	}
-		    });
+			// set the TrayIcon properties
+			trayIcon.addActionListener((e) -> {
+				if(trayItemCreated){
+					trayItemCreated = false;
+					fxUI.setClipboardText(pw);
+					tray.remove(trayIcon);
+				}
+			});
 
-		    trayIcon.setToolTip(ApplicationInstance.APP_NAME + " KeyClip - " + fxUI.getLocaleBundleString("module.keyclip.copy_action_tooltip"));
+			trayIcon.setToolTip(String.format("%s %s - %s",
+				ApplicationInstance.APP_NAME,
+				"KeyClip",
+				app.getLocale().getLanguage().equals("de") ?
+					"Klicken Sie hier um das Passwort in die Zwischenablage zu kopieren" :
+					"Click to copy your password to the clip board"
+			));
 
-		    try {
-		        tray.add(trayIcon);
-		    } catch (AWTException e) {
-		        System.err.println(e);
-		       fxUI.alert(AlertType.ERROR, "KeyClip", "System Tray Icon", "An error occured. Unable to show system tray icon:\n" + e.getMessage());
-		    }
+			try {
+				tray.add(trayIcon);
+			} catch (AWTException e) {
+				fxUI.alert(AlertType.ERROR, "KeyClip", "System Tray Icon", "An error occured. Unable to show system tray icon:\n" + e.getMessage());
+			}
 		}
 
 		trayItemCreated = true;
