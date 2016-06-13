@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
@@ -37,6 +38,8 @@ import de.akubix.keyminder.core.interfaces.Module;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
+import de.akubix.keyminder.locale.LocaleLoader;
+import de.akubix.keyminder.ui.fx.MainWindow;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
@@ -82,9 +85,12 @@ public class Deadline implements Module {
 	private ApplicationInstance app;
 	private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
+	private ResourceBundle locale;
+
 	@Override
 	public void onStartup(ApplicationInstance instance) throws ModuleStartupException {
-		app = instance;
+		this.app = instance;
+		this.locale = LocaleLoader.loadLanguagePack("modules", "deadline", app.getLocale());
 
 		// Initiate a node check if a new file is opened
 		instance.addEventHandler(DefaultEvent.OnFileOpened, () -> {
@@ -112,13 +118,13 @@ public class Deadline implements Module {
 
 		if(instance.isFxUserInterfaceAvailable()){
 			instance.getFxUserInterface().addMenuEntry(
-					FxCommons.createFxMenuItem(instance.getFxUserInterface().getLocaleBundleString("module.deadline.menu_set_expiration_date"),
+					FxCommons.createFxMenuItem(locale.getString("module.deadline.menu_set_expiration_date"),
 							ImageMap.getIcon("icon_waiting"),
 							(ActionEvent ae) -> showSetExpireDateWindow(instance.getTree().getSelectedNode())),
 							MenuEntryPosition.TOOLS, true);
 
 			instance.getFxUserInterface().addMenuEntry(
-					FxCommons.createFxMenuItem(instance.getFxUserInterface().getLocaleBundleString("module.deadline.menu_show_expired_nodes"),
+					FxCommons.createFxMenuItem(locale.getString("module.deadline.menu_show_expired_nodes"),
 							ImageMap.getIcon("icon_deadline"),
 							(ActionEvent ae) -> showExpiredNodesList()),
 							MenuEntryPosition.TOOLS, true);
@@ -144,8 +150,8 @@ public class Deadline implements Module {
 
 				numberField.setStyle("-fx-min-width: 64px; -fx-max-width: -fx-min-width;");
 				// Configure the number days you want to be warned before a node/password becomes invalid
-				Label pre = new Label(instance.getFxUserInterface().getLocaleBundleString("module.deadline.settings_warn_time_pre"));
-				Label post = new Label(instance.getFxUserInterface().getLocaleBundleString("module.deadline.settings_warn_time_post"));
+				Label pre = new Label(locale.getString("module.deadline.settings_warn_time_pre"));
+				Label post = new Label(locale.getString("module.deadline.settings_warn_time_post"));
 				pre.setAlignment(Pos.CENTER_LEFT); post.setAlignment(Pos.CENTER_LEFT);
 				pre.setStyle("-fx-min-height: 22; -fx-max-height: -fx-min-height;");
 				post.setStyle(pre.getStyle());
@@ -247,14 +253,14 @@ public class Deadline implements Module {
 					Button notification = new Button("", ImageMap.getFxImageView(("icon_warning")));
 					notification.setMinWidth(24);
 					notification.setMaxWidth(24);
-					Tooltip tooltip = new Tooltip(	app.getFxUserInterface().getLocaleBundleString("module.deadline.report.title") + "\n" +
-													(expiredNodes.size() > 0 ? String.format(app.getFxUserInterface().getLocaleBundleString("module.deadline.report.expired_nodes") + "\n", expiredNodes.size()) : "") +
-													(nearlyExpiredNodes.size() > 0 ? String.format(app.getFxUserInterface().getLocaleBundleString("module.deadline.report.nearlyexpired_nodes") + "\n", nearlyExpiredNodes.size(), warningDifferenceInDays) : ""));
+					Tooltip tooltip = new Tooltip(	locale.getString("module.deadline.report.title") + "\n" +
+													(expiredNodes.size() > 0 ? String.format(locale.getString("module.deadline.report.expired_nodes") + "\n", expiredNodes.size()) : "") +
+													(nearlyExpiredNodes.size() > 0 ? String.format(locale.getString("module.deadline.report.nearlyexpired_nodes") + "\n", nearlyExpiredNodes.size(), warningDifferenceInDays) : ""));
 
 					notification.setTooltip(tooltip);
 					notification.getStyleClass().add("noBorder");
 
-					Label l = new Label(app.getFxUserInterface().getLocaleBundleString("module.deadline.report.ui_notification"));
+					Label l = new Label(locale.getString("module.deadline.report.ui_notification"));
 					l.setTooltip(tooltip);
 					l.setStyle("-fx-padding: 4px; -fx-cursor: Hand;");
 					Pane treeNotificationPanel = new Pane(l);
@@ -321,18 +327,18 @@ public class Deadline implements Module {
 
 	private void showSetExpireDateWindow(TreeNode node){
 		Stage me = new Stage();
-		me.setTitle(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " - " + app.getFxUserInterface().getLocaleBundleString("module.deadline.dialog.title"));
+		me.setTitle(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " - " + locale.getString("module.deadline.dialog.title"));
 
 		BorderPane root = new BorderPane();
 
-		Label title = new Label(app.getFxUserInterface().getLocaleBundleString("module.deadline.dialog.select_expiration_date"));
+		Label title = new Label(locale.getString("module.deadline.dialog.select_expiration_date"));
 		Pane top = new Pane(title);
 		top.getStyleClass().add("header");
 		root.setTop(top);
 
 		VBox vbox = new VBox(4);
 
-		CheckBox activate = new CheckBox(app.getFxUserInterface().getLocaleBundleString("module.deadline.dialog.enable_expiration_date"));
+		CheckBox activate = new CheckBox(locale.getString("module.deadline.dialog.enable_expiration_date"));
 		activate.setSelected(true);
 
 		// Date-Picker
@@ -344,7 +350,7 @@ public class Deadline implements Module {
 				datePicker.setValue(Instant.ofEpochMilli(Long.parseLong(node.getAttribute(NODE_EXPIRATION_ATTRIBUTE))).atZone(ZoneId.systemDefault()).toLocalDate());
 			}
 			catch(NumberFormatException nuFormatEx){
-				app.alert(String.format(app.getFxUserInterface().getLocaleBundleString("module.deadline.dialog.number_format_exception_message"), node.getText()));
+				app.alert(String.format(locale.getString("module.deadline.dialog.number_format_exception_message"), node.getText()));
 				return;
 			}
 		}
@@ -361,7 +367,7 @@ public class Deadline implements Module {
 
 		HBox bottom = new HBox(4);
 
-		Button acceptButton = new Button(app.getFxUserInterface().getLocaleBundleString("module.deadline.dialog.button_accept"));
+		Button acceptButton = new Button(locale.getString("module.deadline.dialog.button_accept"));
 		acceptButton.setOnAction((ActionEvent ae) -> {
 			if(activate.isSelected()){
 				node.setAttribute(NODE_EXPIRATION_ATTRIBUTE, Long.toString(datePicker.getValue().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().getEpochSecond() * 1000));
@@ -374,7 +380,7 @@ public class Deadline implements Module {
 			me.close();
 		});
 
-		Button cancelButton = new Button(app.getFxUserInterface().getLocaleBundleString("cancel"));
+		Button cancelButton = new Button(LocaleLoader.getBundle(MainWindow.LANGUAGE_BUNDLE_KEY).getString("cancel"));
 		cancelButton.setOnAction((ActionEvent ae) -> me.close());
 
 		acceptButton.setMinWidth(130);
@@ -409,11 +415,11 @@ public class Deadline implements Module {
 		checkForExpiredNodes(app.getTree(), Instant.now().getEpochSecond() * 1000, expiredNodesList, nearlyExpiredNodesList, false);
 
 		Stage me = new Stage();
-		me.setTitle(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " - " + app.getFxUserInterface().getLocaleBundleString("module.deadline.uireport.title"));
+		me.setTitle(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " - " + locale.getString("module.deadline.uireport.title"));
 
 		BorderPane root = new BorderPane();
 
-		Label title = new Label(app.getFxUserInterface().getLocaleBundleString("module.deadline.uireport.headline"));
+		Label title = new Label(locale.getString("module.deadline.uireport.headline"));
 		Pane top = new Pane(title);
 		top.getStyleClass().add("header");
 		root.setTop(top);
@@ -426,15 +432,15 @@ public class Deadline implements Module {
 		expiredNodesList.forEach(c);
 		nearlyExpiredNodesList.forEach(c);
 
-		vbox.getChildren().addAll(	FxCommons.createFxLabelWithStyleClass(app.getFxUserInterface().getLocaleBundleString("module.deadline.uireport.label_expired"), "h2"),
+		vbox.getChildren().addAll(	FxCommons.createFxLabelWithStyleClass(locale.getString("module.deadline.uireport.label_expired"), "h2"),
 									createScrollPane(expired), new Separator(Orientation.HORIZONTAL),
-									FxCommons.createFxLabelWithStyleClass(app.getFxUserInterface().getLocaleBundleString("module.deadline.uireport.label_nearly_expired"), "h2"),
+									FxCommons.createFxLabelWithStyleClass(locale.getString("module.deadline.uireport.label_nearly_expired"), "h2"),
 									createScrollPane(nearlyExpired));
 
 		BorderPane.setMargin(vbox, new Insets(4,10,0,10));
 		root.setCenter(vbox);
 
-		Button okButton = new Button(app.getFxUserInterface().getLocaleBundleString("okay"));
+		Button okButton = new Button(LocaleLoader.getBundle(MainWindow.LANGUAGE_BUNDLE_KEY).getString("okay"));
 		okButton.setOnAction((ActionEvent ae) -> me.close());
 
 		okButton.setDefaultButton(true);
