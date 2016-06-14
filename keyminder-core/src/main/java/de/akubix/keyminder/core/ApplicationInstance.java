@@ -530,7 +530,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 						locale.getString("application.createfile.setpassword.headline"),
 						locale.getString("application.createfile.setpassword.text"),
 						locale.getString("application.createfile.setpassword.confirmtext"))){
-					alert(isFxUserInterfaceAvailable() ? fxInterface.getLocaleBundleString("application.createfile.setpassword.passwords_not_equal") : "The entered passwords doesn't match.");
+					alert(locale.getString("application.createfile.setpassword.passwords_not_equal"));
 					return createNewFile(file, fileTypeIdentifier, encryptFileWithDefaultCipher);
 				}
 
