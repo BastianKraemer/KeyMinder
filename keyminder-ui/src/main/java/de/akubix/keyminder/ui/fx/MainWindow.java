@@ -24,11 +24,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 import java.util.Timer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.core.interfaces.FxAdministrationInterface;
 import de.akubix.keyminder.core.interfaces.Precondition;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
@@ -96,7 +98,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 
-public class MainWindow extends Application implements de.akubix.keyminder.core.interfaces.FxAdministrationInterface {
+public class MainWindow extends Application implements FxAdministrationInterface {
 
 	public static final String LANGUAGE_BUNDLE_KEY = "fxUI";
 
@@ -137,7 +139,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 	private Menu menu_View;
 	private Menu menu_Tools;
 	private Menu menu_Extras;
-	private Menu menu_FavoriteNodes = null;
+	private Menu menu_Quicklinks = null;
 
 	private SimpleBooleanProperty treeDependentElementsDisableProperty = new SimpleBooleanProperty(true);
 	private List<Node> assignedNotificationsItems = new ArrayList<>(2);
@@ -378,7 +380,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 					fxtree.getRoot().getChildren().clear();
 					treeNodeTranslator.clear();
 					treeDependentElementsDisableProperty.set(true);
-					clearFavoriteNodeList(true);
+					clearQuicklinkList(true);
 				}
 			});
 
@@ -388,6 +390,8 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 					me.close();
 				}
 			});
+
+			app.addEventHandler(DefaultEvent.OnQuicklinksUpdated, () -> updateQuicklinkList());
 
 			startupFxUI();
 
@@ -1099,45 +1103,43 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 			}
 		});
 
-		addFavoriteNodeHotKey(KeyCode.DIGIT1, (byte) 0, condition_FileOpened);
-		addFavoriteNodeHotKey(KeyCode.DIGIT2, (byte) 1, condition_FileOpened);
-		addFavoriteNodeHotKey(KeyCode.DIGIT3, (byte) 2, condition_FileOpened);
-		addFavoriteNodeHotKey(KeyCode.DIGIT4, (byte) 3, condition_FileOpened);
-		addFavoriteNodeHotKey(KeyCode.DIGIT5, (byte) 4, condition_FileOpened);
-		addFavoriteNodeHotKey(KeyCode.DIGIT6, (byte) 5, condition_FileOpened);
-		addFavoriteNodeHotKey(KeyCode.DIGIT7, (byte) 6, condition_FileOpened);
-		addFavoriteNodeHotKey(KeyCode.DIGIT8, (byte) 7, condition_FileOpened);
-		addFavoriteNodeHotKey(KeyCode.DIGIT9, (byte) 8, condition_FileOpened);
-		addFavoriteNodeHotKey(KeyCode.DIGIT0, (byte) 9, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT1, 0, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT2, 1, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT3, 2, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT4, 3, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT5, 4, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT6, 5, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT7, 6, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT8, 7, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT9, 8, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT0, 9, condition_FileOpened);
 	}
 
 
-	private void addFavoriteNodeHotKey(KeyCode keycode, byte index, Precondition condition_FileOpened)
-	{
+	private void addQuicklinkNodeHotKey(KeyCode keycode, int index, Precondition condition_FileOpened){
 		addApplicationHotKey(keycode, true, false, false, new HotKeyEvent(condition_FileOpened) {
 			@Override
 			public void onKeyDown() {
-				goToFavoriteNode(index, false, false);
+				followQuicklink(Integer.toString(index), false, false);
 			}
 		});
 		addApplicationHotKey(keycode, true, true, false, new HotKeyEvent(condition_FileOpened) {
 			@Override
 			public void onKeyDown() {
-				goToFavoriteNode(index, true, false);
+				followQuicklink(Integer.toString(index), true, false);
 			}
 		});
 		addApplicationHotKey(keycode, true, true, true, new HotKeyEvent(condition_FileOpened) {
 			@Override
 			public void onKeyDown() {
-				goToFavoriteNode(index, true, true);
+				followQuicklink(Integer.toString(index), true, true);
 			}
 		});
 	}
 
-	private void goToFavoriteNode(byte index, boolean startKeyClip, boolean altKeyOption)
-	{
-		if(!app.getSettingsValueAsBoolean("nodes.disable_favorites", false)){
-			TreeNode n = app.getFavoriteNode(index);
+	private void followQuicklink(String quicklinkName, boolean startKeyClip, boolean altKeyOption){
+		if(!app.getSettingsValueAsBoolean("nodes.disable_quicklinks", false)){
+			TreeNode n = app.getQuicklinkNode(quicklinkName);
 			if(n != null){
 				dataTree.setSelectedNode(n);
 				if(startKeyClip && app.getShell().commandExists("keyclip")){
@@ -1484,8 +1486,8 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 		app.addEventHandler(DefaultEvent.OnFileClosed, () -> l.setText(""));
 
-		if(!app.getSettingsValueAsBoolean("nodes.disable_favorites", false)){
-			hbox.getChildren().add(createFavNodeButton());
+		if(!app.getSettingsValueAsBoolean("nodes.disable_quicklinks", false)){
+			hbox.getChildren().add(createQuicklinkButton());
 		}
 
 		if(app.getShell().commandExists("keyclip")){
@@ -1577,7 +1579,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		}
 	}
 
-	private Button createFavNodeButton(){
+	private Button createQuicklinkButton(){
 		ImageView imgview_notStarred = new ImageView(ImageMap.getIcon("icon_star"));
 		ImageView imgview_starred = new ImageView(ImageMap.getIcon("icon_star_filled"));
 		Button b = new Button("", imgview_notStarred);
@@ -1588,7 +1590,7 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		b.setTooltip(new Tooltip(localeBundle.getString("mainwindow.sidebar.star_node")));
 		b.getStyleClass().add("noBorder");
 
-		TreeNodeEventHandler handler = (node) -> b.setGraphic(node.hasAttribute("favorite") ? imgview_starred : imgview_notStarred);
+		TreeNodeEventHandler handler = (node) -> b.setGraphic(node.hasAttribute(ApplicationInstance.NODE_ATTRIBUTE_QUICKLINK) ? imgview_starred : imgview_notStarred);
 		imgview_notStarred.setFitHeight(16);
 		imgview_notStarred.setFitWidth(16);
 		imgview_starred.setFitHeight(16);
@@ -1598,16 +1600,23 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 
 		b.setOnAction((event) -> {
 			TreeNode node = getSelectedTreeNode();
-			if(node.hasAttribute(ApplicationInstance.NODE_ATTRIBUTE_FAVORITE_NODE)){
-				app.removeFavoriteNode(node);
+			if(node.hasAttribute(ApplicationInstance.NODE_ATTRIBUTE_QUICKLINK)){
+				app.removeQuicklink(node.getAttribute(ApplicationInstance.NODE_ATTRIBUTE_QUICKLINK));
+				handler.eventFired(node);
 			}
 			else{
-				if(!app.setFavoriteNode(node)){
-					//Cannot set node as favorite node - most likely the maximal number of favorite nodes (10) is reached
-					app.alert(localeBundle.getString("mainwindow.messages.max_number_of_favorite_nodes_reached"));
+				Set<String> quciklinks = app.getQuicklinks();
+				for(int i = 1; i <= 10; i++){
+					String s = (i != 10 ? Integer.toString(i) : "0");
+					if(!quciklinks.contains(s)){
+						app.addQuicklink(s, node);
+						handler.eventFired(node);
+						return;
+					}
 				}
+
+				app.alert(localeBundle.getString("mainwindow.messages.max_quicklinks"));
 			}
-			handler.eventFired(node);
 		});
 
 		b.disableProperty().bind(treeDependentElementsDisableProperty);
@@ -1906,46 +1915,41 @@ public class MainWindow extends Application implements de.akubix.keyminder.core.
 		}
 	}
 
-	@Override
-	public void buildFavoriteNodeList(int[] favoriteNodes){
-		if(menu_FavoriteNodes == null){
-			menu_FavoriteNodes = new Menu(localeBundle.getString("mainwindow.menu.favorite_nodes"));
+	public void updateQuicklinkList(){
+		if(menu_Quicklinks == null){
+			menu_Quicklinks = new Menu(localeBundle.getString("mainwindow.menu.quicklinks"));
 		}
 		else{
-			clearFavoriteNodeList(false);
+			clearQuicklinkList(false);
 		}
 
-		byte count = 0;
-		for(byte i = 0; i< favoriteNodes.length; i++){
-			if(favoriteNodes[i] > 0){
-				TreeNode n = dataTree.getNodeById(favoriteNodes[i]);
-				if(n != null){
-					MenuItem menuItem = new MenuItem(i + ": " +n.getText());
-					menuItem.setUserData(favoriteNodes[i]);
-					menuItem.setOnAction((event) -> {
-							TreeNode node = dataTree.getNodeById((int) menuItem.getUserData());
-							if(node != null){dataTree.setSelectedNode(node);}
-					});
+		app.getQuicklinks().stream().filter((s) -> s.matches("[0-9]")).forEach((name) -> {
+			TreeNode node = app.getQuicklinkNode(name);
+			if(node == null){return;}
 
-					menu_FavoriteNodes.getItems().add(menuItem);
-					count++;
-				}
-			}
-		}
+			MenuItem menuItem = new MenuItem(name + ": " + node.getText());
+			menuItem.setUserData(name);
+			menuItem.setOnAction((event) -> {
+				TreeNode quicklinkNode = app.getQuicklinkNode(name);
+				if(node != null){dataTree.setSelectedNode(quicklinkNode);}
+			});
 
-		if(count > 0){
-			menuBar.getMenus().add(menu_FavoriteNodes);
+			menu_Quicklinks.getItems().add(menuItem);
+		});
+
+		if(menu_Quicklinks.getItems().size() > 0){
+			menuBar.getMenus().add(menu_Quicklinks);
 		}
 		else{
-			menu_FavoriteNodes = null;
+			menu_Quicklinks = null;
 		}
 	}
 
-	private void clearFavoriteNodeList(boolean setNull){
-		if(menu_FavoriteNodes != null){
-			menu_FavoriteNodes.getItems().clear();
-			menuBar.getMenus().remove(menu_FavoriteNodes);
-			if(setNull){menu_FavoriteNodes = null;}
+	private void clearQuicklinkList(boolean setNull){
+		if(menu_Quicklinks != null){
+			menu_Quicklinks.getItems().clear();
+			menuBar.getMenus().remove(menu_Quicklinks);
+			if(setNull){menu_Quicklinks = null;}
 		}
 	}
 

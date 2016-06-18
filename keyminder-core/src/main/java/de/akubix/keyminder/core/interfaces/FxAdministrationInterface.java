@@ -18,10 +18,4 @@ public interface FxAdministrationInterface extends FxUserInterface{
 	 * The only difference is, that this method is called before all event handlers.
 	 */
 	public void onFileOpenedHandler();
-
-	/**
-	 * This method is called when the list of favorite nodes has been updated.
-	 * @param favoriteNodes An array of tree node IDs. Each node has been selected as "favorite node"
-	 */
-	public void buildFavoriteNodeList(int[] favoriteNodes);
 }

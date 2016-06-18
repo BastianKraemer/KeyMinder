@@ -47,6 +47,7 @@ import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
+import de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler;
 import de.akubix.keyminder.core.io.StorageManager;
 import de.akubix.keyminder.core.modules.ModuleLoader;
 import de.akubix.keyminder.lib.Tools;
@@ -68,7 +69,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 	public static final String NODE_ATTRIBUTE_CREATION_DATE = "created";
 	public static final String NODE_ATTRIBUTE_MODIFICATION_DATE = "modified";
-	public static final String NODE_ATTRIBUTE_FAVORITE_NODE = "favorite";
+	public static final String NODE_ATTRIBUTE_QUICKLINK = "quicklink";
 	public static final String NODE_ATTRIBUTE_LINKED_NODES = "linked_nodes";
 
 	public static final String SETTINGS_KEY_ENABLED_MODULES = "enabled_modules";
@@ -156,6 +157,13 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		shell.loadCommandsFromIniFile("/de/akubix/keyminder/shell/commands.ini");
 
 		this.moduleLoader = new ModuleLoader(this);
+
+		TreeNodeEventHandler fx = (node) -> {
+			if(node.hasAttribute(NODE_ATTRIBUTE_QUICKLINK)){buildQuicklinkList();}
+		};
+
+		addEventHandler(TreeNodeEvent.OnNodeEdited, fx);
+		addEventHandler(TreeNodeEvent.OnNodeRemoved, fx);
 	}
 
 	public Tree getTree(){
@@ -308,7 +316,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		return settings.put(name, value);
 	}
 
-	public Boolean getSettingsValueAsBoolean(String name, Boolean onNotExist){
+	public boolean getSettingsValueAsBoolean(String name, Boolean onNotExist){
 		if(!settings.containsKey(name)){return onNotExist;}
 		String value = settings.get(name).toLowerCase();
 		if(value.equals("yes") || value.equals("true") || value.equals("1")){return true;}else{return false;}
@@ -439,7 +447,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		tree.enableEventFireing(true);
 
 		if(isFxUserInterfaceAvailable()){fxInterface.onFileOpenedHandler();}
-		generateFavoriteNodeListFromTree();
+		buildQuicklinkList();
 
 		fireEvent(DefaultEvent.OnFileOpened);
 
@@ -500,7 +508,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 			if(currentFile.getEncryptionManager() != null){currentFile.getEncryptionManager().destroy();}
 			currentFile = null;
-			clearFavoriteNodeList();
+			quicklinks.clear();
 			tree.setTreeChangedStatus(false);
 			tree.enableEventFireing(true);
 			fireEvent(DefaultEvent.OnFileClosed);
@@ -621,105 +629,64 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 	/*
 	 * ========================================================================================================================================================
-	 * Favorite nodes
+	 * Quicklinks
 	 * ========================================================================================================================================================
 	 */
-	private int[] favoriteNodes = new int[10];
 
-	private synchronized void clearFavoriteNodeList(){
-		for(byte i = 0; i < favoriteNodes.length; i++){
-			favoriteNodes[i] = 0;
-		}
-	}
+	private Map<String, Integer> quicklinks = new HashMap<>();
 
-	private synchronized void generateFavoriteNodeListFromTree(){
-		clearFavoriteNodeList();
-		if(!getSettingsValueAsBoolean("nodes.disable_favorites", false)){
-			boolean undoWasEnabled = tree.undoManager.isEnabled();
-			tree.undoManager.setEnable(false);
-			tree.allNodes((node) -> {if(node.hasAttribute(NODE_ATTRIBUTE_FAVORITE_NODE)){loadFavoriteNode(node, node.getAttribute(NODE_ATTRIBUTE_FAVORITE_NODE));}});
-			if(isFxUserInterfaceAvailable()){fxInterface.buildFavoriteNodeList(favoriteNodes);}
-			tree.undoManager.setEnable(undoWasEnabled);
-		}
-	}
-
-	public boolean setFavoriteNode(TreeNode node){
-		if(currentFile != null){
-			if(!node.hasAttribute(NODE_ATTRIBUTE_FAVORITE_NODE)){
-				for(byte i = 0; i < favoriteNodes.length; i++){
-					// Find first unused place
-					if(favoriteNodes[i] <= 0){
-						return setFavoriteNode(node, i , true);
-					}
+	private synchronized void buildQuicklinkList(){
+		quicklinks.clear();
+		if(!getSettingsValueAsBoolean("nodes.disable_quicklinks", false)){
+			tree.allNodes((node) -> {
+				if(node.hasAttribute(NODE_ATTRIBUTE_QUICKLINK)){
+					quicklinks.put(node.getAttribute(NODE_ATTRIBUTE_QUICKLINK), node.getId());
 				}
-			}
+			});
 		}
-		return false;
+		fireEvent(DefaultEvent.OnQuicklinksUpdated);
 	}
 
-	private void loadFavoriteNode(TreeNode node, String favoriteNumber){
-		try {
-			setFavoriteNode(node, Byte.parseByte(favoriteNumber), false);
-		}
-		catch(NumberFormatException numFormatEx){
-			if(KeyMinder.verbose_mode){println("Error while parsing favorite number of tree node " + node.getText());}
-			node.removeAttribute(NODE_ATTRIBUTE_FAVORITE_NODE);
-		}
-
+	public synchronized Set<String> getQuicklinks(){
+		return quicklinks.keySet();
 	}
 
-	public synchronized boolean setFavoriteNode(TreeNode node, byte favoriteNumber, boolean writeNodeAttribute){
-		if(currentFile != null && favoriteNumber <= 9 && favoriteNumber >= 0){
-			if(node.getId() > 0){
-				favoriteNodes[favoriteNumber] = node.getId();
-				if(writeNodeAttribute){
-					boolean undoWasEnabled = tree.undoManager.isEnabled();
-					tree.undoManager.setEnable(false);
-					node.setAttribute(NODE_ATTRIBUTE_FAVORITE_NODE, Byte.toString(favoriteNumber));
-					tree.undoManager.setEnable(undoWasEnabled);
-					if(isFxUserInterfaceAvailable()){fxInterface.buildFavoriteNodeList(favoriteNodes);}
-				}
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public void removeFavoriteNode(TreeNode node){
-		if(currentFile != null){
-			for(byte i = 0; i < favoriteNodes.length; i++){
-				if(node.getId() == favoriteNodes[i]){
-					removeFavoriteNode(i);
-				}
-			}
-		}
-	}
-
-	public synchronized void removeFavoriteNode(byte favoriteNumber){
-		if(currentFile != null && favoriteNumber <= 9 && favoriteNumber >= 0){
-			if(favoriteNodes[favoriteNumber] > 0){
-				TreeNode n = tree.getNodeById(favoriteNodes[favoriteNumber]);
-				boolean undoWasEnabled = tree.undoManager.isEnabled();
-				tree.undoManager.setEnable(false);
-				if(n != null){n.removeAttribute(NODE_ATTRIBUTE_FAVORITE_NODE);}
-				tree.undoManager.setEnable(undoWasEnabled);
-				favoriteNodes[favoriteNumber] = 0;
-				if(isFxUserInterfaceAvailable()){fxInterface.buildFavoriteNodeList(favoriteNodes);}
-			}
-			else{
-				favoriteNodes[favoriteNumber] = 0;
-			}
-		}
-	}
-
-	public synchronized TreeNode getFavoriteNode(byte favoriteNumber){
-		if(currentFile != null && favoriteNumber <= 9 && favoriteNumber >= 0){
-			if(favoriteNodes[favoriteNumber] > 0){
-				TreeNode n = tree.getNodeById(favoriteNodes[favoriteNumber]);
-				if(n != null){return n;}
-			}
+	public synchronized TreeNode getQuicklinkNode(String quicklinkName){
+		if(quicklinks.containsKey(quicklinkName)){
+			return tree.getNodeById(quicklinks.get(quicklinkName));
 		}
 		return null;
+	}
+
+	public synchronized void addQuicklink(String quicklinkName, TreeNode node){
+		// Currently "quicklinks" cannot be undone - therefore the undo manager is temporary disabled
+		boolean undoWasEnabled = tree.undoManager.isEnabled();
+		if(quicklinks.containsKey(quicklinkName)){
+			TreeNode oldNode = tree.getNodeById(quicklinks.get(quicklinkName));
+			if(oldNode != null){
+				oldNode.removeAttribute(NODE_ATTRIBUTE_QUICKLINK);
+			}
+		}
+
+		node.setAttribute(NODE_ATTRIBUTE_QUICKLINK, quicklinkName);
+		quicklinks.put(quicklinkName, node.getId());
+		tree.undoManager.setEnable(undoWasEnabled);
+		fireEvent(DefaultEvent.OnQuicklinksUpdated);
+	}
+
+	public void removeQuicklink(String quicklinkName){
+		// Currently "quicklinks" cannot be undone - therefore the undo manager is temporary disabled
+		boolean undoWasEnabled = tree.undoManager.isEnabled();
+		if(quicklinks.containsKey(quicklinkName)){
+			TreeNode node = tree.getNodeById(quicklinks.get(quicklinkName));
+			if(node != null){
+				node.removeAttribute(NODE_ATTRIBUTE_QUICKLINK);
+			}
+		}
+
+		quicklinks.remove(quicklinkName);
+		tree.undoManager.setEnable(undoWasEnabled);
+		fireEvent(DefaultEvent.OnQuicklinksUpdated);
 	}
 
 	/*

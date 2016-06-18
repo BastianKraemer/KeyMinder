@@ -107,10 +107,6 @@ public class StandardTree implements Tree {
 		return treeNodeDB.size();
 	}
 
-	public StandardNode getDefaultNodeById(int id){
-		return treeNodeDB.get(id);
-	}
-
 	@Override
 	public boolean nodeExists(int nodeId){
 		return treeNodeDB.containsKey(nodeId);
@@ -330,21 +326,21 @@ public class StandardTree implements Tree {
 		if(fireEvents){undoManager.captureMulitpleChanges();}
 
 		for(int nodeid: node.childNodes){
-			StandardNode knode = getDefaultNodeById(nodeid);
+			StandardNode stdNode = getNodeById(nodeid).getUnrestrictedAccess();
 			if(fireEvents && enableFireEvents){
 				// Notify UI and modules that the node will be removed
-				app.fireEvent(EventTypes.TreeNodeEvent.OnNodeRemoved, knode);
+				app.fireEvent(EventTypes.TreeNodeEvent.OnNodeRemoved, stdNode);
 
-				resetNodePointerAfterOperation = knode.getId() == nodePointer.getId();
+				resetNodePointerAfterOperation = stdNode.getId() == nodePointer.getId();
 			}
 			else{
-				if(knode.getId() == nodePointer.getId()){resetNodePointerAfterOperation = true;}
+				if(stdNode.getId() == nodePointer.getId()){resetNodePointerAfterOperation = true;}
 			}
 
-			if(removeChildNodes(knode, false)){resetNodePointerAfterOperation = true;}
+			if(removeChildNodes(stdNode, false)){resetNodePointerAfterOperation = true;}
 
-			undoManager.recordNodeRemoved(knode, 0);
-			treeNodeDB.remove(knode.getId());
+			undoManager.recordNodeRemoved(stdNode, 0);
+			treeNodeDB.remove(stdNode.getId());
 
 			// The nodePointer must be something else than null and always has to point to a valid node, if all else fails at least to the root node
 			// If not now, the node pointer has to be corrected before this method will be exited

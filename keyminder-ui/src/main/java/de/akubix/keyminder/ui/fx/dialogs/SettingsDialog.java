@@ -209,12 +209,12 @@ public class SettingsDialog {
 				settingscopy.put("windowtitle.showversion", (newValue == true ? "yes" : "no"));
 			}
 		});
-		final CheckBox useFavorites = new CheckBox(fxUI.getLocaleBundleString("settings.general.enable_favorites"));
-		useFavorites.setSelected(app.getSettingsValueAsBoolean("nodes.disable_favorites", true));
-		useFavorites.selectedProperty().addListener(new ChangeListener<Boolean>() {
+		final CheckBox useQuicklinks = new CheckBox(fxUI.getLocaleBundleString("settings.general.enable_quicklinks"));
+		useQuicklinks.setSelected(app.getSettingsValueAsBoolean("nodes.disable_quicklinks", true));
+		useQuicklinks.selectedProperty().addListener(new ChangeListener<Boolean>() {
 			@Override
 			public void changed(ObservableValue<? extends Boolean> ov, Boolean oldValue, Boolean newValue) {
-				settingscopy.put("nodes.disable_favorites", (newValue == true ? "no" : "yes"));
+				settingscopy.put("nodes.disable_quicklinks", (newValue == true ? "no" : "yes"));
 			}
 		});
 
@@ -256,7 +256,7 @@ public class SettingsDialog {
 		});
 
 		vbox.getChildren().addAll(title, new Label(fxUI.getLocaleBundleString("settings.general.label_defaultfile")), FxCommons.createFxFileInputField(defaultFile, fxUI),
-								  createSeperator(), windowTitleFilename, windowTitleVersion, useFavorites, hideEmptySidebar,
+								  createSeperator(), windowTitleFilename, windowTitleVersion, useQuicklinks, hideEmptySidebar,
 								  createSeperator(), useOtherWebBrowserCheckBox, browserFileInputField);
 
 		ScrollPane scrollPane = new ScrollPane(vbox);

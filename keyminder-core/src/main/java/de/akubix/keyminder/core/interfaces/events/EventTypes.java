@@ -1,11 +1,10 @@
 package de.akubix.keyminder.core.interfaces.events;
 
-
 public class EventTypes {
 	public enum DefaultEvent {
 		// These events does not return any value
 		OnExit, OnFileOpened, OnFileClosed,
-		OnSettingsChanged, OnFileSettingsChanged
+		OnSettingsChanged, OnFileSettingsChanged, OnQuicklinksUpdated
 	}
 	public enum BooleanEvent {
 		//These events return a boolean
@@ -13,7 +12,7 @@ public class EventTypes {
 	}
 	public enum TreeNodeEvent {
 		// Events, that will need a TreeNode as parameter
-		OnNodeAdded, OnNodeEdited,  OnNodeVerticallyMoved, OnNodeRemoved, OnSelectedItemChanged,
+		OnNodeAdded, OnNodeEdited,  OnNodeVerticallyMoved, OnNodeRemoved, OnSelectedItemChanged
 	}
 
 	public enum SettingsEvent {
