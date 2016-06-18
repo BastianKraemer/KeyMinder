@@ -16,7 +16,7 @@ import de.akubix.keyminder.shell.io.ShellOutputWriter;
 @Operands(cnt = 1)
 @Option(name = "-a")
 @Description("Displays a short description of a command.")
-@Usage( "${command.name <command> [-a]\n\n" +
+@Usage( "${command.name} <command> [-a]\n\n" +
 		"The '-a' option displays the supported input- and output object types (if any).")
 public final class Manual extends AbstractShellCommand {
 	@Override
