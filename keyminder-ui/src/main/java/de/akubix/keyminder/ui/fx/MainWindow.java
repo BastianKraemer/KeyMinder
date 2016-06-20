@@ -28,9 +28,10 @@ import java.util.Set;
 import java.util.Timer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.FxAdministrationInterface;
+import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.core.interfaces.Precondition;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
@@ -98,7 +99,7 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 
-public class MainWindow extends Application implements FxAdministrationInterface {
+public class MainWindow extends Application implements FxUserInterface {
 
 	public static final String LANGUAGE_BUNDLE_KEY = "fxUI";
 
@@ -366,6 +367,15 @@ public class MainWindow extends Application implements FxAdministrationInterface
 				}
 			});
 
+			final DefaultEventHandler updateWindowTitle = () -> updateWindowTitle();
+
+			app.addEventHandler(DefaultEvent.OnFileOpened, () -> {
+				onFileOpenedHandler();
+				updateWindowTitle.eventFired();
+			});
+
+			app.addEventHandler(DefaultEvent.OnSettingsChanged, () -> updateWindowTitle.eventFired());
+
 			app.addEventHandler(DefaultEvent.OnFileClosed, new DefaultEventHandler() {
 				@Override
 				public void eventFired() {
@@ -381,6 +391,8 @@ public class MainWindow extends Application implements FxAdministrationInterface
 					treeNodeTranslator.clear();
 					treeDependentElementsDisableProperty.set(true);
 					clearQuicklinkList(true);
+
+					updateWindowTitle.eventFired();
 				}
 			});
 
@@ -469,8 +481,14 @@ public class MainWindow extends Application implements FxAdministrationInterface
 		}
 	}
 
-	@Override
-	public void onFileOpenedHandler(){
+	private void updateWindowTitle() {
+		me.setTitle(
+			ApplicationInstance.APP_NAME
+			+ ((app.getSettingsValueAsBoolean("windowtitle.showfilename", true) && app.currentFile != null) ? " - " + app.currentFile.getFilepath().getName() : "")
+			+ (app.getSettingsValueAsBoolean("windowtitle.showversion", false) ? " (Version " + KeyMinder.getApplicationVersion() + ")" : ""));
+	}
+
+	private void onFileOpenedHandler(){
 		buildTree();
 		if(fxtree.getRoot().getChildren().size() > 0){
 			fxtree.getSelectionModel().select((fxtree.getRoot().getChildren().get(0)));
@@ -496,11 +514,6 @@ public class MainWindow extends Application implements FxAdministrationInterface
 	@Override
 	public String getLocaleBundleString(String key){
 		return localeBundle.getString(key);
-	}
-
-	@Override
-	public void setTitle(String title){
-		me.setTitle(title);
 	}
 
 	@Override

@@ -38,15 +38,17 @@ import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.IllegalCallException;
 import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.FxAdministrationInterface;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.core.interfaces.UserInterface;
+import de.akubix.keyminder.core.interfaces.events.BooleanEventHandler;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventHost;
+import de.akubix.keyminder.core.interfaces.events.EventTypes;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
+import de.akubix.keyminder.core.interfaces.events.SettingsEventHandler;
 import de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler;
 import de.akubix.keyminder.core.io.StorageManager;
 import de.akubix.keyminder.core.modules.ModuleLoader;
@@ -81,7 +83,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 	private File settingsFile;
 	private UserInterface inputSourceProvider;
-	private FxAdministrationInterface fxInterface = null;
+	private FxUserInterface fxInterface = null;
 
 	public Map<String, String> settings = new HashMap<String, String>();
 	public FileConfiguration currentFile = null;
@@ -194,24 +196,8 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * The Startup-Method must be called by the UserInterface when it is ready.
 	 */
 	public void startup(boolean enableModuleLoading){
-
 		if(enableModuleLoading){
 			moduleLoader.loadModules();
-		}
-
-		updateMainWindowTitle();
-
-		if(isFxUserInterfaceAvailable()){
-			DefaultEventHandler eventHandler = new DefaultEventHandler() {
-				@Override
-				public void eventFired() {
-					updateMainWindowTitle();
-				}
-			};
-
-			addEventHandler(DefaultEvent.OnFileOpened, eventHandler);
-			addEventHandler(DefaultEvent.OnFileClosed, eventHandler);
-			addEventHandler(DefaultEvent.OnSettingsChanged, eventHandler);
 		}
 	}
 
@@ -446,10 +432,9 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		tree.enableNodeTimestamps(true);
 		tree.enableEventFireing(true);
 
-		if(isFxUserInterfaceAvailable()){fxInterface.onFileOpenedHandler();}
-		buildQuicklinkList();
-
 		fireEvent(DefaultEvent.OnFileOpened);
+
+		buildQuicklinkList();
 
 		if(tree.getSelectedNode().getId() != 0){fireEvent(TreeNodeEvent.OnSelectedItemChanged, tree.getSelectedNode());}
 	}
@@ -555,15 +540,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 		updateStatus(String.format(locale.getString("application.file_created"), file.getName()));
 		return true;
-	}
-
-
-	private void updateMainWindowTitle() {
-		if (isFxUserInterfaceAvailable()){
-			fxInterface.setTitle(APP_NAME +
-								 ((getSettingsValueAsBoolean("windowtitle.showfilename", true) && currentFile != null) ? " - " + currentFile.getFilepath().getName() : "") +
-								 (getSettingsValueAsBoolean("windowtitle.showversion", false) ? " (Version " + KeyMinder.getApplicationVersion() + ")" : ""));
-		}
 	}
 
 	/*
@@ -695,7 +671,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * ========================================================================================================================================================
 	 */
 
-	public void registerFXUserInterface(FxAdministrationInterface fxUI){
+	public void registerFXUserInterface(FxUserInterface fxUI){
 		fxInterface = fxUI;
 	}
 
