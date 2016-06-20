@@ -677,46 +677,50 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 	@Override
 	/**
-	 * Adds an event handler. If the Java FX user interface is loaded. All events handlers will be called with the JavaFX Thread
+	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
 	 * @param eventName the name of the event
 	 * @param eventHandler the handler which will be execution when the event is triggered
 	 */
-	public void addEventHandler(DefaultEvent eventName, de.akubix.keyminder.core.interfaces.events.DefaultEventHandler eventHandler) {
-		if(!eventCollection.containsKey(eventName.toString())){eventCollection.put(eventName.toString(), new ArrayList<Object>());}
-		eventCollection.get(eventName.toString()).add(eventHandler);
+	public void addEventHandler(DefaultEvent eventName, DefaultEventHandler eventHandler){
+		addEventHandler(eventName.toString(), eventHandler, false);
 	}
 
 	@Override
 	/**
-	 * Adds an event handler. If the Java FX user interface is loaded. All events handlers will be called with the JavaFX Thread
+	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
 	 * @param eventName the name of the event
 	 * @param eventHandler the handler which will be execution when the event is triggered
 	 */
-	public void addEventHandler(BooleanEvent eventName, de.akubix.keyminder.core.interfaces.events.BooleanEventHandler eventHandler) {
-		if(!eventCollection.containsKey(eventName.toString())){eventCollection.put(eventName.toString(), new ArrayList<Object>());}
-		eventCollection.get(eventName.toString()).add(eventHandler);
+	public void addEventHandler(BooleanEvent eventName, BooleanEventHandler eventHandler){
+		addEventHandler(eventName.toString(), eventHandler, false);
 	}
 
 	@Override
 	/**
-	 * Adds an event handler. If the Java FX user interface is loaded. All events handlers will be called with the JavaFX Thread
+	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
 	 * @param eventName the name of the event
 	 * @param eventHandler the handler which will be execution when the event is triggered
 	 */
-	public void addEventHandler(TreeNodeEvent eventName, de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler eventHandler) {
-		if(!eventCollection.containsKey(eventName.toString())){eventCollection.put(eventName.toString(), new ArrayList<Object>());}
-		eventCollection.get(eventName.toString()).add(eventHandler);
+	public void addEventHandler(TreeNodeEvent eventName, TreeNodeEventHandler eventHandler){
+		addEventHandler(eventName.toString(), eventHandler, false);
 	}
 
 	@Override
 	/**
-	 * Adds an event handler. If the Java FX user interface is loaded. All events handlers will be called with the JavaFX Thread
+	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
 	 * @param eventName the name of the event
 	 * @param eventHandler the handler which will be execution when the event is triggered
 	 */
-	public void addEventHandler(SettingsEvent eventName, de.akubix.keyminder.core.interfaces.events.SettingsEventHandler eventHandler) {
-		if(!eventCollection.containsKey(eventName.toString())){eventCollection.put(eventName.toString(), new ArrayList<Object>());}
-		eventCollection.get(eventName.toString()).add(eventHandler);
+	public void addEventHandler(SettingsEvent eventName, SettingsEventHandler eventHandler){
+		addEventHandler(eventName.toString(), eventHandler, false);
+	}
+
+	private void addEventHandler(String eventName, Object eventHandler, boolean highPriority){
+		if(!eventCollection.containsKey(eventName)){
+			eventCollection.put(eventName, new ArrayList<Object>());
+		}
+
+		eventCollection.get(eventName).add(eventHandler);
 	}
 
 	@Override
