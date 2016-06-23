@@ -522,7 +522,7 @@ public class MainWindow extends Application implements FxUserInterface {
 	}
 
 	@Override
-	public boolean isFXThread(){
+	public boolean isUserInterfaceThread(){
 		return Platform.isFxApplicationThread();
 	}
 
@@ -1752,7 +1752,7 @@ public class MainWindow extends Application implements FxUserInterface {
 
 	@Override
 	public void alert(String text) {
-		if(isFXThread()){
+		if(isUserInterfaceThread()){
 			alert(AlertType.INFORMATION, "", null, text);
 		}
 		else{
@@ -1764,7 +1764,7 @@ public class MainWindow extends Application implements FxUserInterface {
 	public void alert(AlertType type, String title, String headline, String contentText){
 		final String alertTile = title.equals("") ? ApplicationInstance.APP_NAME : title;
 
-		if(isFXThread()){
+		if(isUserInterfaceThread()){
 			showAlert(type, alertTile, headline, contentText);
 		}
 		else{

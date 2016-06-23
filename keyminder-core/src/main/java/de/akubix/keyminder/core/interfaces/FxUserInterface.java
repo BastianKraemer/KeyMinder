@@ -56,6 +56,5 @@ public interface FxUserInterface extends UserInterface {
 
 	// etc
 	public void runAsFXThread(Runnable r);
-	public boolean isFXThread();
 	public void focusMainWindow();
 }

@@ -726,18 +726,20 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	@Override
 	/**
 	 * This method will fire an event, according to this all registered event handlers for this event will be called.
-	 * Note: If the JavaFX user interface has been loaded, its not allowed to call this method with another thread than the JavaFX Thread.
+	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
 	 * @param event the event that should be triggered
 	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
-	public synchronized void fireEvent(de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent event) throws IllegalCallException {
+	public synchronized void fireEvent(EventTypes.DefaultEvent event) throws IllegalCallException {
 		if(isFxUserInterfaceAvailable()){
-			if(!fxInterface.isFXThread()){throw new de.akubix.keyminder.core.exceptions.IllegalCallException("If there is an JavaFX UserInterface, all events must be fired with the FXThread!");}
+			if(!fxInterface.isUserInterfaceThread()){
+				throw new IllegalCallException("All events must be fired with the user interface thread.");
+			}
 		}
 
 		if(eventCollection.containsKey(event.toString())){
 			for(int i = 0; i < eventCollection.get(event.toString()).size(); i++){
-				((de.akubix.keyminder.core.interfaces.events.DefaultEventHandler) eventCollection.get(event.toString()).get(i)).eventFired();
+				((DefaultEventHandler) eventCollection.get(event.toString()).get(i)).eventFired();
 			}
 		}
 	}
@@ -746,23 +748,23 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	/**
 	 * This method will fire an event, according to this all registered event handlers for this event will be called.
 	 * Currently this event is only fired to ask all modules if the file has unsaved changes an can be closed.
-	 * Note: If the JavaFX user interface has been loaded, its not allowed to call this method with another thread than the JavaFX Thread.
+	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
 	 * @param event the event that should be fired
 	 * @param cancelOn this method will return the parameter 'cancelValue' if one event handler returns this boolean value
 	 * @param cancelValue the value that will be returned if one event handler returns the value of 'cancelOn'
 	 * @return if everything is okay this method will return '!cancelValue', if not it will be 'cancelValue'
 	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
-	public synchronized boolean fireEvent(de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent event, boolean cancelOn, boolean cancelValue) throws IllegalCallException{
+	public synchronized boolean fireEvent(EventTypes.BooleanEvent event, boolean cancelOn, boolean cancelValue) throws IllegalCallException{
 		if(isFxUserInterfaceAvailable()){
-			if(!fxInterface.isFXThread()){
-				throw new de.akubix.keyminder.core.exceptions.IllegalCallException("If there is an JavaFX UserInterface, all events must be fired with the FXThread!");
+			if(!fxInterface.isUserInterfaceThread()){
+				throw new IllegalCallException("All events must be fired with the user interface thread.");
 			}
 		}
 
 		if(eventCollection.containsKey(event.toString())) {
 			for(int i = 0; i < eventCollection.get(event.toString()).size(); i++){
-				if(((de.akubix.keyminder.core.interfaces.events.BooleanEventHandler) eventCollection.get(event.toString()).get(i)).eventFired() == cancelOn){
+				if(((BooleanEventHandler) eventCollection.get(event.toString()).get(i)).eventFired() == cancelOn){
 					return cancelValue;
 				}
 			}
@@ -774,21 +776,21 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	@Override
 	/**
 	 * This method will fire an event, according to this all registered event handlers for this event will be called.
-	 * Note: If the JavaFX user interface has been loaded, its not allowed to call this method with another thread than the JavaFX Thread.
+	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
 	 * @param event the event that should be triggered
 	 * @param node the node that belongs to this event
 	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
-	public synchronized void fireEvent(de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent event, TreeNode node) throws IllegalCallException {
+	public synchronized void fireEvent(EventTypes.TreeNodeEvent event, TreeNode node) throws IllegalCallException {
 		if(isFxUserInterfaceAvailable()){
-			if(!fxInterface.isFXThread()){
-				throw new de.akubix.keyminder.core.exceptions.IllegalCallException("If there is an JavaFX UserInterface, all events must be fired with the FXThread!");
+			if(!fxInterface.isUserInterfaceThread()){
+				throw new IllegalCallException("All events must be fired with the user interface thread.");
 			}
 		}
 
 		if(eventCollection.containsKey(event.toString())){
 			for(int i = 0; i < eventCollection.get(event.toString()).size(); i++){
-				((de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler) eventCollection.get(event.toString()).get(i)).eventFired(node);
+				((TreeNodeEventHandler) eventCollection.get(event.toString()).get(i)).eventFired(node);
 			}
 		}
 	}
@@ -796,22 +798,22 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	@Override
 	/**
 	 * This method will fire an event, according to this all registered event handlers for this event will be called.
-	 * Note: If the JavaFX user interface has been loaded, its not allowed to call this method with another thread than the JavaFX Thread.
+	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
 	 * @param event the event that should be triggered
 	 * @param tabControl the TabControl of the settings dialog. Some modules maybe want to add their own tab pages
 	 * @param settings a reference to the new settings map - all settings the user want to change has to be updated HERE
 	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
-	public synchronized void fireEvent(de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent event, TabPane tabControl, Map<String, String> settings) throws IllegalCallException	{
+	public synchronized void fireEvent(EventTypes.SettingsEvent event, TabPane tabControl, Map<String, String> settings) throws IllegalCallException	{
 		if(isFxUserInterfaceAvailable()){
-			if(!fxInterface.isFXThread()){
-				throw new de.akubix.keyminder.core.exceptions.IllegalCallException("If there is an JavaFX UserInterface, all events must be fired with the FXThread!");
+			if(!fxInterface.isUserInterfaceThread()){
+				throw new IllegalCallException("All events must be fired with the user interface thread.");
 			}
 		}
 
 		if(eventCollection.containsKey(event.toString())){
 			for(int i = 0; i < eventCollection.get(event.toString()).size(); i++){
-				((de.akubix.keyminder.core.interfaces.events.SettingsEventHandler) eventCollection.get(event.toString()).get(i)).eventFired(tabControl, settings);
+				((SettingsEventHandler) eventCollection.get(event.toString()).get(i)).eventFired(tabControl, settings);
 			}
 		}
 	}

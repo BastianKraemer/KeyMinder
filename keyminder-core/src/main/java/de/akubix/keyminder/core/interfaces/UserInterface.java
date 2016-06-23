@@ -10,4 +10,6 @@ public interface UserInterface {
 	public void updateStatus(String text);
 	public void log(String text);
 	public void alert(String text);
+
+	public boolean isUserInterfaceThread();
 }

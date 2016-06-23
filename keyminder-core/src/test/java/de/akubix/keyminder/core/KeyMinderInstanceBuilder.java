@@ -39,5 +39,10 @@ public class KeyMinderInstanceBuilder {
 
 		@Override
 		public void alert(String text) {}
+
+		@Override
+		public boolean isUserInterfaceThread() {
+			return true;
+		}
 	};
 }

@@ -171,4 +171,9 @@ public class ConsoleMode implements UserInterface {
 			return "";
 		}
 	}
+
+	@Override
+	public boolean isUserInterfaceThread() {
+		return true;
+	}
 }
