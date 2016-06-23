@@ -35,7 +35,8 @@ import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.etc.MenuEntryPosition;
 import de.akubix.keyminder.core.exceptions.ModuleStartupException;
 import de.akubix.keyminder.core.interfaces.Module;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
+import de.akubix.keyminder.core.interfaces.events.Compliance;
+import de.akubix.keyminder.core.interfaces.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.locale.LocaleLoader;
@@ -102,7 +103,7 @@ public class Deadline implements Module {
 				}
 			});
 
-		instance.addEventHandler(BooleanEvent.DONTAllowFileClosing, () -> {
+		instance.addEventHandler(ComplianceEvent.AllowFileClosing, () -> {
 				if(backgroundWorker != null){
 					if(backgroundWorker.isAlive()){
 						backgroundWorker.interrupt();
@@ -113,7 +114,7 @@ public class Deadline implements Module {
 						}
 					}
 				}
-				return false;
+				return Compliance.AGREE;
 			});
 
 		if(instance.isFxUserInterfaceAvailable()){

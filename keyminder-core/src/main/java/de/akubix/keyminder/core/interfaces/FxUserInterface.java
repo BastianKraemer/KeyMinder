@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ResourceBundle;
 
 import de.akubix.keyminder.core.etc.MenuEntryPosition;
-import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.events.HotKeyEvent;
 import de.akubix.keyminder.core.interfaces.events.SidebarNodeChangeEvent;
 import javafx.event.ActionEvent;
@@ -43,14 +42,6 @@ public interface FxUserInterface extends UserInterface {
 	public void addApplicationHotKey(KeyCode keyCode, boolean controlKey, boolean shiftKey, boolean altKey, HotKeyEvent onKeyDown);
 
 	// Dialogs
-
-	/**
-	 * Show a save changes dialog
-	 * @return {@code true} if the changes should be saved or {@code false} should be discarded
-	 * @throws UserCanceledOperationException if the user has pressed the "Cancel" button
-	 */
-	public boolean showSaveChangesDialog() throws UserCanceledOperationException;
-
 	public File showOpenFileDialog(String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions);
 	public File showSaveFileDialog(String dialogTitle, String initalFileName, String initalDirectory, FileChooser.ExtensionFilter[] fileExtensions);
 

@@ -33,7 +33,9 @@ import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.core.interfaces.Precondition;
+import de.akubix.keyminder.core.interfaces.events.Compliance;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
+import de.akubix.keyminder.core.interfaces.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
 import de.akubix.keyminder.core.interfaces.events.HotKeyEvent;
@@ -393,6 +395,14 @@ public class MainWindow extends Application implements FxUserInterface {
 					clearQuicklinkList(true);
 
 					updateWindowTitle.eventFired();
+				}
+			});
+
+			app.addEventHandler(ComplianceEvent.DiscardChanges, () -> {
+				try {
+					return showSaveChangesDialog() ? Compliance.DONT_AGREE : Compliance.AGREE;
+				} catch (UserCanceledOperationException e) {
+					return Compliance.CANCEL;
 				}
 			});
 
@@ -1859,8 +1869,12 @@ public class MainWindow extends Application implements FxUserInterface {
 		}
 	}
 
-	@Override
-	public boolean showSaveChangesDialog() throws UserCanceledOperationException {
+	/**
+	 * Show a save changes dialog
+	 * @return {@code true} if the changes should be saved or {@code false} should be discarded
+	 * @throws UserCanceledOperationException if the user has pressed the "Cancel" button
+	 */
+	private boolean showSaveChangesDialog() throws UserCanceledOperationException {
 		de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result r = de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.show(this);
 		if(r == Result.Cancel){throw new UserCanceledOperationException("Cancel button was pressed.");}
 		return (r == Result.SaveChanges);

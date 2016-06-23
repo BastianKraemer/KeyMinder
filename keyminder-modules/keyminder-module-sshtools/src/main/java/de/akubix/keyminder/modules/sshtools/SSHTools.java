@@ -39,9 +39,9 @@ import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
-import de.akubix.keyminder.core.interfaces.events.BooleanEventHandler;
+import de.akubix.keyminder.core.interfaces.events.Compliance;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
+import de.akubix.keyminder.core.interfaces.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.interfaces.events.SettingsEventHandler;
@@ -334,10 +334,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		// If the file settings has been changed
 		app.addEventHandler(DefaultEvent.OnFileSettingsChanged, handler);
 
-		app.addEventHandler(BooleanEvent.DONTAllowFileClosing, new BooleanEventHandler() {
-			@Override
-			public boolean eventFired() {
-
+		app.addEventHandler(ComplianceEvent.AllowFileClosing, () -> {
 				boolean ask4Close = false;
 
 				for(String key: runningSocksProfiles.keySet()){
@@ -356,11 +353,11 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 						}
 					}
 					else{
-						return true;
+						return Compliance.DONT_AGREE;
 					}
 				}
-				return false;
-			}});
+				return Compliance.AGREE;
+			});
 
 		// This will only be executed if the JavaFX user interface is available
 		if(fxUI != null){

@@ -40,11 +40,12 @@ import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.core.interfaces.UserInterface;
-import de.akubix.keyminder.core.interfaces.events.BooleanEventHandler;
+import de.akubix.keyminder.core.interfaces.events.Compliance;
+import de.akubix.keyminder.core.interfaces.events.ComplianceEventHandler;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventHost;
 import de.akubix.keyminder.core.interfaces.events.EventTypes;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
+import de.akubix.keyminder.core.interfaces.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
@@ -469,22 +470,14 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 */
 	public synchronized boolean closeFile(){
 		if(currentFile != null){
-			if(fireEvent(BooleanEvent.DONTAllowFileClosing, true, true)){return false;}
+			if(fireEvent(ComplianceEvent.AllowFileClosing) != Compliance.AGREE){return false;}
+
 			if(tree.treeHasBeenUpdated()){
-				if(isFxUserInterfaceAvailable()){
-					try {
-						if(fxInterface.showSaveChangesDialog()){
-							// Save the changes
-							if(!saveFile()){return false;}
-						}
-					} catch (UserCanceledOperationException e) {
-						return false;
-					}
-				}
-				else{
-					if(!inputSourceProvider.getYesNoChoice(null, null, "Do you want do discard your changes?")){
-						return false;
-					}
+				Compliance discardChanges = fireEvent(ComplianceEvent.DiscardChanges);
+
+				if(discardChanges == Compliance.CANCEL){return false;}
+				if(discardChanges == Compliance.DONT_AGREE){
+					if(!saveFile()){return false;}
 				}
 			}
 
@@ -691,7 +684,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param eventName the name of the event
 	 * @param eventHandler the handler which will be execution when the event is triggered
 	 */
-	public void addEventHandler(BooleanEvent eventName, BooleanEventHandler eventHandler){
+	public void addEventHandler(ComplianceEvent eventName, ComplianceEventHandler eventHandler){
 		addEventHandler(eventName.toString(), eventHandler, false);
 	}
 
@@ -747,7 +740,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	@Override
 	/**
 	 * This method will fire an event, according to this all registered event handlers for this event will be called.
-	 * Currently this event is only fired to ask all modules if the file has unsaved changes an can be closed.
+	 * Currently this event is only fired to ask if the file has unsaved changes an can be closed.
 	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
 	 * @param event the event that should be fired
 	 * @param cancelOn this method will return the parameter 'cancelValue' if one event handler returns this boolean value
@@ -755,22 +748,26 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @return if everything is okay this method will return '!cancelValue', if not it will be 'cancelValue'
 	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
-	public synchronized boolean fireEvent(EventTypes.BooleanEvent event, boolean cancelOn, boolean cancelValue) throws IllegalCallException{
+	public synchronized Compliance fireEvent(EventTypes.ComplianceEvent event) throws IllegalCallException{
 		if(isFxUserInterfaceAvailable()){
 			if(!fxInterface.isUserInterfaceThread()){
 				throw new IllegalCallException("All events must be fired with the user interface thread.");
 			}
 		}
 
+		Compliance returnValue = Compliance.AGREE;
 		if(eventCollection.containsKey(event.toString())) {
 			for(int i = 0; i < eventCollection.get(event.toString()).size(); i++){
-				if(((BooleanEventHandler) eventCollection.get(event.toString()).get(i)).eventFired() == cancelOn){
-					return cancelValue;
+				Compliance c = ((ComplianceEventHandler) eventCollection.get(event.toString()).get(i)).eventFired();
+				if(c != Compliance.AGREE){
+					if(returnValue != Compliance.CANCEL){
+						returnValue = c;
+					}
 				}
 			}
 		}
 
-		return !cancelValue;
+		return returnValue;
 	}
 
 	@Override
