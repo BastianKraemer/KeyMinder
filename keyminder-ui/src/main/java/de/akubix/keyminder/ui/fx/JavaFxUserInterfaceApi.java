@@ -3,7 +3,6 @@ package de.akubix.keyminder.ui.fx;
 import java.io.File;
 import java.util.ResourceBundle;
 
-import de.akubix.keyminder.core.etc.MenuEntryPosition;
 import de.akubix.keyminder.core.interfaces.events.HotKeyEvent;
 import de.akubix.keyminder.core.interfaces.events.SidebarNodeChangeEvent;
 import de.akubix.keyminder.ui.UserInterface;

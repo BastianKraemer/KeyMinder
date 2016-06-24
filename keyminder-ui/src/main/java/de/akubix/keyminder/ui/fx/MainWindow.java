@@ -1674,7 +1674,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	}
 
 	@Override
-	public void addMenuEntry(MenuItem item, de.akubix.keyminder.core.etc.MenuEntryPosition pos, boolean add2TreeDependentItems) {
+	public void addMenuEntry(MenuItem item, MenuEntryPosition pos, boolean add2TreeDependentItems) {
 		switch(pos){
 			case FILE:
 				menu_File.getItems().add(item);

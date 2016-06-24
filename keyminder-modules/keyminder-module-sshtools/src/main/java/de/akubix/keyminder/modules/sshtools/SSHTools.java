@@ -184,7 +184,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 						fxUI.alert("Cannot execute etc hosts command: " + ex.getMessage());
 						if(de.akubix.keyminder.core.KeyMinder.verbose_mode){ex.printStackTrace();}
 					}
-				}), de.akubix.keyminder.core.etc.MenuEntryPosition.TOOLS, false);
+				}), de.akubix.keyminder.ui.fx.MenuEntryPosition.TOOLS, false);
 			}
 		}
 

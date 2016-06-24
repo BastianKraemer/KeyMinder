@@ -27,8 +27,8 @@ import org.w3c.dom.Node;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.core.etc.MenuEntryPosition;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.MenuEntryPosition;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
