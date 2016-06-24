@@ -1,6 +1,8 @@
 package de.akubix.keyminder.ui.fx.sidebar;
 
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -17,14 +19,15 @@ import javafx.scene.layout.BorderPane;
 public abstract class FxSidebarPasswordbox implements FxSidebarElement {
 
 	private TextInputControl inputElement;
+	private final
 	BorderPane row;
-	public FxSidebarPasswordbox(de.akubix.keyminder.core.ApplicationInstance instance)
-	{
+	public FxSidebarPasswordbox(de.akubix.keyminder.core.ApplicationInstance instance) {
+		final JavaFxUserInterfaceApi fxUI = JavaFxUserInterface.getInstance(instance);
 		row = new BorderPane();
 		inputElement = createPasswordbox(instance, true);
 		row.setCenter(inputElement);
 
-		CheckBox showPw = new CheckBox(instance.getFxUserInterface().getLocaleBundleString("passwordfield.show_password"));
+		CheckBox showPw = new CheckBox(fxUI.getLocaleBundleString("passwordfield.show_password"));
 		showPw.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -49,12 +52,12 @@ public abstract class FxSidebarPasswordbox implements FxSidebarElement {
 		Button copy = new Button("", ImageMap.getFxImageView(("icon_copy")));
 		copy.setMinWidth(16);
 		copy.setMaxWidth(16);
-		copy.setTooltip(new Tooltip(instance.getFxUserInterface().getLocaleBundleString("mainwindow.menu.edit.copy_text")));
+		copy.setTooltip(new Tooltip(fxUI.getLocaleBundleString("mainwindow.menu.edit.copy_text")));
 
 		copy.getStyleClass().add("noBorder");
 		copy.setFocusTraversable(false);
 
-		copy.setOnAction((event) -> instance.getFxUserInterface().setClipboardText(getUIValue()));
+		copy.setOnAction((event) -> fxUI.setClipboardText(getUIValue()));
 		row.setRight(copy);
 	}
 

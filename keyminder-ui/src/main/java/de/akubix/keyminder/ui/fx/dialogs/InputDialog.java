@@ -20,7 +20,7 @@ package de.akubix.keyminder.ui.fx.dialogs;
 
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.FxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.event.ActionEvent;
@@ -50,19 +50,19 @@ public class InputDialog {
 	private boolean canceled = false;
 	private final int sceneWidth = 400;
 	private final int sceneHeight = 100;
-	public InputDialog(Stage primaryStage, FxUserInterface fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog){
+	public InputDialog(Stage primaryStage, JavaFxUserInterfaceApi fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog){
 		createScene(fxUI, windowTitle, labelText, defaultValueOrPasswordHint, useAsPasswordDialog);
 		inputDialog.initOwner(primaryStage);
 		inputDialog.setX(primaryStage.getX() + (primaryStage.getWidth() / 2) - sceneWidth / 2);
 		inputDialog.setY(primaryStage.getY() + (primaryStage.getHeight() / 2) - (sceneHeight / 2) - 32);
 	}
 
-	public InputDialog(FxUserInterface fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog){
+	public InputDialog(JavaFxUserInterfaceApi fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog){
 		createScene(fxUI, windowTitle, labelText, defaultValueOrPasswordHint, useAsPasswordDialog);
 		inputDialog.centerOnScreen();
 	}
 
-	private void createScene(FxUserInterface fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog){
+	private void createScene(JavaFxUserInterfaceApi fxUI, String windowTitle, String labelText, String defaultValueOrPasswordHint, boolean useAsPasswordDialog){
 		BorderPane root = new BorderPane();
 
 		Label title = new Label(labelText);
@@ -154,7 +154,7 @@ public class InputDialog {
 		return input.getText();
 	}
 
-	public static String show(FxUserInterface fxUI, String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog) throws UserCanceledOperationException {
+	public static String show(JavaFxUserInterfaceApi fxUI, String windowTitle, String labelText, String defaultValue, boolean useAsPasswordDialog) throws UserCanceledOperationException {
 		InputDialog inputDialog = new InputDialog(fxUI, windowTitle, labelText, defaultValue, useAsPasswordDialog);
 		return inputDialog.getInput();
 	}

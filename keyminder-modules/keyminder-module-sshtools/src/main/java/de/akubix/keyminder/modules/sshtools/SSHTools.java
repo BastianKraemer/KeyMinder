@@ -38,7 +38,6 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.core.interfaces.events.Compliance;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.ComplianceEvent;
@@ -48,6 +47,8 @@ import de.akubix.keyminder.core.interfaces.events.SettingsEventHandler;
 import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import javafx.beans.value.ChangeListener;
@@ -95,7 +96,7 @@ import javafx.stage.DirectoryChooser;
 public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 
 	private ApplicationInstance app;
-	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI = null;
+	private de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI = null;
 
 	private String defaultUsername, defaultPassword;
 
@@ -126,8 +127,8 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		app.getShell().addCommand("socks", getClass().getPackage().getName() + ".SocksCmd");
 		app.getShell().addCommand("run", getClass().getPackage().getName() + ".AppStartCmd");
 
-		if(app.isFxUserInterfaceAvailable()){
-			fxUI = app.getFxUserInterface();
+		if(JavaFxUserInterface.isLoaded(app)){
+			fxUI = JavaFxUserInterface.getInstance(app);
 
 			EventHandler<ActionEvent> keyclipHandler = null;
 			if(app.getShell().commandExists("keyclip")){
@@ -407,10 +408,9 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 
 			if(socksProfileIDs.size() > 0){
 				appStarter.forEach((key, as) -> as.clearSocksItems());
-				for(String profileId: socksProfileIDs)
-				{
+				for(String profileId: socksProfileIDs){
 					final String text2display = app.fileSettingsContainsKey("sshtools.socksprofile:" + profileId + ".name") ? app.getFileSettingsValue("sshtools.socksprofile:" + profileId + ".name") : profileId;
-					appStarter.forEach((key, as) -> as.createUsingSocksItem(profileId, text2display));
+					appStarter.forEach((key, as) -> as.createUsingSocksItem(profileId, text2display, fxUI));
 
 					CheckMenuItem socksMainMenuProfileItem = new CheckMenuItem(text2display);
 
@@ -823,7 +823,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 	 * @param fxUI
 	 * @return
 	 */
-	private javafx.scene.Node createFileInputDialog(Map<String, String> generalSettings, String settingsKey, FxUserInterface fxUI){
+	private javafx.scene.Node createFileInputDialog(Map<String, String> generalSettings, String settingsKey, JavaFxUserInterfaceApi fxUI){
 		TextField textField = new TextField(app.getSettingsValue(settingsKey));
 		textField.addEventFilter(KeyEvent.KEY_RELEASED, (event) -> generalSettings.put(settingsKey, textField.getText()));
 

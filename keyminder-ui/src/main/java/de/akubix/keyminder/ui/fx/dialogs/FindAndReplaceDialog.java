@@ -51,8 +51,8 @@ public class FindAndReplaceDialog {
 	private TextField findTextField;
 	private TextField replaceTextField;
 	private CheckBox ignoreCase;
-	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI;
-	private FindAndReplaceDialog(Stage primaryStage, Tree tree, de.akubix.keyminder.core.interfaces.FxUserInterface fxUI){
+	private de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI;
+	private FindAndReplaceDialog(Stage primaryStage, Tree tree, de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI){
 		this.tree = tree;
 		this.fxUI = fxUI;
 		createScene();
@@ -67,7 +67,7 @@ public class FindAndReplaceDialog {
 		me.requestFocus();
 	}
 
-	public static synchronized void showInstance(Stage primaryStage, Tree tree, de.akubix.keyminder.core.interfaces.FxUserInterface fxUI){
+	public static synchronized void showInstance(Stage primaryStage, Tree tree, de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI){
 		if(instance == null){
 			instance = new FindAndReplaceDialog(primaryStage, tree, fxUI);
 			instance.show();

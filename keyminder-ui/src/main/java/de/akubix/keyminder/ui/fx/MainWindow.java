@@ -31,7 +31,6 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.core.interfaces.Precondition;
 import de.akubix.keyminder.core.interfaces.events.Compliance;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
@@ -42,6 +41,7 @@ import de.akubix.keyminder.core.interfaces.events.HotKeyEvent;
 import de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
+import de.akubix.keyminder.ui.KeyMinderUserInterface;
 import de.akubix.keyminder.ui.fx.dialogs.FindAndReplaceDialog;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
 import de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result;
@@ -101,9 +101,11 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 
-public class MainWindow extends Application implements FxUserInterface {
-
-	public static final String LANGUAGE_BUNDLE_KEY = "fxUI";
+@KeyMinderUserInterface(
+	name="JavaFX user interface for KeyMinder",
+	id = JavaFxUserInterface.USER_INTERFACE_ID
+)
+public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 	private HashMap<TreeNode, TreeItem<TreeNode>> treeNodeTranslator = new HashMap<>();
 
@@ -315,7 +317,7 @@ public class MainWindow extends Application implements FxUserInterface {
 			 */
 
 			localeBundle = LocaleLoader.loadLanguagePack("ui", "fxUI", app.getLocale());
-			LocaleLoader.provideBundle(LANGUAGE_BUNDLE_KEY, localeBundle);
+			LocaleLoader.provideBundle(JavaFxUserInterface.LANGUAGE_BUNDLE_KEY, localeBundle);
 
 			/* ================================================================================================================
 			 * Build user interface
@@ -329,8 +331,6 @@ public class MainWindow extends Application implements FxUserInterface {
 			me.setScene(scene);
 			me.setMinWidth(640);
 			me.setMinHeight(400);
-
-			app.registerFXUserInterface(this);
 
 			/* ================================================================================================================
 			 * Event Registration
@@ -705,7 +705,7 @@ public class MainWindow extends Application implements FxUserInterface {
 
 		menu_Extras.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.extras.appinfo"),
 				  ImageMap.getIcon("icon_star_filled"),
-				  (event) -> {new de.akubix.keyminder.ui.fx.About(app).show();}, false));
+				  (event) -> {new de.akubix.keyminder.ui.fx.About(this).show();}, false));
 
 		menuBar.getMenus().addAll(menu_File, menu_Edit, menu_View, menu_Extras, menu_Tools);
 		root.setTop(menuBar);
@@ -953,7 +953,7 @@ public class MainWindow extends Application implements FxUserInterface {
 
 		// Define all "hot keys"
 
-		final de.akubix.keyminder.core.interfaces.FxUserInterface fxUI = this;
+		final JavaFxUserInterfaceApi fxUI = this;
 
 		Precondition condition_FileOpened = new Precondition() {
 			@Override

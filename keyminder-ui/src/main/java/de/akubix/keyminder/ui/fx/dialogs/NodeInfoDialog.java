@@ -17,7 +17,11 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 package de.akubix.keyminder.ui.fx.dialogs;
+import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.MainWindow;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
@@ -59,8 +63,9 @@ import javafx.util.Callback;
 public class NodeInfoDialog {
 
 	private boolean attributesHasBeenChanged = false;
-	private de.akubix.keyminder.core.ApplicationInstance app;
-	private TreeNode node;
+	private final ApplicationInstance app;
+	private final JavaFxUserInterfaceApi fxUI;
+	private final TreeNode node;
 
 	/**
 	 * Creates the node information dialog that shows several informations about a tree node
@@ -68,9 +73,10 @@ public class NodeInfoDialog {
 	 * @param instance the application instance
 	 * @throws IllegalArgumentException if parameter treeNode == null
 	 */
-	public NodeInfoDialog(TreeNode treeNode, de.akubix.keyminder.core.ApplicationInstance instance) throws IllegalArgumentException{
-		if(treeNode == null){throw new IllegalArgumentException("Node was null.");}
-		app = instance;
+	public NodeInfoDialog(TreeNode treeNode, ApplicationInstance instance) throws IllegalStateException {
+		if(treeNode == null){throw new IllegalStateException("Selected node can't be null.");}
+		this.app = instance;
+		this.fxUI = JavaFxUserInterface.getInstance(instance);
 		this.node = treeNode;
 	}
 
@@ -110,7 +116,7 @@ public class NodeInfoDialog {
 		Stage me = new Stage();
 		me.initOwner(owner);
 		me.initModality( Modality.APPLICATION_MODAL );
-		me.setTitle(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.title"));
+		me.setTitle(fxUI.getLocaleBundleString("dialogs.nodeinfo.title"));
 		me.setResizable(false);
 		ImageMap.addDefaultIconsToStage(me);
 		me.setWidth(400);
@@ -131,10 +137,10 @@ public class NodeInfoDialog {
 				return new EditingCell();
 			}};
 
-		TableColumn<Record, String> columnAttribName = new TableColumn<>(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.attributenamecolumn"));
+		TableColumn<Record, String> columnAttribName = new TableColumn<>(fxUI.getLocaleBundleString("dialogs.nodeinfo.attributenamecolumn"));
 		columnAttribName.setCellValueFactory(new PropertyValueFactory<Record,String>("attributeName"));
 
-		TableColumn<Record, String> columnAttribValue = new TableColumn<>(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.attributevaluecolumn"));
+		TableColumn<Record, String> columnAttribValue = new TableColumn<>(fxUI.getLocaleBundleString("dialogs.nodeinfo.attributevaluecolumn"));
 		columnAttribValue.setCellValueFactory(new PropertyValueFactory<Record,String>("attributeValue"));
 
 		// Add for Editable Cell of Value field
@@ -162,9 +168,19 @@ public class NodeInfoDialog {
 		tableView.setItems(getAttributesFromNode(node));
 
 		final VBox nodeInfo = new VBox(16);
-		nodeInfo.getChildren().add(createVerticalNodeList(new Label(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.attrib_text")), new Label(node.getText())));
-		nodeInfo.getChildren().add(createVerticalNodeList(new Label(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.attrib_creationdate")), new Label(getTimeFromAttribte(node, de.akubix.keyminder.core.ApplicationInstance.NODE_ATTRIBUTE_CREATION_DATE))));
-		nodeInfo.getChildren().add(createVerticalNodeList(new Label(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.attrib_modificationdate")), new Label(getTimeFromAttribte(node, de.akubix.keyminder.core.ApplicationInstance.NODE_ATTRIBUTE_MODIFICATION_DATE))));
+		nodeInfo.getChildren().addAll(
+			createVerticalNodeList(
+				new Label(fxUI.getLocaleBundleString("dialogs.nodeinfo.attrib_text")),
+				new Label(node.getText())
+			),
+			createVerticalNodeList(
+				new Label(fxUI.getLocaleBundleString("dialogs.nodeinfo.attrib_creationdate")),
+				new Label(getTimeFromAttribte(node, ApplicationInstance.NODE_ATTRIBUTE_CREATION_DATE))
+			),
+			createVerticalNodeList(
+				new Label(fxUI.getLocaleBundleString("dialogs.nodeinfo.attrib_modificationdate")),
+				new Label(getTimeFromAttribte(node, ApplicationInstance.NODE_ATTRIBUTE_MODIFICATION_DATE))
+		));
 
 		final VBox nodeLinkBox = new VBox(4);
 
@@ -173,25 +189,25 @@ public class NodeInfoDialog {
 		scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
 		scrollPane.setStyle("-fx-min-width: " + (me.getWidth() - 16) + "; -fx-max-width: -fx-min-width;");
 		nodeLinkBox.setStyle("-fx-min-width: " + (me.getWidth() - 16) + "; -fx-max-width: -fx-min-width;");
-		Label title = new Label(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.linkednodestitle"));
+		Label title = new Label(fxUI.getLocaleBundleString("dialogs.nodeinfo.linkednodestitle"));
 		title.getStyleClass().add("h2");
 		title.setStyle("-fx-padding: 0 0 0 4");
 		nodeLinkBox.getChildren().add(title);
 		app.forEachLinkedNode(node, (linkedNode) -> nodeLinkBox.getChildren().add(createLinkedNodeDataRow(linkedNode, nodeLinkBox)));
 
 		final Accordion accordion = new Accordion();
-		final TitledPane nodePropertiesPart = new TitledPane(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.tab_properties"), nodeInfo);
-		final TitledPane nodeAttribsPart = new TitledPane(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.tab_attributes"), tableView);
+		final TitledPane nodePropertiesPart = new TitledPane(fxUI.getLocaleBundleString("dialogs.nodeinfo.tab_properties"), nodeInfo);
+		final TitledPane nodeAttribsPart = new TitledPane(fxUI.getLocaleBundleString("dialogs.nodeinfo.tab_attributes"), tableView);
 
 		accordion.getPanes().addAll(nodePropertiesPart, nodeAttribsPart);
 
 		if(nodeLinkBox.getChildren().size() > 1){
-			accordion.getPanes().add(new TitledPane(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.tab_nodelinks"), scrollPane));
+			accordion.getPanes().add(new TitledPane(fxUI.getLocaleBundleString("dialogs.nodeinfo.tab_nodelinks"), scrollPane));
 		}
 
 		accordion.setExpandedPane(nodePropertiesPart);
 
-		Label titleLabel = FxCommons.createFxLabelWithStyleClass(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.title"), "h2");
+		Label titleLabel = FxCommons.createFxLabelWithStyleClass(fxUI.getLocaleBundleString("dialogs.nodeinfo.title"), "h2");
 		titleLabel.setAlignment(Pos.CENTER_LEFT);
 		Pane top = new Pane(titleLabel);
 		top.getStyleClass().add("header");
@@ -200,7 +216,7 @@ public class NodeInfoDialog {
 
 		// Buttons
 		final HBox bottom = new HBox(4);
-		final Button ok = new Button(app.getFxUserInterface().getLocaleBundleString("okay"));
+		final Button ok = new Button(fxUI.getLocaleBundleString("okay"));
 		ok.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -211,7 +227,7 @@ public class NodeInfoDialog {
 			}
 		});
 
-		Button cancel = new Button(app.getFxUserInterface().getLocaleBundleString("cancel"));
+		Button cancel = new Button(fxUI.getLocaleBundleString("cancel"));
 		cancel.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
@@ -284,7 +300,18 @@ public class NodeInfoDialog {
 
 		BorderPane bp = new BorderPane(link);
 		BorderPane.setAlignment(link, Pos.CENTER_LEFT);
-		bp.setRight(de.akubix.keyminder.ui.fx.MainWindow.createSmallButton(app.getFxUserInterface().getLocaleBundleString("dialogs.nodeinfo.removenodelink"), "icon_delete", 24, (event) -> {container.getChildren().remove(bp); app.removeLinkedNode(node, linkedNode.getId());}));
+		bp.setRight(
+			MainWindow.createSmallButton(
+				fxUI.getLocaleBundleString(
+					"dialogs.nodeinfo.removenodelink"),
+					"icon_delete",
+					24,
+					(event) -> {
+						container.getChildren().remove(bp);
+						app.removeLinkedNode(node, linkedNode.getId());
+					}
+		));
+
 		return bp;
 	}
 

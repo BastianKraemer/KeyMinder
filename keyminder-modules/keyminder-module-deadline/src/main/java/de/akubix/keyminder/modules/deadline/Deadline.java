@@ -40,7 +40,8 @@ import de.akubix.keyminder.core.interfaces.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.locale.LocaleLoader;
-import de.akubix.keyminder.ui.fx.MainWindow;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
@@ -86,16 +87,19 @@ public class Deadline implements Module {
 	private ApplicationInstance app;
 	private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
+	private boolean javaFxUserInterfaceLoaded;
 	private ResourceBundle locale;
 
 	@Override
 	public void onStartup(ApplicationInstance instance) throws ModuleStartupException {
 		this.app = instance;
 		this.locale = LocaleLoader.loadLanguagePack("modules", "deadline", app.getLocale());
+		this.javaFxUserInterfaceLoaded = JavaFxUserInterface.isLoaded(instance);
+
 
 		// Initiate a node check if a new file is opened
 		instance.addEventHandler(DefaultEvent.OnFileOpened, () -> {
-				if(instance.isFxUserInterfaceAvailable()){
+				if(this.javaFxUserInterfaceLoaded){
 					runCheckAsThread(false);
 				}
 				else{
@@ -117,14 +121,15 @@ public class Deadline implements Module {
 				return Compliance.AGREE;
 			});
 
-		if(instance.isFxUserInterfaceAvailable()){
-			instance.getFxUserInterface().addMenuEntry(
+		if(this.javaFxUserInterfaceLoaded){
+			final JavaFxUserInterfaceApi fxUI = JavaFxUserInterface.getInstance(this.app);
+			fxUI.addMenuEntry(
 					FxCommons.createFxMenuItem(locale.getString("module.deadline.menu_set_expiration_date"),
 							ImageMap.getIcon("icon_waiting"),
 							(ActionEvent ae) -> showSetExpireDateWindow(instance.getTree().getSelectedNode())),
 							MenuEntryPosition.TOOLS, true);
 
-			instance.getFxUserInterface().addMenuEntry(
+			fxUI.addMenuEntry(
 					FxCommons.createFxMenuItem(locale.getString("module.deadline.menu_show_expired_nodes"),
 							ImageMap.getIcon("icon_deadline"),
 							(ActionEvent ae) -> showExpiredNodesList()),
@@ -249,7 +254,9 @@ public class Deadline implements Module {
 		if(KeyMinder.verbose_mode || forceConsoleOutput){app.println(String.format("Check completed - %d expired node(s) found, %d node(s) will expire during the next %d days.", expiredNodes.size(), nearlyExpiredNodes.size(), warningDifferenceInDays));}
 
 		if(expiredNodes.size() > 0 || nearlyExpiredNodes.size() > 0){
-			if(app.isFxUserInterfaceAvailable() && !forceConsoleOutput){
+			if(this.javaFxUserInterfaceLoaded && !forceConsoleOutput){
+				final JavaFxUserInterfaceApi fxUI = JavaFxUserInterface.getInstance(this.app);
+
 				Runnable run = () -> {
 					Button notification = new Button("", ImageMap.getFxImageView(("icon_warning")));
 					notification.setMinWidth(24);
@@ -267,15 +274,26 @@ public class Deadline implements Module {
 					Pane treeNotificationPanel = new Pane(l);
 					treeNotificationPanel.getStyleClass().add("highlighted");
 
-					Runnable r = () -> {showExpiredNodesList(); app.getFxUserInterface().removeNotificationItem(notification); app.getFxUserInterface().removeTreePanel(treeNotificationPanel);};
+					Runnable r = () -> {
+						showExpiredNodesList();
+						fxUI.removeNotificationItem(notification);
+						fxUI.removeTreePanel(treeNotificationPanel);
+					};
 
 					notification.setOnAction((event) -> r.run());
-					l.setOnMouseClicked((MouseEvent event) -> {if(event.getButton() == MouseButton.PRIMARY){r.run();}else{app.getFxUserInterface().removeTreePanel(treeNotificationPanel);}});
+					l.setOnMouseClicked((MouseEvent event) -> {
+						if(event.getButton() == MouseButton.PRIMARY){
+							r.run();
+						}
+						else{
+							fxUI.removeTreePanel(treeNotificationPanel);
+						}
+					});
 
-					app.getFxUserInterface().addTreePanel(treeNotificationPanel, true);
-					app.getFxUserInterface().addNotificationItem(notification, true);
+					fxUI.addTreePanel(treeNotificationPanel, true);
+					fxUI.addNotificationItem(notification, true);
 				};
-				app.getFxUserInterface().runAsFXThread(run);
+				fxUI.runAsFXThread(run);
 			}
 			else{
 				if(expiredNodes.size() > 0){printExpireNodeList(expiredNodes, true);}
@@ -381,7 +399,7 @@ public class Deadline implements Module {
 			me.close();
 		});
 
-		Button cancelButton = new Button(LocaleLoader.getBundle(MainWindow.LANGUAGE_BUNDLE_KEY).getString("cancel"));
+		Button cancelButton = new Button(LocaleLoader.getBundle(JavaFxUserInterface.LANGUAGE_BUNDLE_KEY).getString("cancel"));
 		cancelButton.setOnAction((ActionEvent ae) -> me.close());
 
 		acceptButton.setMinWidth(130);
@@ -441,7 +459,7 @@ public class Deadline implements Module {
 		BorderPane.setMargin(vbox, new Insets(4,10,0,10));
 		root.setCenter(vbox);
 
-		Button okButton = new Button(LocaleLoader.getBundle(MainWindow.LANGUAGE_BUNDLE_KEY).getString("okay"));
+		Button okButton = new Button(LocaleLoader.getBundle(JavaFxUserInterface.LANGUAGE_BUNDLE_KEY).getString("okay"));
 		okButton.setOnAction((ActionEvent ae) -> me.close());
 
 		okButton.setDefaultButton(true);

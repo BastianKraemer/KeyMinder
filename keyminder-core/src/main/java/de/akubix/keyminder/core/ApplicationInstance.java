@@ -38,8 +38,6 @@ import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.IllegalCallException;
 import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.FxUserInterface;
-import de.akubix.keyminder.core.interfaces.UserInterface;
 import de.akubix.keyminder.core.interfaces.events.Compliance;
 import de.akubix.keyminder.core.interfaces.events.ComplianceEventHandler;
 import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
@@ -59,6 +57,8 @@ import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.Shell;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
+import de.akubix.keyminder.ui.KeyMinderUserInterface;
+import de.akubix.keyminder.ui.UserInterface;
 import javafx.scene.control.TabPane;
 
 /**
@@ -83,8 +83,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	/* Other variables */
 
 	private File settingsFile;
-	private UserInterface inputSourceProvider;
-	private FxUserInterface fxInterface = null;
+	private UserInterface ui;
 
 	public Map<String, String> settings = new HashMap<String, String>();
 	public FileConfiguration currentFile = null;
@@ -96,15 +95,22 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	private final ModuleLoader moduleLoader;
 	public final StorageManager storageManager;
 	private final ResourceBundle locale;
+	private final KeyMinderUserInterface userInterfaceInformation;
 
 	private final Set<ShellOutputWriter> outputWriter;
 
-	public ApplicationInstance(UserInterface inputSourceProvider){
-		this(inputSourceProvider, false);
+	public ApplicationInstance(UserInterface ui){
+		this(ui, false);
 	}
 
-	public ApplicationInstance(UserInterface inputSource, boolean forceEnglishLocale){
-		this.inputSourceProvider = inputSource;
+	public ApplicationInstance(UserInterface ui, boolean forceEnglishLocale) throws IllegalArgumentException {
+		this.ui = ui;
+
+		this.userInterfaceInformation = ui.getClass().getAnnotation(KeyMinderUserInterface.class);
+
+		if(this.userInterfaceInformation == null){
+			throw new IllegalArgumentException("User interface is not annotated with '" + KeyMinderUserInterface.class.getName() + "'.");
+		}
 
 		outputWriter = new HashSet<>();
 		outputWriter.add(new ConsoleOutput());
@@ -184,6 +190,14 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 	public ModuleLoader getModuleLoader(){
 		return this.moduleLoader;
+	}
+
+	public UserInterface getUserInterface(){
+		return ui;
+	}
+
+	public KeyMinderUserInterface getUserInterfaceInformation(){
+		return this.userInterfaceInformation;
 	}
 
 	/*
@@ -665,10 +679,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * ========================================================================================================================================================
 	 */
 
-	public void registerFXUserInterface(FxUserInterface fxUI){
-		fxInterface = fxUI;
-	}
-
 	@Override
 	/**
 	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
@@ -725,10 +735,8 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
 	public synchronized void fireEvent(EventTypes.DefaultEvent event) throws IllegalCallException {
-		if(isFxUserInterfaceAvailable()){
-			if(!fxInterface.isUserInterfaceThread()){
-				throw new IllegalCallException("All events must be fired with the user interface thread.");
-			}
+		if(!ui.isUserInterfaceThread()){
+			throw new IllegalCallException("All events must be fired with the user interface thread.");
 		}
 
 		if(eventCollection.containsKey(event.toString())){
@@ -750,10 +758,8 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
 	public synchronized Compliance fireEvent(EventTypes.ComplianceEvent event) throws IllegalCallException{
-		if(isFxUserInterfaceAvailable()){
-			if(!fxInterface.isUserInterfaceThread()){
-				throw new IllegalCallException("All events must be fired with the user interface thread.");
-			}
+		if(!ui.isUserInterfaceThread()){
+			throw new IllegalCallException("All events must be fired with the user interface thread.");
 		}
 
 		Compliance returnValue = Compliance.AGREE;
@@ -780,10 +786,8 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
 	public synchronized void fireEvent(EventTypes.TreeNodeEvent event, TreeNode node) throws IllegalCallException {
-		if(isFxUserInterfaceAvailable()){
-			if(!fxInterface.isUserInterfaceThread()){
-				throw new IllegalCallException("All events must be fired with the user interface thread.");
-			}
+		if(!ui.isUserInterfaceThread()){
+			throw new IllegalCallException("All events must be fired with the user interface thread.");
 		}
 
 		if(eventCollection.containsKey(event.toString())){
@@ -803,10 +807,8 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
 	public synchronized void fireEvent(EventTypes.SettingsEvent event, TabPane tabControl, Map<String, String> settings) throws IllegalCallException	{
-		if(isFxUserInterfaceAvailable()){
-			if(!fxInterface.isUserInterfaceThread()){
-				throw new IllegalCallException("All events must be fired with the user interface thread.");
-			}
+		if(!ui.isUserInterfaceThread()){
+			throw new IllegalCallException("All events must be fired with the user interface thread.");
 		}
 
 		if(eventCollection.containsKey(event.toString())){
@@ -822,22 +824,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * ========================================================================================================================================================
 	 */
 
-	/**
-	 * This application can be started without a user interface. This method can be used to check if the graphical user interface is available.
-	 * @return true of the JavaFX user interface has been loaded, false if not
-	 */
-	public boolean isFxUserInterfaceAvailable(){
-		return (fxInterface != null);
-	}
-
-	/**
-	 * This method allows you to access the JavaFX user interface
-	 * @return Reference to the JavaFX user interface OR null if it is currently not available.
-	 */
-	public FxUserInterface getFxUserInterface(){
-		return fxInterface;
-	}
-
 	// The following methods can be by used all modules to request input dialogs in console mode and graphical mode
 
 	/**
@@ -849,7 +835,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @throws UserCanceledOperationException if the user canceled the operation
 	 */
 	public String requestStringInput(String title, String text, String defaultValue) throws UserCanceledOperationException{
-		return inputSourceProvider.getStringInput(title, text, defaultValue);
+		return ui.getStringInput(title, text, defaultValue);
 	}
 
 	/**
@@ -861,7 +847,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @throws UserCanceledOperationException
 	 */
 	public char[] requestPasswordInput(String title, String text, String passwordHint) throws UserCanceledOperationException {
-		return inputSourceProvider.getPasswordInput(title, text, passwordHint);
+		return ui.getPasswordInput(title, text, passwordHint);
 	}
 
 	/**
@@ -871,7 +857,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @return {@code true} if the user clicked "yes", {@code false} if it was "no"
 	 */
 	public boolean requestYesNoDialog(String title, String text) {
-		return inputSourceProvider.getYesNoChoice(title, null, text);
+		return ui.getYesNoChoice(title, null, text);
 	}
 
 	/*
@@ -885,7 +871,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param text the text that will be displayed in the status bar
 	 */
 	public void updateStatus(String text){
-		inputSourceProvider.updateStatus(text);
+		ui.updateStatus(text);
 	}
 
 	/**
@@ -893,7 +879,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param text the text you want to log
 	 */
 	public void log(String text){
-		inputSourceProvider.log(text);
+		ui.log(text);
 	}
 
 	/**
@@ -901,7 +887,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param text the text you want to display
 	 */
 	public void alert(String text){
-		inputSourceProvider.alert(text);
+		ui.alert(text);
 	}
 
 	/*

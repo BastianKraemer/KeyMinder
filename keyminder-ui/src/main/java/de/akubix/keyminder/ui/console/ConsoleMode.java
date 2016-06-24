@@ -23,17 +23,24 @@ import java.util.Scanner;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.UserInterface;
 import de.akubix.keyminder.core.interfaces.events.Compliance;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.CommandException;
+import de.akubix.keyminder.ui.KeyMinderUserInterface;
+import de.akubix.keyminder.ui.UserInterface;
 
 /**
  * ConsoleMode for this application. This is an alternative user interface for using this with a console only.
  */
+@KeyMinderUserInterface(
+	name = "Interactive command line user interface",
+	id = ConsoleMode.USER_INTERFACE_ID
+)
 public class ConsoleMode implements UserInterface {
+
+	public static final String USER_INTERFACE_ID = "ConsoleMode";
 
 	private final ApplicationInstance app;
 	private final Scanner in;

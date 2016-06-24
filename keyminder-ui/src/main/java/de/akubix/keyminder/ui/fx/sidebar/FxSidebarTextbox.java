@@ -1,6 +1,8 @@
 package de.akubix.keyminder.ui.fx.sidebar;
 
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -17,6 +19,8 @@ public abstract class FxSidebarTextbox implements FxSidebarElement {
 	private final BorderPane row;
 
 	public FxSidebarTextbox(de.akubix.keyminder.core.ApplicationInstance instance) {
+		final JavaFxUserInterfaceApi fxUI =  JavaFxUserInterface.getInstance(instance);
+
 		textfield = new TextField();
 		textfield.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 			@Override
@@ -27,7 +31,7 @@ public abstract class FxSidebarTextbox implements FxSidebarElement {
 		Button copy = new Button("", ImageMap.getFxImageView(("icon_copy")));
 		copy.setMinWidth(16);
 		copy.setMaxWidth(16);
-		copy.setTooltip(new Tooltip(instance.getFxUserInterface().getLocaleBundleString("mainwindow.menu.edit.copy_text")));
+		copy.setTooltip(new Tooltip(fxUI.getLocaleBundleString("mainwindow.menu.edit.copy_text")));
 
 		copy.getStyleClass().add("noBorder");
 		copy.setFocusTraversable(false);
@@ -36,7 +40,7 @@ public abstract class FxSidebarTextbox implements FxSidebarElement {
 
 			@Override
 			public void handle(ActionEvent event) {
-					instance.getFxUserInterface().setClipboardText(getUIValue());
+					fxUI.setClipboardText(getUIValue());
 			}
 		});
 

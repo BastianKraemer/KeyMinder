@@ -18,7 +18,7 @@
 */
 package de.akubix.keyminder.ui.fx.utils;
 
-import de.akubix.keyminder.core.interfaces.FxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.control.Button;
@@ -46,7 +46,7 @@ public class FxCommons {
         return menuItem;
 	}
 
-	public static HBox createFxFileInputField(TextField textfield, FxUserInterface fxUI){
+	public static HBox createFxFileInputField(TextField textfield, JavaFxUserInterfaceApi fxUI){
 		HBox hbox = new HBox(4);
 		Button b = new Button(fxUI.getLocaleBundleString("filebrowser.buttentext"));
 		b.setOnAction(new EventHandler<ActionEvent>() {
@@ -67,14 +67,14 @@ public class FxCommons {
 		return hbox;
 	}
 
-	public static BorderPane createFxPasswordField(EventHandler<KeyEvent> onKeyReleased, String initalValue, boolean initialValueOfHidePw, FxUserInterface fxUI){
+	public static BorderPane createFxPasswordField(EventHandler<KeyEvent> onKeyReleased, String initalValue, boolean initialValueOfHidePw, JavaFxUserInterfaceApi fxUI){
 		TextField textField = new TextField(initalValue);
 		PasswordField passwordField = new PasswordField();
 		passwordField.setText(initalValue);
 		return createFxPasswordField(onKeyReleased, textField, passwordField, initialValueOfHidePw, fxUI);
 	}
 
-	public static BorderPane createFxPasswordField(EventHandler<KeyEvent> onKeyReleased, TextField textField, PasswordField passwordField, boolean initialValueOfHidePw, FxUserInterface fxUI) {
+	public static BorderPane createFxPasswordField(EventHandler<KeyEvent> onKeyReleased, TextField textField, PasswordField passwordField, boolean initialValueOfHidePw, JavaFxUserInterfaceApi fxUI) {
 		BorderPane row = new BorderPane(textField);
 
 		CheckBox showPw = new CheckBox(fxUI.getLocaleBundleString("passwordfield.hide_password"));

@@ -46,6 +46,7 @@ import de.akubix.keyminder.core.exceptions.StorageExceptionType;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.lib.AESCore;
 import de.akubix.keyminder.lib.XMLCore;
+import de.akubix.keyminder.locale.LocaleLoader;
 
 public class KeyMindFileHandler implements StorageHandler {
 
@@ -194,7 +195,7 @@ public class KeyMindFileHandler implements StorageHandler {
 
 									char[] pw;
 									if(filepassword.equals("")){
-										String txt = app.isFxUserInterfaceAvailable() ? app.getFxUserInterface().getLocaleBundleString("decryption.input_password_label") : "Please enter your password:";
+										String txt = LocaleLoader.getBundle("core").getString("encryption.input_password_label");
 										pw = app.requestPasswordInput(ApplicationInstance.APP_NAME, txt, fileAttributes.containsKey("PasswordHint") ? fileAttributes.get("PasswordHint") : "");
 
 										if(pw.equals("")){throw new UserCanceledOperationException("The user canceled the operation.");}
@@ -230,8 +231,7 @@ public class KeyMindFileHandler implements StorageHandler {
 								} catch (NoSuchAlgorithmException e) {
 									throw new StorageException(StorageExceptionType.UnknownEncryptionCipher, "Encryption with '" + cipherName + "' is not supported on this system.");
 								} catch (InvalidKeyException e) {
-									app.alert(app.isFxUserInterfaceAvailable() ? app.getFxUserInterface().getLocaleBundleString("decryption.wrong_password") : "Wrong password.");
-
+									app.alert(LocaleLoader.getBundle("core").getString("encryption.incorrect_password"));
 								} catch (DOMException e) {
 									throw new XMLParseException(e.getMessage());
 								}

@@ -27,6 +27,7 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.event.ActionEvent;
@@ -59,7 +60,7 @@ public class FileSettingsDialog {
 
 	private Stage me;
 	private ApplicationInstance app;
-	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI;
+	private de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI;
 	private Map<String, String> fileSettingsCopy;
 
 	private Map<String, String> originalFileSettingsReference;
@@ -67,7 +68,7 @@ public class FileSettingsDialog {
 
 	public FileSettingsDialog(Stage primaryStage, ApplicationInstance instance){
 		this.app = instance;
-		this.fxUI = instance.getFxUserInterface();
+		this.fxUI = JavaFxUserInterface.getInstance(instance);
 		this.originalFileSettingsReference = app.currentFile.fileSettings;
 		this.fileSettingsCopy = new HashMap<String, String>();
 
