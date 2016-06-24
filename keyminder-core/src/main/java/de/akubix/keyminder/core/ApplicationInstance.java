@@ -155,6 +155,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		}
 
 		this.locale = LocaleLoader.loadLanguagePack("core", "core", applicationLocale);
+		LocaleLoader.provideBundle("core", locale);
 
 		this.shell = new Shell(this);
 		shell.loadCommandsFromIniFile("/de/akubix/keyminder/shell/commands.ini");
