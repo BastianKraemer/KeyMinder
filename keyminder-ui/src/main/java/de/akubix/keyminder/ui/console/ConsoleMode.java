@@ -22,10 +22,10 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.events.Compliance;
+import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
+import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.events.Compliance;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.ComplianceEvent;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.KeyMinderUserInterface;

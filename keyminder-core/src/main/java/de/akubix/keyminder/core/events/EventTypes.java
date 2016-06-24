@@ -1,4 +1,4 @@
-package de.akubix.keyminder.core.interfaces.events;
+package de.akubix.keyminder.core.events;
 
 public class EventTypes {
 	public enum DefaultEvent {

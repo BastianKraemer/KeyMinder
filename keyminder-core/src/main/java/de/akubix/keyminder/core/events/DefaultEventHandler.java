@@ -1,4 +1,4 @@
-package de.akubix.keyminder.core.interfaces.events;
+package de.akubix.keyminder.core.events;
 
 public interface DefaultEventHandler {
 	public void eventFired();

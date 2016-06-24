@@ -30,15 +30,16 @@ import java.util.Timer;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.events.Compliance;
+import de.akubix.keyminder.core.events.DefaultEventHandler;
+import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
+import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
+import de.akubix.keyminder.core.events.EventTypes.TreeNodeEvent;
+import de.akubix.keyminder.core.events.HotKeyEvent;
+import de.akubix.keyminder.core.events.SidebarNodeChangeEvent;
+import de.akubix.keyminder.core.events.TreeNodeEventHandler;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.interfaces.Precondition;
-import de.akubix.keyminder.core.interfaces.events.Compliance;
-import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.ComplianceEvent;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
-import de.akubix.keyminder.core.interfaces.events.HotKeyEvent;
-import de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.KeyMinderUserInterface;
@@ -1443,11 +1444,11 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	 * ======================================================================================================================================================
 	 */
 
-	private List<de.akubix.keyminder.core.interfaces.events.SidebarNodeChangeEvent> sidebarPanelNodeChangeEvenHandler = new ArrayList<de.akubix.keyminder.core.interfaces.events.SidebarNodeChangeEvent>();
+	private List<SidebarNodeChangeEvent> sidebarPanelNodeChangeEvenHandler = new ArrayList<SidebarNodeChangeEvent>();
 	private boolean sidebarAvailable = false;
 
 	@Override
-	public Tab addSidebarPanel(String tabtitle, Node panel, de.akubix.keyminder.core.interfaces.events.SidebarNodeChangeEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked) {
+	public Tab addSidebarPanel(String tabtitle, Node panel, SidebarNodeChangeEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked) {
 		if(sidebarTabPanel.getTabs().size() == 0){createSidebar();}
 		sidebarAvailable = true;
 

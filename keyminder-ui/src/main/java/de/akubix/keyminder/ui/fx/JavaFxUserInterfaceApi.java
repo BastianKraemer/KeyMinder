@@ -3,8 +3,8 @@ package de.akubix.keyminder.ui.fx;
 import java.io.File;
 import java.util.ResourceBundle;
 
-import de.akubix.keyminder.core.interfaces.events.HotKeyEvent;
-import de.akubix.keyminder.core.interfaces.events.SidebarNodeChangeEvent;
+import de.akubix.keyminder.core.events.HotKeyEvent;
+import de.akubix.keyminder.core.events.SidebarNodeChangeEvent;
 import de.akubix.keyminder.ui.UserInterface;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;

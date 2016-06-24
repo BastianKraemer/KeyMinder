@@ -1,4 +1,4 @@
-package de.akubix.keyminder.core.interfaces.events;
+package de.akubix.keyminder.core.events;
 
 /**
  * This class is used by the event handling. The compliance is given be the event name, for example "DiscardChanges":

@@ -23,8 +23,8 @@ import java.util.Map;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
+import de.akubix.keyminder.core.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.interfaces.ModuleProperties;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.modules.ModuleInfo;
 import de.akubix.keyminder.core.modules.ModuleLoader;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;

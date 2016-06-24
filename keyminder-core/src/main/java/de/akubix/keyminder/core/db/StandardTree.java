@@ -23,8 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import de.akubix.keyminder.core.interfaces.events.EventTypes;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
+import de.akubix.keyminder.core.events.EventTypes;
+import de.akubix.keyminder.core.events.EventTypes.TreeNodeEvent;
 
 /**
  * This class is the core of the whole database. All data stored in this applications will be assigned to the HashMap treeNodeDB in this class

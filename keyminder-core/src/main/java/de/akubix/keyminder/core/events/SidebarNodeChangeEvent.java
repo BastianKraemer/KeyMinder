@@ -1,4 +1,4 @@
-package de.akubix.keyminder.core.interfaces.events;
+package de.akubix.keyminder.core.events;
 
 import de.akubix.keyminder.core.db.TreeNode;
 

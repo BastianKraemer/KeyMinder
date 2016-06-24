@@ -12,9 +12,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import de.akubix.keyminder.core.db.Tree;
+import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
+import de.akubix.keyminder.core.events.EventTypes.TreeNodeEvent;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
 import de.akubix.keyminder.shell.CommandException;
 
 public class AppTest {
