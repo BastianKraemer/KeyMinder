@@ -27,6 +27,7 @@ import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.Timer;
 import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
@@ -36,11 +37,9 @@ import de.akubix.keyminder.core.events.DefaultEventHandler;
 import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.events.EventTypes.TreeNodeEvent;
-import de.akubix.keyminder.core.events.HotKeyEvent;
-import de.akubix.keyminder.core.events.SidebarNodeChangeEvent;
 import de.akubix.keyminder.core.events.TreeNodeEventHandler;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.Precondition;
+import de.akubix.keyminder.core.io.FileExtension;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.KeyMinderUserInterface;
@@ -48,6 +47,8 @@ import de.akubix.keyminder.ui.fx.dialogs.FindAndReplaceDialog;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
 import de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
+import de.akubix.keyminder.ui.fx.events.HotKeyEvent;
+import de.akubix.keyminder.ui.fx.events.SidebarNodeChangedEvent;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.application.Application;
@@ -934,10 +935,28 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	private void showCreateNewFileDialog(boolean encryptFile){
 		if(!app.closeFile()){return;}
 
-		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.new_file.title"), "", "", app.storageManager.getFileChooserExtensionFilter());
+		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.new_file.title"), "", "", getFileChooserExtensionFilter());
 		if(f != null){
 			app.createNewFile(f, encryptFile);
 		}
+	}
+
+	/**
+	 * This function will return an array of all supported file extensions, so that they can be used for a {@link FileChooser}
+	 * @return an array of all supported file extensions
+	 * @see FileChooser
+	 * @see FileChooser.ExtensionFilter
+	 */
+	private FileChooser.ExtensionFilter[] getFileChooserExtensionFilter(){
+		List<FileExtension> knownFileExtensions = app.storageManager.getKnownExtensions();
+		FileChooser.ExtensionFilter[] arr = new FileChooser.ExtensionFilter[knownFileExtensions.size() + 1];
+
+		for(int i = 0; i < knownFileExtensions.size(); i++){
+			arr[i] = new FileChooser.ExtensionFilter(knownFileExtensions.get(i).getDescription(), knownFileExtensions.get(i).getExtension());
+		}
+
+		arr[knownFileExtensions.size()] = new FileChooser.ExtensionFilter(localeBundle.getString("filebrowser.allfiles_selector"), "*.*");
+		return arr;
 	}
 
 	private MenuItem createColorContextMenu(String colorName, String iconKeyWord, String colorHTMLValue)
@@ -963,19 +982,8 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		final JavaFxUserInterfaceApi fxUI = this;
 
-		Precondition condition_FileOpened = new Precondition() {
-			@Override
-			public boolean check() {
-				return app.currentFile != null;
-			}
-		};
-
-		Precondition condition_nodesAvailable = new Precondition() {
-			@Override
-			public boolean check() {
-				return (dataTree.getRootNode().countChildNodes() > 0);
-			}
-		};
+		BooleanSupplier condition_FileOpened = () -> app.currentFile != null;
+		BooleanSupplier condition_nodesAvailable = () -> (dataTree.getRootNode().countChildNodes() > 0);
 
 		// Possible Key-Combinations
 		addApplicationHotKey(KeyCode.A, true, false, false, new HotKeyEvent(condition_nodesAvailable) {
@@ -1146,8 +1154,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		addQuicklinkNodeHotKey(KeyCode.DIGIT0, 9, condition_FileOpened);
 	}
 
-
-	private void addQuicklinkNodeHotKey(KeyCode keycode, int index, Precondition condition_FileOpened){
+	private void addQuicklinkNodeHotKey(KeyCode keycode, int index, BooleanSupplier condition_FileOpened){
 		addApplicationHotKey(keycode, true, false, false, new HotKeyEvent(condition_FileOpened) {
 			@Override
 			public void onKeyDown() {
@@ -1343,14 +1350,14 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	private void initalizeOpenFile(){
 		if(!app.closeFile()){return;}
 
-		File f = showOpenFileDialog(localeBundle.getString("mainwindow.dialogs.open_file.title"), "", "", app.storageManager.getFileChooserExtensionFilter());
+		File f = showOpenFileDialog(localeBundle.getString("mainwindow.dialogs.open_file.title"), "", "", getFileChooserExtensionFilter());
 		if(f != null){
 			app.openFile(f);
 		}
 	}
 
 	private void initalizeSaveFileAs(){
-		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.save_file.title"), app.currentFile.getFilepath().getAbsolutePath(), "", app.storageManager.getFileChooserExtensionFilter());
+		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.save_file.title"), app.currentFile.getFilepath().getAbsolutePath(), "", getFileChooserExtensionFilter());
 		if(f != null){
 			String fileTypeIdentifier = app.storageManager.getIdentifierByExtension(de.akubix.keyminder.lib.Tools.getFileExtension(f.getName()), "");
 			if(fileTypeIdentifier.equals("")){
@@ -1390,7 +1397,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 			  fileChooser.getExtensionFilters().addAll(fileExtensions);
 		}
 		else{
-			  fileChooser.getExtensionFilters().addAll(app.storageManager.getFileChooserExtensionFilter());
+			  fileChooser.getExtensionFilters().addAll(getFileChooserExtensionFilter());
 		}
 
 		if(initalFileName != null && !initalFileName.equals("")){
@@ -1451,11 +1458,11 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	 * ======================================================================================================================================================
 	 */
 
-	private List<SidebarNodeChangeEvent> sidebarPanelNodeChangeEvenHandler = new ArrayList<SidebarNodeChangeEvent>();
+	private List<SidebarNodeChangedEvent> sidebarPanelNodeChangeEvenHandler = new ArrayList<>();
 	private boolean sidebarAvailable = false;
 
 	@Override
-	public Tab addSidebarPanel(String tabtitle, Node panel, SidebarNodeChangeEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked) {
+	public Tab addSidebarPanel(String tabtitle, Node panel, SidebarNodeChangedEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked) {
 		if(sidebarTabPanel.getTabs().size() == 0){createSidebar();}
 		sidebarAvailable = true;
 
@@ -1505,7 +1512,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		app.addEventHandler(TreeNodeEvent.OnSelectedItemChanged, (node) -> {
 				l.setText(node.getText());
 				boolean sidebarIsEmpty[] = new boolean[]{false};
-				sidebarPanelNodeChangeEvenHandler.forEach((event) -> sidebarIsEmpty[0] = event.selectedNodeChanged(node) || sidebarIsEmpty[0]);
+				sidebarPanelNodeChangeEvenHandler.forEach((event) -> sidebarIsEmpty[0] = event.panelIsNotEmpty(node) || sidebarIsEmpty[0]);
 				showSidebar(sidebarIsEmpty[0]);
 			});
 

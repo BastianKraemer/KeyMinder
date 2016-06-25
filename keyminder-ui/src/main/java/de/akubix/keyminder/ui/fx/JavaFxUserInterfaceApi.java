@@ -5,10 +5,10 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.function.BiConsumer;
 
-import de.akubix.keyminder.core.events.HotKeyEvent;
-import de.akubix.keyminder.core.events.SidebarNodeChangeEvent;
 import de.akubix.keyminder.ui.UserInterface;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
+import de.akubix.keyminder.ui.fx.events.HotKeyEvent;
+import de.akubix.keyminder.ui.fx.events.SidebarNodeChangedEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
@@ -22,7 +22,7 @@ import javafx.stage.FileChooser;
 public interface JavaFxUserInterfaceApi extends UserInterface {
 
 	// Additional FX Components
-	public javafx.scene.control.Tab addSidebarPanel(String tabtitle, Node panel, SidebarNodeChangeEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked);
+	public javafx.scene.control.Tab addSidebarPanel(String tabtitle, Node panel, SidebarNodeChangedEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked);
 	public javafx.beans.property.ReadOnlyDoubleProperty getSidbarWidthProperty();
 	public void addMenuEntry(MenuItem item, MenuEntryPosition pos, boolean add2TreeDependentItems);
 	public void addMenu(Menu menu, boolean add2TreeDependentItems);
