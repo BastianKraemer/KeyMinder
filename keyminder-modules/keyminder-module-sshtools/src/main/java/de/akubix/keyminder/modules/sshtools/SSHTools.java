@@ -39,16 +39,15 @@ import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.events.Compliance;
 import de.akubix.keyminder.core.events.DefaultEventHandler;
-import de.akubix.keyminder.core.events.SettingsEventHandler;
 import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
-import de.akubix.keyminder.core.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
-import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import javafx.beans.value.ChangeListener;
@@ -362,18 +361,12 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 
 		// This will only be executed if the JavaFX user interface is available
 		if(fxUI != null){
-			app.addEventHandler(SettingsEvent.OnSettingsDialogOpened, new SettingsEventHandler() {
-				@Override
-				public void eventFired(TabPane tabControl, Map<String, String> settings) {
+			fxUI.addEventListener(FxSettingsEvent.OnSettingsDialogOpened, (TabPane tabControl, Map<String, String> settings) -> {
 					onSettingsDialogOpened(tabControl, settings);
-				}
 			});
 
-			app.addEventHandler(SettingsEvent.OnFileSettingsDialogOpened, new SettingsEventHandler() {
-				@Override
-				public void eventFired(TabPane tabControl, Map<String, String> settings) {
+			fxUI.addEventListener(FxSettingsEvent.OnFileSettingsDialogOpened, (TabPane tabControl, Map<String, String> settings) -> {
 					onFileSettingsDialogOpened(tabControl, settings);
-				}
 			});
 		}
 	}

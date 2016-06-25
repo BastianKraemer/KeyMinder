@@ -35,13 +35,13 @@ import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.events.Compliance;
 import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
-import de.akubix.keyminder.core.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.exceptions.ModuleStartupException;
 import de.akubix.keyminder.core.interfaces.Module;
 import de.akubix.keyminder.locale.LocaleLoader;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.MenuEntryPosition;
-import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
@@ -134,53 +134,50 @@ public class Deadline implements Module {
 							ImageMap.getIcon("icon_deadline"),
 							(ActionEvent ae) -> showExpiredNodesList()),
 							MenuEntryPosition.TOOLS, true);
+
+			// Append some controls for configuration the warning time to the general settings tab
+			fxUI.addEventListener(FxSettingsEvent.OnSettingsDialogOpened, (TabPane tabControl, Map<String, String> settings) -> {
+				try {
+					Separator s = new Separator(Orientation.HORIZONTAL);
+					s.setStyle("-fx-padding: 8 0 8 0");
+
+					HBox hbox = new HBox(4);
+
+					Spinner<Integer> numberField = new Spinner<Integer>(1, 31, 14);
+					numberField.setEditable(true);
+					//SpinnerValueFactory.IntegerSpinnerValueFactory spinnerValueFactory = (IntegerSpinnerValueFactory) numberField.getValueFactory();
+
+					numberField.setStyle("-fx-min-width: 64px; -fx-max-width: -fx-min-width;");
+					// Configure the number days you want to be warned before a node/password becomes invalid
+					Label pre = new Label(locale.getString("module.deadline.settings_warn_time_pre"));
+					Label post = new Label(locale.getString("module.deadline.settings_warn_time_post"));
+					pre.setAlignment(Pos.CENTER_LEFT); post.setAlignment(Pos.CENTER_LEFT);
+					pre.setStyle("-fx-min-height: 22; -fx-max-height: -fx-min-height;");
+					post.setStyle(pre.getStyle());
+					hbox.getChildren().addAll(pre, numberField, post);
+
+					if(settings.containsKey(WARNING_DIFFERENCE_SETTINGS_VALUE)){
+						try{
+							((IntegerSpinnerValueFactory) numberField.getValueFactory()).setValue(Integer.parseInt(settings.get(WARNING_DIFFERENCE_SETTINGS_VALUE)));
+						}
+						catch(NumberFormatException numEx){} //Keep default value
+					}
+
+					numberField.valueProperty().addListener((obs, oldValue, newValue) -> settings.put(WARNING_DIFFERENCE_SETTINGS_VALUE, Integer.toString(newValue)));
+
+					ScrollPane sp = (ScrollPane) tabControl.getTabs().get(0).getContent();
+					VBox vbox = (VBox) sp.getContent();
+					vbox.getChildren().addAll(s, hbox);
+				}
+				catch(ClassCastException cce){
+					instance.log("Module Deadline: Cannot create settings controls (incompatible).");
+				}
+			});
 		}
 
 		// Load the values for "warningDifferenceInDays" and" warningDifferenceInDays" and update them if the settings are updated.
 		loadWarnDiffFromSettings(instance);
 		instance.addEventHandler(DefaultEvent.OnSettingsChanged, () -> loadWarnDiffFromSettings(instance));
-
-		/* ==========================================================================================================================================
-			Append some controls for configuration the warning time to the general settings tab
-		   ========================================================================================================================================== */
-		instance.addEventHandler(SettingsEvent.OnSettingsDialogOpened, (TabPane tabControl, Map<String, String> settings) -> {
-			try {
-				Separator s = new Separator(Orientation.HORIZONTAL);
-				s.setStyle("-fx-padding: 8 0 8 0");
-
-				HBox hbox = new HBox(4);
-
-				Spinner<Integer> numberField = new Spinner<Integer>(1, 31, 14);
-				numberField.setEditable(true);
-				//SpinnerValueFactory.IntegerSpinnerValueFactory spinnerValueFactory = (IntegerSpinnerValueFactory) numberField.getValueFactory();
-
-				numberField.setStyle("-fx-min-width: 64px; -fx-max-width: -fx-min-width;");
-				// Configure the number days you want to be warned before a node/password becomes invalid
-				Label pre = new Label(locale.getString("module.deadline.settings_warn_time_pre"));
-				Label post = new Label(locale.getString("module.deadline.settings_warn_time_post"));
-				pre.setAlignment(Pos.CENTER_LEFT); post.setAlignment(Pos.CENTER_LEFT);
-				pre.setStyle("-fx-min-height: 22; -fx-max-height: -fx-min-height;");
-				post.setStyle(pre.getStyle());
-				hbox.getChildren().addAll(pre, numberField, post);
-
-				if(settings.containsKey(WARNING_DIFFERENCE_SETTINGS_VALUE)){
-					try{
-						((IntegerSpinnerValueFactory) numberField.getValueFactory()).setValue(Integer.parseInt(settings.get(WARNING_DIFFERENCE_SETTINGS_VALUE)));
-					}
-					catch(NumberFormatException numEx){} //Keep default value
-				}
-
-				numberField.valueProperty().addListener((obs, oldValue, newValue) -> settings.put(WARNING_DIFFERENCE_SETTINGS_VALUE, Integer.toString(newValue)));
-
-				ScrollPane sp = (ScrollPane) tabControl.getTabs().get(0).getContent();
-				VBox vbox = (VBox) sp.getContent();
-				vbox.getChildren().addAll(s, hbox);
-			}
-			catch(ClassCastException cce)
-			{
-				instance.log("Module Deadline: Cannot create settings controls (incompatible).");
-			}
-		});
 
 		/* ==========================================================================================================================================
 			Add some commands to interact with this module via KeyMinder Shell (ConsoleMode or Terminal)

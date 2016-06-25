@@ -40,12 +40,10 @@ import de.akubix.keyminder.core.events.ComplianceEventHandler;
 import de.akubix.keyminder.core.events.DefaultEventHandler;
 import de.akubix.keyminder.core.events.EventHost;
 import de.akubix.keyminder.core.events.EventTypes;
-import de.akubix.keyminder.core.events.SettingsEventHandler;
-import de.akubix.keyminder.core.events.TreeNodeEventHandler;
 import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
-import de.akubix.keyminder.core.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.events.EventTypes.TreeNodeEvent;
+import de.akubix.keyminder.core.events.TreeNodeEventHandler;
 import de.akubix.keyminder.core.exceptions.IllegalCallException;
 import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
@@ -59,7 +57,6 @@ import de.akubix.keyminder.shell.Shell;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 import de.akubix.keyminder.ui.KeyMinderUserInterface;
 import de.akubix.keyminder.ui.UserInterface;
-import javafx.scene.control.TabPane;
 
 /**
  * This class is the core of this application, it provides all functions and methods for the whole event handling, manages the loading of all modules
@@ -686,7 +683,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param eventHandler the handler which will be execution when the event is triggered
 	 */
 	public void addEventHandler(DefaultEvent eventName, DefaultEventHandler eventHandler){
-		addEventHandler(eventName.toString(), eventHandler, false);
+		addEventHandler(eventName.toString(), eventHandler);
 	}
 
 	@Override
@@ -696,7 +693,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param eventHandler the handler which will be execution when the event is triggered
 	 */
 	public void addEventHandler(ComplianceEvent eventName, ComplianceEventHandler eventHandler){
-		addEventHandler(eventName.toString(), eventHandler, false);
+		addEventHandler(eventName.toString(), eventHandler);
 	}
 
 	@Override
@@ -706,7 +703,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param eventHandler the handler which will be execution when the event is triggered
 	 */
 	public void addEventHandler(TreeNodeEvent eventName, TreeNodeEventHandler eventHandler){
-		addEventHandler(eventName.toString(), eventHandler, false);
+		addEventHandler(eventName.toString(), eventHandler);
 	}
 
 	@Override
@@ -715,16 +712,15 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param eventName the name of the event
 	 * @param eventHandler the handler which will be execution when the event is triggered
 	 */
-	public void addEventHandler(SettingsEvent eventName, SettingsEventHandler eventHandler){
-		addEventHandler(eventName.toString(), eventHandler, false);
-	}
-
-	private void addEventHandler(String eventName, Object eventHandler, boolean highPriority){
-		if(!eventCollection.containsKey(eventName)){
-			eventCollection.put(eventName, new ArrayList<Object>());
+	public void addEventHandler(String eventName, Object eventHandler){
+		if(eventCollection.containsKey(eventName)){
+			eventCollection.get(eventName).add(eventHandler);
 		}
-
-		eventCollection.get(eventName).add(eventHandler);
+		else{
+			List<Object> eventList = new ArrayList<>(16);
+			eventList.add(eventHandler);
+			eventCollection.put(eventName, eventList);
+		}
 	}
 
 	@Override
@@ -740,9 +736,9 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		}
 
 		if(eventCollection.containsKey(event.toString())){
-			for(int i = 0; i < eventCollection.get(event.toString()).size(); i++){
-				((DefaultEventHandler) eventCollection.get(event.toString()).get(i)).eventFired();
-			}
+			eventCollection.get(event.toString()).forEach((handler) -> {
+				((DefaultEventHandler) handler).eventFired();
+			});
 		}
 	}
 
@@ -791,31 +787,14 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		}
 
 		if(eventCollection.containsKey(event.toString())){
-			for(int i = 0; i < eventCollection.get(event.toString()).size(); i++){
-				((TreeNodeEventHandler) eventCollection.get(event.toString()).get(i)).eventFired(node);
-			}
+			eventCollection.get(event.toString()).forEach((handler) -> {
+				((TreeNodeEventHandler) handler).eventFired(node);
+			});
 		}
 	}
 
-	@Override
-	/**
-	 * This method will fire an event, according to this all registered event handlers for this event will be called.
-	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
-	 * @param event the event that should be triggered
-	 * @param tabControl the TabControl of the settings dialog. Some modules maybe want to add their own tab pages
-	 * @param settings a reference to the new settings map - all settings the user want to change has to be updated HERE
-	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
-	 */
-	public synchronized void fireEvent(EventTypes.SettingsEvent event, TabPane tabControl, Map<String, String> settings) throws IllegalCallException	{
-		if(!ui.isUserInterfaceThread()){
-			throw new IllegalCallException("All events must be fired with the user interface thread.");
-		}
-
-		if(eventCollection.containsKey(event.toString())){
-			for(int i = 0; i < eventCollection.get(event.toString()).size(); i++){
-				((SettingsEventHandler) eventCollection.get(event.toString()).get(i)).eventFired(tabControl, settings);
-			}
-		}
+	public List<Object> getEventHandler(String eventName){
+		return eventCollection.get(eventName);
 	}
 
 	/*

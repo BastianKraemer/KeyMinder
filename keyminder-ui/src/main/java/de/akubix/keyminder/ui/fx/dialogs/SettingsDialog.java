@@ -20,15 +20,16 @@ package de.akubix.keyminder.ui.fx.dialogs;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
-import de.akubix.keyminder.core.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.interfaces.ModuleProperties;
 import de.akubix.keyminder.core.modules.ModuleInfo;
 import de.akubix.keyminder.core.modules.ModuleLoader;
-import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
@@ -84,6 +85,7 @@ public class SettingsDialog {
 
 	private boolean saveSettings = false;
 
+
 	public boolean show(){
 		BorderPane root = new BorderPane();
 
@@ -92,7 +94,7 @@ public class SettingsDialog {
 		// General Settings
 		tabs.getTabs().addAll(createGeneralSettingsTab(), createModuleSettingsTab());
 
-		app.fireEvent(SettingsEvent.OnSettingsDialogOpened, tabs, settingscopy);
+		fireSettingsDialogOpenedEvent(tabs);
 
 		root.setCenter(tabs);
 
@@ -163,6 +165,13 @@ public class SettingsDialog {
 		me.showAndWait();
 
 		return saveSettings;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void fireSettingsDialogOpenedEvent(TabPane tabs){
+		app.getEventHandler(FxSettingsEvent.OnSettingsDialogOpened.toString()).forEach((consumer) -> {
+			((BiConsumer<TabPane, Map<String, String>>) consumer).accept(tabs, settingscopy);
+		});
 	}
 
 	private Separator createSeperator(){

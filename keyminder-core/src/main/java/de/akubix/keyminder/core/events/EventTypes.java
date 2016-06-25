@@ -20,13 +20,9 @@ public class EventTypes {
 	public enum ComplianceEvent {
 		AllowFileClosing, DiscardChanges
 	}
+
 	public enum TreeNodeEvent {
 		// Events, that will need a TreeNode as parameter
 		OnNodeAdded, OnNodeEdited,  OnNodeVerticallyMoved, OnNodeRemoved, OnSelectedItemChanged
-	}
-
-	public enum SettingsEvent {
-		// Events, which handle with settings
-		OnSettingsDialogOpened, OnFileSettingsDialogOpened
 	}
 }

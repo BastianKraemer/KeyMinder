@@ -1,17 +1,21 @@
 package de.akubix.keyminder.ui.fx;
 
 import java.io.File;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.function.BiConsumer;
 
 import de.akubix.keyminder.core.events.HotKeyEvent;
 import de.akubix.keyminder.core.events.SidebarNodeChangeEvent;
 import de.akubix.keyminder.ui.UserInterface;
+import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;
 import javafx.stage.FileChooser;
 
@@ -48,4 +52,8 @@ public interface JavaFxUserInterfaceApi extends UserInterface {
 	// etc
 	public void runAsFXThread(Runnable r);
 	public void focusMainWindow();
+
+	// Events
+
+	public void addEventListener(FxSettingsEvent eventName, BiConsumer<TabPane, Map<String, String>> eventData);
 }

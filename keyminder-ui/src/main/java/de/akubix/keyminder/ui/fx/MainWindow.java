@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.Timer;
+import java.util.function.BiConsumer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
@@ -46,6 +47,7 @@ import de.akubix.keyminder.ui.KeyMinderUserInterface;
 import de.akubix.keyminder.ui.fx.dialogs.FindAndReplaceDialog;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
 import de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result;
+import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.application.Application;
@@ -535,6 +537,11 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	@Override
 	public boolean isUserInterfaceThread(){
 		return Platform.isFxApplicationThread();
+	}
+
+	@Override
+	public void addEventListener(FxSettingsEvent eventName, BiConsumer<TabPane, Map<String, String>> eventListener){
+		app.addEventHandler(eventName.toString(), eventListener);
 	}
 
 	@Override
