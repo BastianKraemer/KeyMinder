@@ -28,6 +28,15 @@ public class LocaleLoader {
 		bundleMap.putIfAbsent(key, bundle);
 	}
 
+	/**
+	 * Provides translations of any application module for other modules
+	 *
+	 * By default you can use the key 'core' to access the general translations.
+	 * Other keys may be provided by the user interface or any KeyMinder module
+	 *
+	 * @param key The key for the {@link ResourceBundle} with the translations
+	 * @return The {@link ResourceBundle} or 'null' if the key is not defined
+	 */
 	public static ResourceBundle getBundle(String key){
 		return bundleMap.get(key);
 	}

@@ -24,7 +24,8 @@ import java.awt.event.MouseListener;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.exceptions.ModuleStartupException;
-import de.akubix.keyminder.core.interfaces.FxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.scene.control.Alert.AlertType;
 
@@ -39,7 +40,7 @@ import javafx.scene.control.Alert.AlertType;
  */
 public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 
-	private FxUserInterface fxUI;
+	private JavaFxUserInterfaceApi fxUI;
 	private ApplicationInstance app;
 	private boolean trayItemCreated = false;
 	private String pw = "";
@@ -47,8 +48,8 @@ public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
 	@Override
 	public void onStartup(ApplicationInstance instance) throws ModuleStartupException {
 
-		if(instance.isFxUserInterfaceAvailable()){
-			this.fxUI = instance.getFxUserInterface();
+		if(JavaFxUserInterface.isLoaded(instance)){
+			this.fxUI = JavaFxUserInterface.getInstance(instance);
 			this.app = instance;
 
 			// Provide the KeyClip feature as command

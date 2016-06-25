@@ -1,20 +1,20 @@
-package de.akubix.keyminder.core.interfaces.events;
+package de.akubix.keyminder.ui.fx.events;
 
-import de.akubix.keyminder.core.interfaces.Precondition;
+import java.util.function.BooleanSupplier;
 
 public abstract class HotKeyEvent {
-	Precondition condition;
+	BooleanSupplier condition;
 	public HotKeyEvent(){
 		this.condition = null;
 	}
-	public HotKeyEvent(Precondition condition){
+	public HotKeyEvent(BooleanSupplier condition){
 		this.condition = condition;
 	}
 	public void fireEvent(){
 		if(this.condition == null){
 			onKeyDown();
 		}
-		else if(this.condition.check()){onKeyDown();}
+		else if(this.condition.getAsBoolean()){onKeyDown();}
 	}
 
 	public abstract void onKeyDown();

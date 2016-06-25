@@ -22,17 +22,25 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.events.Compliance;
+import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
+import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.UserInterface;
-import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.CommandException;
+import de.akubix.keyminder.ui.KeyMinderUserInterface;
+import de.akubix.keyminder.ui.UserInterface;
 
 /**
  * ConsoleMode for this application. This is an alternative user interface for using this with a console only.
  */
+@KeyMinderUserInterface(
+	name = "Interactive command line user interface",
+	id = ConsoleMode.USER_INTERFACE_ID
+)
 public class ConsoleMode implements UserInterface {
+
+	public static final String USER_INTERFACE_ID = "ConsoleMode";
 
 	private final ApplicationInstance app;
 	private final Scanner in;
@@ -50,11 +58,10 @@ public class ConsoleMode implements UserInterface {
 
 			app.startup(true);
 
-			app.addEventHandler(DefaultEvent.OnExit, new DefaultEventHandler() {
-				@Override
-				public void eventFired() {
-					in.close();
-				}
+			app.addEventHandler(DefaultEvent.OnExit, () -> {in.close();});
+
+			app.addEventHandler(ComplianceEvent.DiscardChanges, () -> {
+				return getYesNoChoice(null, null, "Do you want do discard your changes?") ? Compliance.AGREE : Compliance.DONT_AGREE;
 			});
 
 			app.loadDefaultFile();
@@ -66,8 +73,11 @@ public class ConsoleMode implements UserInterface {
 
 					app.getShell().runShellCommand(app, input);
 				}
-				catch(UserCanceledOperationException ex){
-					throw new NoSuchElementException(ex.getMessage()); // 'exit' command has been executed
+				catch(UserCanceledOperationException ex){ // 'exit' command has been executed
+					if(app.closeFile()){
+						app.fireEvent(DefaultEvent.OnExit);
+						throw new NoSuchElementException(ex.getMessage());
+					}
 				}
 				catch(CommandException ex){
 					app.println(ex.getMessage());
@@ -170,5 +180,10 @@ public class ConsoleMode implements UserInterface {
 		catch(Exception ex){
 			return "";
 		}
+	}
+
+	@Override
+	public boolean isUserInterfaceThread() {
+		return true;
 	}
 }

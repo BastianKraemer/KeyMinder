@@ -21,12 +21,14 @@ package de.akubix.keyminder.ui.fx.dialogs;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.event.ActionEvent;
@@ -59,7 +61,7 @@ public class FileSettingsDialog {
 
 	private Stage me;
 	private ApplicationInstance app;
-	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI;
+	private de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI;
 	private Map<String, String> fileSettingsCopy;
 
 	private Map<String, String> originalFileSettingsReference;
@@ -67,7 +69,7 @@ public class FileSettingsDialog {
 
 	public FileSettingsDialog(Stage primaryStage, ApplicationInstance instance){
 		this.app = instance;
-		this.fxUI = instance.getFxUserInterface();
+		this.fxUI = JavaFxUserInterface.getInstance(instance);
 		this.originalFileSettingsReference = app.currentFile.fileSettings;
 		this.fileSettingsCopy = new HashMap<String, String>();
 
@@ -92,7 +94,7 @@ public class FileSettingsDialog {
 
 		tabs.getTabs().add(createSecuritySettingsTab());
 
-		app.fireEvent(SettingsEvent.OnFileSettingsDialogOpened, tabs, fileSettingsCopy);
+		fireFileSettingsDialogOpenedEvent(tabs);
 		root.setCenter(tabs);
 
 		HBox bottom = new HBox(4);
@@ -147,6 +149,13 @@ public class FileSettingsDialog {
 		me.showAndWait();
 
 		return saveSettings;
+	}
+
+	@SuppressWarnings("unchecked")
+	private void fireFileSettingsDialogOpenedEvent(TabPane tabs){
+		app.getEventHandler(FxSettingsEvent.OnFileSettingsDialogOpened.toString()).forEach((consumer) -> {
+			((BiConsumer<TabPane, Map<String, String>>) consumer).accept(tabs, fileSettingsCopy);
+		});
 	}
 
 	private Tab createSecuritySettingsTab(){

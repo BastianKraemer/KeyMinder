@@ -63,8 +63,8 @@ public interface Tree {
 	/**
 	 * This method allows you to fire any TreeNode events manually.
 	 * @param node the tree node that has been edited
-	 * @see de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler
-	 * @see de.akubix.keyminder.core.interfaces.events.EventTypes
+	 * @see de.akubix.keyminder.core.events.TreeNodeEventHandler
+	 * @see de.akubix.keyminder.core.events.EventTypes
 	 */
 	public void fireEditedEventForTreeNode(TreeNode node);
 

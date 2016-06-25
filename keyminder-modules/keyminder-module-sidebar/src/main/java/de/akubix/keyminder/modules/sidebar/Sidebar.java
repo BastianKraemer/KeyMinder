@@ -25,6 +25,7 @@ import de.akubix.keyminder.core.exceptions.ModuleStartupException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -42,7 +43,7 @@ public class Sidebar implements de.akubix.keyminder.core.interfaces.Module {
 
 	@Override
 	public void onStartup(ApplicationInstance instance) throws ModuleStartupException{
-		if(!instance.isFxUserInterfaceAvailable()){
+		if(!JavaFxUserInterface.isLoaded(instance)){
 			throw new ModuleStartupException("JavaFX Interface not available", ModuleStartupException.ModuleErrorLevel.FxUserInterfaceNotAvailable);
 		}
 

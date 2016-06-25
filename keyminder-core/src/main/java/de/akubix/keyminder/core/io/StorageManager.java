@@ -25,20 +25,23 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import javafx.stage.FileChooser;
-
 public class StorageManager {
 
 	public static final String defaultFileType = "xml/keymindfile";
 
 	public StorageManager(){
-		addStorageHandler(defaultFileType, (String idetifier) -> {return new KeyMindFileHandler(idetifier);}, new FileExtension(".keymind", "KeyMinder XML File (*.keymind)"),
-																					 new FileExtension(".xml", "XML-File (*.xml)"));
+		addStorageHandler(
+			defaultFileType,
+			(String idetifier) -> {
+				return new KeyMindFileHandler(idetifier);
+			},
+			new FileExtension(".keymind", "KeyMinder XML File (*.keymind)"),
+			new FileExtension(".xml", "XML-File (*.xml)"));
 	}
 
 	private Map<String, StorageHandlerInstanceFabric> fileTypes = new HashMap<>();
 	private Map<String, String> extensionTranslator = new HashMap<>();
-	private List<FileChooser.ExtensionFilter> knownFileExtensions = new ArrayList<>();
+	private List<FileExtension> knownFileExtensions = new ArrayList<>(8);
 
 	/**
 	 * Get the type identifier that has been assigned to a specific extension
@@ -111,24 +114,12 @@ public class StorageManager {
 		fileTypes.put(identifier, instanceFabric);
 
 		for(int i = 0; i < fileExtensions.length; i++){
-			if(!extensionTranslator.containsKey(fileExtensions[i].extension.toLowerCase())){
-				extensionTranslator.put(fileExtensions[i].extension.toLowerCase(), identifier);
-				knownFileExtensions.add(new FileChooser.ExtensionFilter(fileExtensions[i].description, "*" + fileExtensions[i].extension));
+			String ext = fileExtensions[i].getExtension().toLowerCase();
+			if(!extensionTranslator.containsKey(ext)){
+				extensionTranslator.put(ext, identifier);
+				knownFileExtensions.add(fileExtensions[i]);
 			}
 		}
-	}
-
-	/**
-	 * This function will return an array of all supported file extension, so that they can be used for a @link {@link FileChooser}
-	 * @return an array of all supported file extensions
-	 * @see FileChooser
-	 * @see FileChooser.ExtensionFilter
-	 */
-	public FileChooser.ExtensionFilter[] getFileChooserExtensionFilter(){
-		FileChooser.ExtensionFilter[] arr = new FileChooser.ExtensionFilter[knownFileExtensions.size() + 1];
-		knownFileExtensions.toArray(arr);
-		arr[knownFileExtensions.size()] = new FileChooser.ExtensionFilter("Alle Dateien (*.*)", "*.*");
-		return arr;
 	}
 
 	/**
@@ -146,13 +137,13 @@ public class StorageManager {
 	public void forEachKnownExtension(BiConsumer<? super String, ? super String> lambda){
 		extensionTranslator.forEach(lambda);
 	}
-}
 
-class FileExtension {
-	public final String extension, description;
-	public FileExtension(String extension, String description) {
-		this.extension = extension.startsWith(".") ? extension : "." + extension;
-		this.description = description;
+	/**
+	 * Returns a list of known file extensions
+	 * @return
+	 */
+	public List<FileExtension> getKnownExtensions(){
+		return knownFileExtensions;
 	}
 }
 

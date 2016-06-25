@@ -35,19 +35,18 @@ import de.akubix.keyminder.core.db.StandardTree;
 import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
+import de.akubix.keyminder.core.events.Compliance;
+import de.akubix.keyminder.core.events.ComplianceEventHandler;
+import de.akubix.keyminder.core.events.DefaultEventHandler;
+import de.akubix.keyminder.core.events.EventHost;
+import de.akubix.keyminder.core.events.EventTypes;
+import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
+import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
+import de.akubix.keyminder.core.events.EventTypes.TreeNodeEvent;
+import de.akubix.keyminder.core.events.TreeNodeEventHandler;
 import de.akubix.keyminder.core.exceptions.IllegalCallException;
 import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.FxAdministrationInterface;
-import de.akubix.keyminder.core.interfaces.FxUserInterface;
-import de.akubix.keyminder.core.interfaces.UserInterface;
-import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
-import de.akubix.keyminder.core.interfaces.events.EventHost;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
-import de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler;
 import de.akubix.keyminder.core.io.StorageManager;
 import de.akubix.keyminder.core.modules.ModuleLoader;
 import de.akubix.keyminder.lib.Tools;
@@ -56,7 +55,8 @@ import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.Shell;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
-import javafx.scene.control.TabPane;
+import de.akubix.keyminder.ui.KeyMinderUserInterface;
+import de.akubix.keyminder.ui.UserInterface;
 
 /**
  * This class is the core of this application, it provides all functions and methods for the whole event handling, manages the loading of all modules
@@ -80,8 +80,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	/* Other variables */
 
 	private File settingsFile;
-	private UserInterface inputSourceProvider;
-	private FxAdministrationInterface fxInterface = null;
+	private UserInterface ui;
 
 	public Map<String, String> settings = new HashMap<String, String>();
 	public FileConfiguration currentFile = null;
@@ -93,15 +92,22 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	private final ModuleLoader moduleLoader;
 	public final StorageManager storageManager;
 	private final ResourceBundle locale;
+	private final KeyMinderUserInterface userInterfaceInformation;
 
 	private final Set<ShellOutputWriter> outputWriter;
 
-	public ApplicationInstance(UserInterface inputSourceProvider){
-		this(inputSourceProvider, false);
+	public ApplicationInstance(UserInterface ui){
+		this(ui, false);
 	}
 
-	public ApplicationInstance(UserInterface inputSource, boolean forceEnglishLocale){
-		this.inputSourceProvider = inputSource;
+	public ApplicationInstance(UserInterface ui, boolean forceEnglishLocale) throws IllegalArgumentException {
+		this.ui = ui;
+
+		this.userInterfaceInformation = ui.getClass().getAnnotation(KeyMinderUserInterface.class);
+
+		if(this.userInterfaceInformation == null){
+			throw new IllegalArgumentException("User interface is not annotated with '" + KeyMinderUserInterface.class.getName() + "'.");
+		}
 
 		outputWriter = new HashSet<>();
 		outputWriter.add(new ConsoleOutput());
@@ -152,6 +158,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		}
 
 		this.locale = LocaleLoader.loadLanguagePack("core", "core", applicationLocale);
+		LocaleLoader.provideBundle("core", locale);
 
 		this.shell = new Shell(this);
 		shell.loadCommandsFromIniFile("/de/akubix/keyminder/shell/commands.ini");
@@ -182,6 +189,14 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		return this.moduleLoader;
 	}
 
+	public UserInterface getUserInterface(){
+		return ui;
+	}
+
+	public KeyMinderUserInterface getUserInterfaceInformation(){
+		return this.userInterfaceInformation;
+	}
+
 	/*
 	 * ========================================================================================================================================================
 	 * Startup method
@@ -194,24 +209,8 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * The Startup-Method must be called by the UserInterface when it is ready.
 	 */
 	public void startup(boolean enableModuleLoading){
-
 		if(enableModuleLoading){
 			moduleLoader.loadModules();
-		}
-
-		updateMainWindowTitle();
-
-		if(isFxUserInterfaceAvailable()){
-			DefaultEventHandler eventHandler = new DefaultEventHandler() {
-				@Override
-				public void eventFired() {
-					updateMainWindowTitle();
-				}
-			};
-
-			addEventHandler(DefaultEvent.OnFileOpened, eventHandler);
-			addEventHandler(DefaultEvent.OnFileClosed, eventHandler);
-			addEventHandler(DefaultEvent.OnSettingsChanged, eventHandler);
 		}
 	}
 
@@ -446,10 +445,9 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		tree.enableNodeTimestamps(true);
 		tree.enableEventFireing(true);
 
-		if(isFxUserInterfaceAvailable()){fxInterface.onFileOpenedHandler();}
-		buildQuicklinkList();
-
 		fireEvent(DefaultEvent.OnFileOpened);
+
+		buildQuicklinkList();
 
 		if(tree.getSelectedNode().getId() != 0){fireEvent(TreeNodeEvent.OnSelectedItemChanged, tree.getSelectedNode());}
 	}
@@ -484,22 +482,14 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 */
 	public synchronized boolean closeFile(){
 		if(currentFile != null){
-			if(fireEvent(BooleanEvent.DONTAllowFileClosing, true, true)){return false;}
+			if(fireEvent(ComplianceEvent.AllowFileClosing) != Compliance.AGREE){return false;}
+
 			if(tree.treeHasBeenUpdated()){
-				if(isFxUserInterfaceAvailable()){
-					try {
-						if(fxInterface.showSaveChangesDialog()){
-							// Save the changes
-							if(!saveFile()){return false;}
-						}
-					} catch (UserCanceledOperationException e) {
-						return false;
-					}
-				}
-				else{
-					if(!inputSourceProvider.getYesNoChoice(null, null, "Do you want do discard your changes?")){
-						return false;
-					}
+				Compliance discardChanges = fireEvent(ComplianceEvent.DiscardChanges);
+
+				if(discardChanges == Compliance.CANCEL){return false;}
+				if(discardChanges == Compliance.DONT_AGREE){
+					if(!saveFile()){return false;}
 				}
 			}
 
@@ -555,15 +545,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 
 		updateStatus(String.format(locale.getString("application.file_created"), file.getName()));
 		return true;
-	}
-
-
-	private void updateMainWindowTitle() {
-		if (isFxUserInterfaceAvailable()){
-			fxInterface.setTitle(APP_NAME +
-								 ((getSettingsValueAsBoolean("windowtitle.showfilename", true) && currentFile != null) ? " - " + currentFile.getFilepath().getName() : "") +
-								 (getSettingsValueAsBoolean("windowtitle.showversion", false) ? " (Version " + KeyMinder.getApplicationVersion() + ")" : ""));
-		}
 	}
 
 	/*
@@ -695,145 +676,125 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * ========================================================================================================================================================
 	 */
 
-	public void registerFXUserInterface(FxAdministrationInterface fxUI){
-		fxInterface = fxUI;
+	@Override
+	/**
+	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
+	 * @param eventName the name of the event
+	 * @param eventHandler the handler which will be execution when the event is triggered
+	 */
+	public void addEventHandler(DefaultEvent eventName, DefaultEventHandler eventHandler){
+		addEventHandler(eventName.toString(), eventHandler);
 	}
 
 	@Override
 	/**
-	 * Adds an event handler. If the Java FX user interface is loaded. All events handlers will be called with the JavaFX Thread
+	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
 	 * @param eventName the name of the event
 	 * @param eventHandler the handler which will be execution when the event is triggered
 	 */
-	public void addEventHandler(DefaultEvent eventName, de.akubix.keyminder.core.interfaces.events.DefaultEventHandler eventHandler) {
-		if(!eventCollection.containsKey(eventName.toString())){eventCollection.put(eventName.toString(), new ArrayList<Object>());}
-		eventCollection.get(eventName.toString()).add(eventHandler);
+	public void addEventHandler(ComplianceEvent eventName, ComplianceEventHandler eventHandler){
+		addEventHandler(eventName.toString(), eventHandler);
 	}
 
 	@Override
 	/**
-	 * Adds an event handler. If the Java FX user interface is loaded. All events handlers will be called with the JavaFX Thread
+	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
 	 * @param eventName the name of the event
 	 * @param eventHandler the handler which will be execution when the event is triggered
 	 */
-	public void addEventHandler(BooleanEvent eventName, de.akubix.keyminder.core.interfaces.events.BooleanEventHandler eventHandler) {
-		if(!eventCollection.containsKey(eventName.toString())){eventCollection.put(eventName.toString(), new ArrayList<Object>());}
-		eventCollection.get(eventName.toString()).add(eventHandler);
+	public void addEventHandler(TreeNodeEvent eventName, TreeNodeEventHandler eventHandler){
+		addEventHandler(eventName.toString(), eventHandler);
 	}
 
 	@Override
 	/**
-	 * Adds an event handler. If the Java FX user interface is loaded. All events handlers will be called with the JavaFX Thread
+	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
 	 * @param eventName the name of the event
 	 * @param eventHandler the handler which will be execution when the event is triggered
 	 */
-	public void addEventHandler(TreeNodeEvent eventName, de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler eventHandler) {
-		if(!eventCollection.containsKey(eventName.toString())){eventCollection.put(eventName.toString(), new ArrayList<Object>());}
-		eventCollection.get(eventName.toString()).add(eventHandler);
-	}
-
-	@Override
-	/**
-	 * Adds an event handler. If the Java FX user interface is loaded. All events handlers will be called with the JavaFX Thread
-	 * @param eventName the name of the event
-	 * @param eventHandler the handler which will be execution when the event is triggered
-	 */
-	public void addEventHandler(SettingsEvent eventName, de.akubix.keyminder.core.interfaces.events.SettingsEventHandler eventHandler) {
-		if(!eventCollection.containsKey(eventName.toString())){eventCollection.put(eventName.toString(), new ArrayList<Object>());}
-		eventCollection.get(eventName.toString()).add(eventHandler);
+	public void addEventHandler(String eventName, Object eventHandler){
+		if(eventCollection.containsKey(eventName)){
+			eventCollection.get(eventName).add(eventHandler);
+		}
+		else{
+			List<Object> eventList = new ArrayList<>(16);
+			eventList.add(eventHandler);
+			eventCollection.put(eventName, eventList);
+		}
 	}
 
 	@Override
 	/**
 	 * This method will fire an event, according to this all registered event handlers for this event will be called.
-	 * Note: If the JavaFX user interface has been loaded, its not allowed to call this method with another thread than the JavaFX Thread.
+	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
 	 * @param event the event that should be triggered
 	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
-	public synchronized void fireEvent(de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent event) throws IllegalCallException {
-		if(isFxUserInterfaceAvailable()){
-			if(!fxInterface.isFXThread()){throw new de.akubix.keyminder.core.exceptions.IllegalCallException("If there is an JavaFX UserInterface, all events must be fired with the FXThread!");}
+	public synchronized void fireEvent(EventTypes.DefaultEvent event) throws IllegalCallException {
+		if(!ui.isUserInterfaceThread()){
+			throw new IllegalCallException("All events must be fired with the user interface thread.");
 		}
 
 		if(eventCollection.containsKey(event.toString())){
-			for(int i = 0; i < eventCollection.get(event.toString()).size(); i++){
-				((de.akubix.keyminder.core.interfaces.events.DefaultEventHandler) eventCollection.get(event.toString()).get(i)).eventFired();
-			}
+			eventCollection.get(event.toString()).forEach((handler) -> {
+				((DefaultEventHandler) handler).eventFired();
+			});
 		}
 	}
 
 	@Override
 	/**
 	 * This method will fire an event, according to this all registered event handlers for this event will be called.
-	 * Currently this event is only fired to ask all modules if the file has unsaved changes an can be closed.
-	 * Note: If the JavaFX user interface has been loaded, its not allowed to call this method with another thread than the JavaFX Thread.
+	 * Currently this event is only fired to ask if the file has unsaved changes an can be closed.
+	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
 	 * @param event the event that should be fired
 	 * @param cancelOn this method will return the parameter 'cancelValue' if one event handler returns this boolean value
 	 * @param cancelValue the value that will be returned if one event handler returns the value of 'cancelOn'
 	 * @return if everything is okay this method will return '!cancelValue', if not it will be 'cancelValue'
 	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
-	public synchronized boolean fireEvent(de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent event, boolean cancelOn, boolean cancelValue) throws IllegalCallException{
-		if(isFxUserInterfaceAvailable()){
-			if(!fxInterface.isFXThread()){
-				throw new de.akubix.keyminder.core.exceptions.IllegalCallException("If there is an JavaFX UserInterface, all events must be fired with the FXThread!");
-			}
+	public synchronized Compliance fireEvent(EventTypes.ComplianceEvent event) throws IllegalCallException{
+		if(!ui.isUserInterfaceThread()){
+			throw new IllegalCallException("All events must be fired with the user interface thread.");
 		}
 
+		Compliance returnValue = Compliance.AGREE;
 		if(eventCollection.containsKey(event.toString())) {
 			for(int i = 0; i < eventCollection.get(event.toString()).size(); i++){
-				if(((de.akubix.keyminder.core.interfaces.events.BooleanEventHandler) eventCollection.get(event.toString()).get(i)).eventFired() == cancelOn){
-					return cancelValue;
+				Compliance c = ((ComplianceEventHandler) eventCollection.get(event.toString()).get(i)).eventFired();
+				if(c != Compliance.AGREE){
+					if(returnValue != Compliance.CANCEL){
+						returnValue = c;
+					}
 				}
 			}
 		}
 
-		return !cancelValue;
+		return returnValue;
 	}
 
 	@Override
 	/**
 	 * This method will fire an event, according to this all registered event handlers for this event will be called.
-	 * Note: If the JavaFX user interface has been loaded, its not allowed to call this method with another thread than the JavaFX Thread.
+	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
 	 * @param event the event that should be triggered
 	 * @param node the node that belongs to this event
 	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
-	public synchronized void fireEvent(de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent event, TreeNode node) throws IllegalCallException {
-		if(isFxUserInterfaceAvailable()){
-			if(!fxInterface.isFXThread()){
-				throw new de.akubix.keyminder.core.exceptions.IllegalCallException("If there is an JavaFX UserInterface, all events must be fired with the FXThread!");
-			}
+	public synchronized void fireEvent(EventTypes.TreeNodeEvent event, TreeNode node) throws IllegalCallException {
+		if(!ui.isUserInterfaceThread()){
+			throw new IllegalCallException("All events must be fired with the user interface thread.");
 		}
 
 		if(eventCollection.containsKey(event.toString())){
-			for(int i = 0; i < eventCollection.get(event.toString()).size(); i++){
-				((de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler) eventCollection.get(event.toString()).get(i)).eventFired(node);
-			}
+			eventCollection.get(event.toString()).forEach((handler) -> {
+				((TreeNodeEventHandler) handler).eventFired(node);
+			});
 		}
 	}
 
-	@Override
-	/**
-	 * This method will fire an event, according to this all registered event handlers for this event will be called.
-	 * Note: If the JavaFX user interface has been loaded, its not allowed to call this method with another thread than the JavaFX Thread.
-	 * @param event the event that should be triggered
-	 * @param tabControl the TabControl of the settings dialog. Some modules maybe want to add their own tab pages
-	 * @param settings a reference to the new settings map - all settings the user want to change has to be updated HERE
-	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
-	 */
-	public synchronized void fireEvent(de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent event, TabPane tabControl, Map<String, String> settings) throws IllegalCallException	{
-		if(isFxUserInterfaceAvailable()){
-			if(!fxInterface.isFXThread()){
-				throw new de.akubix.keyminder.core.exceptions.IllegalCallException("If there is an JavaFX UserInterface, all events must be fired with the FXThread!");
-			}
-		}
-
-		if(eventCollection.containsKey(event.toString())){
-			for(int i = 0; i < eventCollection.get(event.toString()).size(); i++){
-				((de.akubix.keyminder.core.interfaces.events.SettingsEventHandler) eventCollection.get(event.toString()).get(i)).eventFired(tabControl, settings);
-			}
-		}
+	public List<Object> getEventHandler(String eventName){
+		return eventCollection.get(eventName);
 	}
 
 	/*
@@ -841,22 +802,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * Plugins for JavaFX Interface
 	 * ========================================================================================================================================================
 	 */
-
-	/**
-	 * This application can be started without a user interface. This method can be used to check if the graphical user interface is available.
-	 * @return true of the JavaFX user interface has been loaded, false if not
-	 */
-	public boolean isFxUserInterfaceAvailable(){
-		return (fxInterface != null);
-	}
-
-	/**
-	 * This method allows you to access the JavaFX user interface
-	 * @return Reference to the JavaFX user interface OR null if it is currently not available.
-	 */
-	public FxUserInterface getFxUserInterface(){
-		return fxInterface;
-	}
 
 	// The following methods can be by used all modules to request input dialogs in console mode and graphical mode
 
@@ -869,7 +814,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @throws UserCanceledOperationException if the user canceled the operation
 	 */
 	public String requestStringInput(String title, String text, String defaultValue) throws UserCanceledOperationException{
-		return inputSourceProvider.getStringInput(title, text, defaultValue);
+		return ui.getStringInput(title, text, defaultValue);
 	}
 
 	/**
@@ -881,7 +826,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @throws UserCanceledOperationException
 	 */
 	public char[] requestPasswordInput(String title, String text, String passwordHint) throws UserCanceledOperationException {
-		return inputSourceProvider.getPasswordInput(title, text, passwordHint);
+		return ui.getPasswordInput(title, text, passwordHint);
 	}
 
 	/**
@@ -891,7 +836,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @return {@code true} if the user clicked "yes", {@code false} if it was "no"
 	 */
 	public boolean requestYesNoDialog(String title, String text) {
-		return inputSourceProvider.getYesNoChoice(title, null, text);
+		return ui.getYesNoChoice(title, null, text);
 	}
 
 	/*
@@ -905,7 +850,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param text the text that will be displayed in the status bar
 	 */
 	public void updateStatus(String text){
-		inputSourceProvider.updateStatus(text);
+		ui.updateStatus(text);
 	}
 
 	/**
@@ -913,7 +858,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param text the text you want to log
 	 */
 	public void log(String text){
-		inputSourceProvider.log(text);
+		ui.log(text);
 	}
 
 	/**
@@ -921,7 +866,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * @param text the text you want to display
 	 */
 	public void alert(String text){
-		inputSourceProvider.alert(text);
+		ui.alert(text);
 	}
 
 	/*

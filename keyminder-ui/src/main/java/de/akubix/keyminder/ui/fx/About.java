@@ -20,7 +20,6 @@ package de.akubix.keyminder.ui.fx;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
-import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.event.ActionEvent;
@@ -41,11 +40,11 @@ import javafx.stage.Stage;
 
 public class About {
 
-	private FxUserInterface fxUI;
+	private final JavaFxUserInterfaceApi fxUI;
 	private static int WINDOW_WIDTH = 640;
 	private TextArea content;
-	public About(ApplicationInstance app){
-		this.fxUI = app.getFxUserInterface();
+	public About(JavaFxUserInterfaceApi fxUI){
+		this.fxUI = fxUI;
 	}
 
 	public void show(){

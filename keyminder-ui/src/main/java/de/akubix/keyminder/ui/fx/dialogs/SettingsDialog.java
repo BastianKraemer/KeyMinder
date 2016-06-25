@@ -20,13 +20,16 @@ package de.akubix.keyminder.ui.fx.dialogs;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.interfaces.ModuleProperties;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.core.modules.ModuleInfo;
 import de.akubix.keyminder.core.modules.ModuleLoader;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
@@ -62,16 +65,15 @@ public class SettingsDialog {
 	public static final double size_y = 450;
 
 	private Stage me;
-	private de.akubix.keyminder.core.ApplicationInstance app;
-	private de.akubix.keyminder.core.interfaces.FxUserInterface fxUI;
+	private final ApplicationInstance app;
+	private JavaFxUserInterfaceApi fxUI;
 	private Map<String, String> settingscopy;
 
 	private Map<String, String> originalGeneralSettingsReference;
 
-	public SettingsDialog(Stage primaryStage, ApplicationInstance instance)
-	{
+	public SettingsDialog(Stage primaryStage, ApplicationInstance instance) throws IllegalStateException {
 		this.app = instance;
-		this.fxUI = instance.getFxUserInterface();
+		this.fxUI = JavaFxUserInterface.getInstance(instance);
 		this.originalGeneralSettingsReference = app.settings;
 		this.settingscopy = new HashMap<String, String>();
 		de.akubix.keyminder.lib.Tools.hashCopy(originalGeneralSettingsReference, settingscopy);
@@ -83,6 +85,7 @@ public class SettingsDialog {
 
 	private boolean saveSettings = false;
 
+
 	public boolean show(){
 		BorderPane root = new BorderPane();
 
@@ -91,7 +94,7 @@ public class SettingsDialog {
 		// General Settings
 		tabs.getTabs().addAll(createGeneralSettingsTab(), createModuleSettingsTab());
 
-		app.fireEvent(SettingsEvent.OnSettingsDialogOpened, tabs, settingscopy);
+		fireSettingsDialogOpenedEvent(tabs);
 
 		root.setCenter(tabs);
 
@@ -164,6 +167,13 @@ public class SettingsDialog {
 		return saveSettings;
 	}
 
+	@SuppressWarnings("unchecked")
+	private void fireSettingsDialogOpenedEvent(TabPane tabs){
+		app.getEventHandler(FxSettingsEvent.OnSettingsDialogOpened.toString()).forEach((consumer) -> {
+			((BiConsumer<TabPane, Map<String, String>>) consumer).accept(tabs, settingscopy);
+		});
+	}
+
 	private Separator createSeperator(){
 		Separator s = new Separator(Orientation.HORIZONTAL);
 		s.setStyle("-fx-padding: 8 0 8 0");
@@ -181,15 +191,15 @@ public class SettingsDialog {
 		title.getStyleClass().add("h2");
 
 		TextField defaultFile = new TextField("");
-		if(settingscopy.containsKey(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_DEFAULT_FILE))
+		if(settingscopy.containsKey(ApplicationInstance.SETTINGS_KEY_DEFAULT_FILE))
 		{
-			defaultFile.setText(settingscopy.get(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_DEFAULT_FILE));
+			defaultFile.setText(settingscopy.get(ApplicationInstance.SETTINGS_KEY_DEFAULT_FILE));
 		}
 
 		defaultFile.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 			@Override
 			public void handle(KeyEvent event) {
-				settingscopy.put(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_DEFAULT_FILE, defaultFile.getText());
+				settingscopy.put(ApplicationInstance.SETTINGS_KEY_DEFAULT_FILE, defaultFile.getText());
 			}});
 
 		final CheckBox windowTitleFilename = new CheckBox("settings.general.show_current_file_in_window_title");
@@ -227,30 +237,30 @@ public class SettingsDialog {
 			}
 		});
 
-		final TextField webBrowserPathTextField = new TextField(app.getSettingsValue(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_BROWSER_PATH));
+		final TextField webBrowserPathTextField = new TextField(app.getSettingsValue(ApplicationInstance.SETTINGS_KEY_BROWSER_PATH));
 		webBrowserPathTextField.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
 			@Override
 			public void handle(KeyEvent event) {
 				String value = webBrowserPathTextField.getText();
 				if(!value.equals("")){
-					settingscopy.put(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_BROWSER_PATH, webBrowserPathTextField.getText());
+					settingscopy.put(ApplicationInstance.SETTINGS_KEY_BROWSER_PATH, webBrowserPathTextField.getText());
 				}
 				else{
-					settingscopy.remove(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_BROWSER_PATH);
+					settingscopy.remove(ApplicationInstance.SETTINGS_KEY_BROWSER_PATH);
 				}
 			}});
 
 		Parent browserFileInputField = FxCommons.createFxFileInputField(webBrowserPathTextField, fxUI);
 
 		final CheckBox useOtherWebBrowserCheckBox = new CheckBox(fxUI.getLocaleBundleString("settings.general.label_otherwebbrowser"));
-		boolean useOtherBrowserValue = app.getSettingsValueAsBoolean(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_USE_OTHER_WEB_BROWSER, false);
+		boolean useOtherBrowserValue = app.getSettingsValueAsBoolean(ApplicationInstance.SETTINGS_KEY_USE_OTHER_WEB_BROWSER, false);
 		useOtherWebBrowserCheckBox.setSelected(useOtherBrowserValue);
 		browserFileInputField.setDisable(!useOtherBrowserValue);
 
 		useOtherWebBrowserCheckBox.selectedProperty().addListener(new ChangeListener<Boolean>() {
 			@Override
 			public void changed(ObservableValue<? extends Boolean> ov, Boolean oldValue, Boolean newValue) {
-				if(newValue){settingscopy.put(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_USE_OTHER_WEB_BROWSER, "yes");}else{settingscopy.remove(de.akubix.keyminder.core.ApplicationInstance.SETTINGS_KEY_USE_OTHER_WEB_BROWSER);}
+				if(newValue){settingscopy.put(ApplicationInstance.SETTINGS_KEY_USE_OTHER_WEB_BROWSER, "yes");}else{settingscopy.remove(ApplicationInstance.SETTINGS_KEY_USE_OTHER_WEB_BROWSER);}
 				browserFileInputField.setDisable(!newValue);
 			}
 		});

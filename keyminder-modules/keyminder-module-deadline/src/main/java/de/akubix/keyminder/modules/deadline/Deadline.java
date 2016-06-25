@@ -32,14 +32,16 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.core.etc.MenuEntryPosition;
+import de.akubix.keyminder.core.events.Compliance;
+import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
+import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.exceptions.ModuleStartupException;
 import de.akubix.keyminder.core.interfaces.Module;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.BooleanEvent;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.SettingsEvent;
 import de.akubix.keyminder.locale.LocaleLoader;
-import de.akubix.keyminder.ui.fx.MainWindow;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.MenuEntryPosition;
+import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
@@ -85,16 +87,19 @@ public class Deadline implements Module {
 	private ApplicationInstance app;
 	private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
+	private boolean javaFxUserInterfaceLoaded;
 	private ResourceBundle locale;
 
 	@Override
 	public void onStartup(ApplicationInstance instance) throws ModuleStartupException {
 		this.app = instance;
 		this.locale = LocaleLoader.loadLanguagePack("modules", "deadline", app.getLocale());
+		this.javaFxUserInterfaceLoaded = JavaFxUserInterface.isLoaded(instance);
+
 
 		// Initiate a node check if a new file is opened
 		instance.addEventHandler(DefaultEvent.OnFileOpened, () -> {
-				if(instance.isFxUserInterfaceAvailable()){
+				if(this.javaFxUserInterfaceLoaded){
 					runCheckAsThread(false);
 				}
 				else{
@@ -102,7 +107,7 @@ public class Deadline implements Module {
 				}
 			});
 
-		instance.addEventHandler(BooleanEvent.DONTAllowFileClosing, () -> {
+		instance.addEventHandler(ComplianceEvent.AllowFileClosing, () -> {
 				if(backgroundWorker != null){
 					if(backgroundWorker.isAlive()){
 						backgroundWorker.interrupt();
@@ -113,68 +118,66 @@ public class Deadline implements Module {
 						}
 					}
 				}
-				return false;
+				return Compliance.AGREE;
 			});
 
-		if(instance.isFxUserInterfaceAvailable()){
-			instance.getFxUserInterface().addMenuEntry(
+		if(this.javaFxUserInterfaceLoaded){
+			final JavaFxUserInterfaceApi fxUI = JavaFxUserInterface.getInstance(this.app);
+			fxUI.addMenuEntry(
 					FxCommons.createFxMenuItem(locale.getString("module.deadline.menu_set_expiration_date"),
 							ImageMap.getIcon("icon_waiting"),
 							(ActionEvent ae) -> showSetExpireDateWindow(instance.getTree().getSelectedNode())),
 							MenuEntryPosition.TOOLS, true);
 
-			instance.getFxUserInterface().addMenuEntry(
+			fxUI.addMenuEntry(
 					FxCommons.createFxMenuItem(locale.getString("module.deadline.menu_show_expired_nodes"),
 							ImageMap.getIcon("icon_deadline"),
 							(ActionEvent ae) -> showExpiredNodesList()),
 							MenuEntryPosition.TOOLS, true);
+
+			// Append some controls for configuration the warning time to the general settings tab
+			fxUI.addEventListener(FxSettingsEvent.OnSettingsDialogOpened, (TabPane tabControl, Map<String, String> settings) -> {
+				try {
+					Separator s = new Separator(Orientation.HORIZONTAL);
+					s.setStyle("-fx-padding: 8 0 8 0");
+
+					HBox hbox = new HBox(4);
+
+					Spinner<Integer> numberField = new Spinner<Integer>(1, 31, 14);
+					numberField.setEditable(true);
+					//SpinnerValueFactory.IntegerSpinnerValueFactory spinnerValueFactory = (IntegerSpinnerValueFactory) numberField.getValueFactory();
+
+					numberField.setStyle("-fx-min-width: 64px; -fx-max-width: -fx-min-width;");
+					// Configure the number days you want to be warned before a node/password becomes invalid
+					Label pre = new Label(locale.getString("module.deadline.settings_warn_time_pre"));
+					Label post = new Label(locale.getString("module.deadline.settings_warn_time_post"));
+					pre.setAlignment(Pos.CENTER_LEFT); post.setAlignment(Pos.CENTER_LEFT);
+					pre.setStyle("-fx-min-height: 22; -fx-max-height: -fx-min-height;");
+					post.setStyle(pre.getStyle());
+					hbox.getChildren().addAll(pre, numberField, post);
+
+					if(settings.containsKey(WARNING_DIFFERENCE_SETTINGS_VALUE)){
+						try{
+							((IntegerSpinnerValueFactory) numberField.getValueFactory()).setValue(Integer.parseInt(settings.get(WARNING_DIFFERENCE_SETTINGS_VALUE)));
+						}
+						catch(NumberFormatException numEx){} //Keep default value
+					}
+
+					numberField.valueProperty().addListener((obs, oldValue, newValue) -> settings.put(WARNING_DIFFERENCE_SETTINGS_VALUE, Integer.toString(newValue)));
+
+					ScrollPane sp = (ScrollPane) tabControl.getTabs().get(0).getContent();
+					VBox vbox = (VBox) sp.getContent();
+					vbox.getChildren().addAll(s, hbox);
+				}
+				catch(ClassCastException cce){
+					instance.log("Module Deadline: Cannot create settings controls (incompatible).");
+				}
+			});
 		}
 
 		// Load the values for "warningDifferenceInDays" and" warningDifferenceInDays" and update them if the settings are updated.
 		loadWarnDiffFromSettings(instance);
 		instance.addEventHandler(DefaultEvent.OnSettingsChanged, () -> loadWarnDiffFromSettings(instance));
-
-		/* ==========================================================================================================================================
-			Append some controls for configuration the warning time to the general settings tab
-		   ========================================================================================================================================== */
-		instance.addEventHandler(SettingsEvent.OnSettingsDialogOpened, (TabPane tabControl, Map<String, String> settings) -> {
-			try {
-				Separator s = new Separator(Orientation.HORIZONTAL);
-				s.setStyle("-fx-padding: 8 0 8 0");
-
-				HBox hbox = new HBox(4);
-
-				Spinner<Integer> numberField = new Spinner<Integer>(1, 31, 14);
-				numberField.setEditable(true);
-				//SpinnerValueFactory.IntegerSpinnerValueFactory spinnerValueFactory = (IntegerSpinnerValueFactory) numberField.getValueFactory();
-
-				numberField.setStyle("-fx-min-width: 64px; -fx-max-width: -fx-min-width;");
-				// Configure the number days you want to be warned before a node/password becomes invalid
-				Label pre = new Label(locale.getString("module.deadline.settings_warn_time_pre"));
-				Label post = new Label(locale.getString("module.deadline.settings_warn_time_post"));
-				pre.setAlignment(Pos.CENTER_LEFT); post.setAlignment(Pos.CENTER_LEFT);
-				pre.setStyle("-fx-min-height: 22; -fx-max-height: -fx-min-height;");
-				post.setStyle(pre.getStyle());
-				hbox.getChildren().addAll(pre, numberField, post);
-
-				if(settings.containsKey(WARNING_DIFFERENCE_SETTINGS_VALUE)){
-					try{
-						((IntegerSpinnerValueFactory) numberField.getValueFactory()).setValue(Integer.parseInt(settings.get(WARNING_DIFFERENCE_SETTINGS_VALUE)));
-					}
-					catch(NumberFormatException numEx){} //Keep default value
-				}
-
-				numberField.valueProperty().addListener((obs, oldValue, newValue) -> settings.put(WARNING_DIFFERENCE_SETTINGS_VALUE, Integer.toString(newValue)));
-
-				ScrollPane sp = (ScrollPane) tabControl.getTabs().get(0).getContent();
-				VBox vbox = (VBox) sp.getContent();
-				vbox.getChildren().addAll(s, hbox);
-			}
-			catch(ClassCastException cce)
-			{
-				instance.log("Module Deadline: Cannot create settings controls (incompatible).");
-			}
-		});
 
 		/* ==========================================================================================================================================
 			Add some commands to interact with this module via KeyMinder Shell (ConsoleMode or Terminal)
@@ -248,7 +251,9 @@ public class Deadline implements Module {
 		if(KeyMinder.verbose_mode || forceConsoleOutput){app.println(String.format("Check completed - %d expired node(s) found, %d node(s) will expire during the next %d days.", expiredNodes.size(), nearlyExpiredNodes.size(), warningDifferenceInDays));}
 
 		if(expiredNodes.size() > 0 || nearlyExpiredNodes.size() > 0){
-			if(app.isFxUserInterfaceAvailable() && !forceConsoleOutput){
+			if(this.javaFxUserInterfaceLoaded && !forceConsoleOutput){
+				final JavaFxUserInterfaceApi fxUI = JavaFxUserInterface.getInstance(this.app);
+
 				Runnable run = () -> {
 					Button notification = new Button("", ImageMap.getFxImageView(("icon_warning")));
 					notification.setMinWidth(24);
@@ -266,15 +271,26 @@ public class Deadline implements Module {
 					Pane treeNotificationPanel = new Pane(l);
 					treeNotificationPanel.getStyleClass().add("highlighted");
 
-					Runnable r = () -> {showExpiredNodesList(); app.getFxUserInterface().removeNotificationItem(notification); app.getFxUserInterface().removeTreePanel(treeNotificationPanel);};
+					Runnable r = () -> {
+						showExpiredNodesList();
+						fxUI.removeNotificationItem(notification);
+						fxUI.removeTreePanel(treeNotificationPanel);
+					};
 
 					notification.setOnAction((event) -> r.run());
-					l.setOnMouseClicked((MouseEvent event) -> {if(event.getButton() == MouseButton.PRIMARY){r.run();}else{app.getFxUserInterface().removeTreePanel(treeNotificationPanel);}});
+					l.setOnMouseClicked((MouseEvent event) -> {
+						if(event.getButton() == MouseButton.PRIMARY){
+							r.run();
+						}
+						else{
+							fxUI.removeTreePanel(treeNotificationPanel);
+						}
+					});
 
-					app.getFxUserInterface().addTreePanel(treeNotificationPanel, true);
-					app.getFxUserInterface().addNotificationItem(notification, true);
+					fxUI.addTreePanel(treeNotificationPanel, true);
+					fxUI.addNotificationItem(notification, true);
 				};
-				app.getFxUserInterface().runAsFXThread(run);
+				fxUI.runAsFXThread(run);
 			}
 			else{
 				if(expiredNodes.size() > 0){printExpireNodeList(expiredNodes, true);}
@@ -380,7 +396,7 @@ public class Deadline implements Module {
 			me.close();
 		});
 
-		Button cancelButton = new Button(LocaleLoader.getBundle(MainWindow.LANGUAGE_BUNDLE_KEY).getString("cancel"));
+		Button cancelButton = new Button(LocaleLoader.getBundle(JavaFxUserInterface.LANGUAGE_BUNDLE_KEY).getString("cancel"));
 		cancelButton.setOnAction((ActionEvent ae) -> me.close());
 
 		acceptButton.setMinWidth(130);
@@ -440,7 +456,7 @@ public class Deadline implements Module {
 		BorderPane.setMargin(vbox, new Insets(4,10,0,10));
 		root.setCenter(vbox);
 
-		Button okButton = new Button(LocaleLoader.getBundle(MainWindow.LANGUAGE_BUNDLE_KEY).getString("okay"));
+		Button okButton = new Button(LocaleLoader.getBundle(JavaFxUserInterface.LANGUAGE_BUNDLE_KEY).getString("okay"));
 		okButton.setOnAction((ActionEvent ae) -> me.close());
 
 		okButton.setDefaultButton(true);

@@ -21,11 +21,13 @@ package de.akubix.keyminder.ui.fx.sidebar;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.events.DefaultEventHandler;
+import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.FxUserInterface;
-import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -40,14 +42,15 @@ import javafx.scene.layout.VBox;
 public class FxSidebar {
 
 	private Map<String, FxSidebarElement> elements = new HashMap<>();
-	private de.akubix.keyminder.core.ApplicationInstance instance;
+	private final ApplicationInstance instance;
+	private final JavaFxUserInterfaceApi fxUI;
 	private final VBox sidebarContainer;
 	private final javafx.scene.control.Tab sidebarTab;
 	private boolean firstLabel = true;
 
-	public FxSidebar(de.akubix.keyminder.core.ApplicationInstance instance, String sidebarTitle, boolean disableSidebarWhileNoFileIsOpened, EventHandler<ActionEvent> keySendHandler) throws IllegalStateException
-	{
-		if(!instance.isFxUserInterfaceAvailable()){throw new IllegalStateException("JavaFX User Interface is not available.");}
+	public FxSidebar(ApplicationInstance instance, String sidebarTitle, boolean disableSidebarWhileNoFileIsOpened, EventHandler<ActionEvent> keySendHandler) throws IllegalStateException {
+
+		this.fxUI = JavaFxUserInterface.getInstance(instance);
 		this.instance = instance;
 		this.sidebarContainer = new VBox();
 
@@ -56,10 +59,10 @@ public class FxSidebar {
 		scrollPane.setHbarPolicy(ScrollBarPolicy.NEVER);
 		scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
 
-		this.sidebarContainer.prefWidthProperty().bind(instance.getFxUserInterface().getSidbarWidthProperty().subtract(12));
-		scrollPane.prefWidthProperty().bind(instance.getFxUserInterface().getSidbarWidthProperty());
+		this.sidebarContainer.prefWidthProperty().bind(fxUI.getSidbarWidthProperty().subtract(12));
+		scrollPane.prefWidthProperty().bind(fxUI.getSidbarWidthProperty());
 
-		this.sidebarTab = instance.getFxUserInterface().addSidebarPanel(sidebarTitle, scrollPane, (node) -> {
+		this.sidebarTab = fxUI.addSidebarPanel(sidebarTitle, scrollPane, (node) -> {
 			boolean b[] = new boolean[]{false};
 			elements.values().forEach((fxSidebarEl) -> {b[0] = fxSidebarEl.loadData(node) || b[0];});
 			return b[0];
@@ -191,9 +194,8 @@ public class FxSidebar {
 		return new FxSidebarHyperlink(instance, useMailTo) {
 			@Override
 			public void storeData(TreeNode node) {
-				FxUserInterface fxUI = instance.getFxUserInterface();
 				String defaultText = getUIValue();
-				InputDialog id = new InputDialog(instance.getFxUserInterface(), fxUI.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.edit_email" : "mainwindow.sidebar.hyperlink.edit_link"),
+				InputDialog id = new InputDialog(fxUI, fxUI.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.edit_email" : "mainwindow.sidebar.hyperlink.edit_link"),
 																			 fxUI.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.dialog.edit_email" : "mainwindow.sidebar.hyperlink.dialog.edit_link"),
 																			 defaultText.equals("...") ? "" : defaultText, false);
 
@@ -202,7 +204,7 @@ public class FxSidebar {
 					if(input != null && !input.equals("")){
 						node.setAttribute(hashKey, input);
 						setUIValue(input);
-						instance.getFxUserInterface().updateStatus(fxUI.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.messages.email_edited" : "mainwindow.sidebar.hyperlink.messages.link_edited"));
+						fxUI.updateStatus(fxUI.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.messages.email_edited" : "mainwindow.sidebar.hyperlink.messages.link_edited"));
 					}
 				}
 				catch(UserCanceledOperationException e){}

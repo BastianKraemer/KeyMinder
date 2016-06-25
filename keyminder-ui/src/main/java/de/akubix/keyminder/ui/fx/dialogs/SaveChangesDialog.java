@@ -20,7 +20,7 @@ package de.akubix.keyminder.ui.fx.dialogs;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
-import de.akubix.keyminder.core.interfaces.FxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.event.ActionEvent;
@@ -42,19 +42,19 @@ public class SaveChangesDialog {
 	private Result result = Result.Cancel;
 	private final int sceneWidth = 400;
 	private final int sceneHeight = 106;
-	public SaveChangesDialog(Stage primaryStage, FxUserInterface fxUI){
+	public SaveChangesDialog(Stage primaryStage, JavaFxUserInterfaceApi fxUI){
 		createScene(fxUI);
 		dialog.setX(primaryStage.getX() + (primaryStage.getWidth() / 2) - sceneWidth / 2);
 		dialog.setY(primaryStage.getY() + (primaryStage.getHeight() / 2) - (sceneHeight / 2) - 32);
 		dialog.initOwner(primaryStage);
 	}
 
-	public SaveChangesDialog(FxUserInterface fxUI){
+	public SaveChangesDialog(JavaFxUserInterfaceApi fxUI){
 		createScene(fxUI);
 		dialog.centerOnScreen();
 	}
 
-	private void createScene(FxUserInterface fxUI){
+	private void createScene(JavaFxUserInterfaceApi fxUI){
 		BorderPane root = new BorderPane();
 
 		Label title = new Label(fxUI.getLocaleBundleString("dialogs.savechanges.headline"));
@@ -134,7 +134,7 @@ public class SaveChangesDialog {
 		return result;
 	}
 
-	public static Result show(FxUserInterface fxUI){
+	public static Result show(JavaFxUserInterfaceApi fxUI){
 		SaveChangesDialog dialog = new SaveChangesDialog(fxUI);
 		return dialog.getInput();
 	}

@@ -40,11 +40,11 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.FxUserInterface;
 import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.ui.console.ConsoleMode;
-import de.akubix.keyminder.ui.fx.MainWindow;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import javafx.stage.FileChooser;
 
 /**
@@ -72,7 +72,7 @@ public class XMLApplicationProfileParser
 		this.app = app;
 		this.xmldoc = xmldoc;
 		this.variables = variables;
-		this.locale = LocaleLoader.getBundle(MainWindow.LANGUAGE_BUNDLE_KEY);
+		this.locale = LocaleLoader.getBundle(JavaFxUserInterface.LANGUAGE_BUNDLE_KEY);
 	}
 
 	/**
@@ -308,8 +308,8 @@ public class XMLApplicationProfileParser
 
 		switch(targetAttribute.getNodeValue()){
 			case "clipboard":
-				if(app.isFxUserInterfaceAvailable()){
-					app.getFxUserInterface().setClipboardText(value);
+				if(JavaFxUserInterface.isLoaded(app)){
+					JavaFxUserInterface.getInstance(app).setClipboardText(value);
 				}
 				else{
 					ConsoleMode.setClipboardText(value);
@@ -372,8 +372,8 @@ public class XMLApplicationProfileParser
 		 */
 
 		if(varName.equals("_clipboard_")){
-			if(app.isFxUserInterfaceAvailable()){
-				return app.getFxUserInterface().getClipboardText();
+			if(JavaFxUserInterface.isLoaded(app)){
+				JavaFxUserInterface.getInstance(app).getClipboardText();
 			}
 			else{
 				return ConsoleMode.getClipboardText();
@@ -382,8 +382,8 @@ public class XMLApplicationProfileParser
 
 		try{
 			if(varName.equals("_openfiledialog_")){
-				if(app.isFxUserInterfaceAvailable()){
-					FxUserInterface fxUI = app.getFxUserInterface();
+				if(JavaFxUserInterface.isLoaded(app)){
+					JavaFxUserInterfaceApi fxUI = JavaFxUserInterface.getInstance(app);
 					java.io.File f = fxUI.showOpenFileDialog(locale.getString("filebrowser.dialogtitle"), "", null,
 															 new FileChooser.ExtensionFilter[]{
 																	new FileChooser.ExtensionFilter(locale.getString("filebrowser.allfiles_selector"), "*.*")});
@@ -395,8 +395,8 @@ public class XMLApplicationProfileParser
 			}
 
 			if(varName.equals("_savefiledialog_")){
-				if(app.isFxUserInterfaceAvailable()){
-					FxUserInterface fxUI = app.getFxUserInterface();
+				if(JavaFxUserInterface.isLoaded(app)){
+					JavaFxUserInterfaceApi fxUI = JavaFxUserInterface.getInstance(app);
 					java.io.File f = fxUI.showSaveFileDialog(locale.getString("filebrowser.dialogtitle"), "", null,
 															 new FileChooser.ExtensionFilter[]{
 																	new FileChooser.ExtensionFilter(locale.getString("filebrowser.allfiles_selector"), "*.*")});

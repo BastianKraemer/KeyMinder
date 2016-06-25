@@ -26,22 +26,29 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.Timer;
+import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.events.Compliance;
+import de.akubix.keyminder.core.events.DefaultEventHandler;
+import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
+import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
+import de.akubix.keyminder.core.events.EventTypes.TreeNodeEvent;
+import de.akubix.keyminder.core.events.TreeNodeEventHandler;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.core.interfaces.FxAdministrationInterface;
-import de.akubix.keyminder.core.interfaces.Precondition;
-import de.akubix.keyminder.core.interfaces.events.DefaultEventHandler;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.DefaultEvent;
-import de.akubix.keyminder.core.interfaces.events.EventTypes.TreeNodeEvent;
-import de.akubix.keyminder.core.interfaces.events.HotKeyEvent;
-import de.akubix.keyminder.core.interfaces.events.TreeNodeEventHandler;
+import de.akubix.keyminder.core.io.FileExtension;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
+import de.akubix.keyminder.ui.KeyMinderUserInterface;
 import de.akubix.keyminder.ui.fx.dialogs.FindAndReplaceDialog;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
 import de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result;
+import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
+import de.akubix.keyminder.ui.fx.events.HotKeyEvent;
+import de.akubix.keyminder.ui.fx.events.SidebarNodeChangedEvent;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.application.Application;
@@ -98,9 +105,11 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import javafx.util.Callback;
 
-public class MainWindow extends Application implements FxAdministrationInterface {
-
-	public static final String LANGUAGE_BUNDLE_KEY = "fxUI";
+@KeyMinderUserInterface(
+	name="JavaFX user interface for KeyMinder",
+	id = JavaFxUserInterface.USER_INTERFACE_ID
+)
+public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 	private HashMap<TreeNode, TreeItem<TreeNode>> treeNodeTranslator = new HashMap<>();
 
@@ -312,7 +321,7 @@ public class MainWindow extends Application implements FxAdministrationInterface
 			 */
 
 			localeBundle = LocaleLoader.loadLanguagePack("ui", "fxUI", app.getLocale());
-			LocaleLoader.provideBundle(LANGUAGE_BUNDLE_KEY, localeBundle);
+			LocaleLoader.provideBundle(JavaFxUserInterface.LANGUAGE_BUNDLE_KEY, localeBundle);
 
 			/* ================================================================================================================
 			 * Build user interface
@@ -326,8 +335,6 @@ public class MainWindow extends Application implements FxAdministrationInterface
 			me.setScene(scene);
 			me.setMinWidth(640);
 			me.setMinHeight(400);
-
-			app.registerFXUserInterface(this);
 
 			/* ================================================================================================================
 			 * Event Registration
@@ -366,6 +373,15 @@ public class MainWindow extends Application implements FxAdministrationInterface
 				}
 			});
 
+			final DefaultEventHandler updateWindowTitle = () -> updateWindowTitle();
+
+			app.addEventHandler(DefaultEvent.OnFileOpened, () -> {
+				onFileOpenedHandler();
+				updateWindowTitle.eventFired();
+			});
+
+			app.addEventHandler(DefaultEvent.OnSettingsChanged, () -> updateWindowTitle.eventFired());
+
 			app.addEventHandler(DefaultEvent.OnFileClosed, new DefaultEventHandler() {
 				@Override
 				public void eventFired() {
@@ -381,6 +397,16 @@ public class MainWindow extends Application implements FxAdministrationInterface
 					treeNodeTranslator.clear();
 					treeDependentElementsDisableProperty.set(true);
 					clearQuicklinkList(true);
+
+					updateWindowTitle.eventFired();
+				}
+			});
+
+			app.addEventHandler(ComplianceEvent.DiscardChanges, () -> {
+				try {
+					return showSaveChangesDialog() ? Compliance.DONT_AGREE : Compliance.AGREE;
+				} catch (UserCanceledOperationException e) {
+					return Compliance.CANCEL;
 				}
 			});
 
@@ -469,8 +495,14 @@ public class MainWindow extends Application implements FxAdministrationInterface
 		}
 	}
 
-	@Override
-	public void onFileOpenedHandler(){
+	private void updateWindowTitle() {
+		me.setTitle(
+			ApplicationInstance.APP_NAME
+			+ ((app.getSettingsValueAsBoolean("windowtitle.showfilename", true) && app.currentFile != null) ? " - " + app.currentFile.getFilepath().getName() : "")
+			+ (app.getSettingsValueAsBoolean("windowtitle.showversion", false) ? " (Version " + KeyMinder.getApplicationVersion() + ")" : ""));
+	}
+
+	private void onFileOpenedHandler(){
 		buildTree();
 		if(fxtree.getRoot().getChildren().size() > 0){
 			fxtree.getSelectionModel().select((fxtree.getRoot().getChildren().get(0)));
@@ -499,18 +531,18 @@ public class MainWindow extends Application implements FxAdministrationInterface
 	}
 
 	@Override
-	public void setTitle(String title){
-		me.setTitle(title);
-	}
-
-	@Override
 	public void runAsFXThread(Runnable r){
 		Platform.runLater(r);
 	}
 
 	@Override
-	public boolean isFXThread(){
+	public boolean isUserInterfaceThread(){
 		return Platform.isFxApplicationThread();
+	}
+
+	@Override
+	public void addEventListener(FxSettingsEvent eventName, BiConsumer<TabPane, Map<String, String>> eventListener){
+		app.addEventHandler(eventName.toString(), eventListener);
 	}
 
 	@Override
@@ -682,7 +714,7 @@ public class MainWindow extends Application implements FxAdministrationInterface
 
 		menu_Extras.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.extras.appinfo"),
 				  ImageMap.getIcon("icon_star_filled"),
-				  (event) -> {new de.akubix.keyminder.ui.fx.About(app).show();}, false));
+				  (event) -> {new de.akubix.keyminder.ui.fx.About(this).show();}, false));
 
 		menuBar.getMenus().addAll(menu_File, menu_Edit, menu_View, menu_Extras, menu_Tools);
 		root.setTop(menuBar);
@@ -903,10 +935,28 @@ public class MainWindow extends Application implements FxAdministrationInterface
 	private void showCreateNewFileDialog(boolean encryptFile){
 		if(!app.closeFile()){return;}
 
-		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.new_file.title"), "", "", app.storageManager.getFileChooserExtensionFilter());
+		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.new_file.title"), "", "", getFileChooserExtensionFilter());
 		if(f != null){
 			app.createNewFile(f, encryptFile);
 		}
+	}
+
+	/**
+	 * This function will return an array of all supported file extensions, so that they can be used for a {@link FileChooser}
+	 * @return an array of all supported file extensions
+	 * @see FileChooser
+	 * @see FileChooser.ExtensionFilter
+	 */
+	private FileChooser.ExtensionFilter[] getFileChooserExtensionFilter(){
+		List<FileExtension> knownFileExtensions = app.storageManager.getKnownExtensions();
+		FileChooser.ExtensionFilter[] arr = new FileChooser.ExtensionFilter[knownFileExtensions.size() + 1];
+
+		for(int i = 0; i < knownFileExtensions.size(); i++){
+			arr[i] = new FileChooser.ExtensionFilter(knownFileExtensions.get(i).getDescription(), knownFileExtensions.get(i).getExtension());
+		}
+
+		arr[knownFileExtensions.size()] = new FileChooser.ExtensionFilter(localeBundle.getString("filebrowser.allfiles_selector"), "*.*");
+		return arr;
 	}
 
 	private MenuItem createColorContextMenu(String colorName, String iconKeyWord, String colorHTMLValue)
@@ -930,21 +980,10 @@ public class MainWindow extends Application implements FxAdministrationInterface
 
 		// Define all "hot keys"
 
-		final de.akubix.keyminder.core.interfaces.FxUserInterface fxUI = this;
+		final JavaFxUserInterfaceApi fxUI = this;
 
-		Precondition condition_FileOpened = new Precondition() {
-			@Override
-			public boolean check() {
-				return app.currentFile != null;
-			}
-		};
-
-		Precondition condition_nodesAvailable = new Precondition() {
-			@Override
-			public boolean check() {
-				return (dataTree.getRootNode().countChildNodes() > 0);
-			}
-		};
+		BooleanSupplier condition_FileOpened = () -> app.currentFile != null;
+		BooleanSupplier condition_nodesAvailable = () -> (dataTree.getRootNode().countChildNodes() > 0);
 
 		// Possible Key-Combinations
 		addApplicationHotKey(KeyCode.A, true, false, false, new HotKeyEvent(condition_nodesAvailable) {
@@ -1115,8 +1154,7 @@ public class MainWindow extends Application implements FxAdministrationInterface
 		addQuicklinkNodeHotKey(KeyCode.DIGIT0, 9, condition_FileOpened);
 	}
 
-
-	private void addQuicklinkNodeHotKey(KeyCode keycode, int index, Precondition condition_FileOpened){
+	private void addQuicklinkNodeHotKey(KeyCode keycode, int index, BooleanSupplier condition_FileOpened){
 		addApplicationHotKey(keycode, true, false, false, new HotKeyEvent(condition_FileOpened) {
 			@Override
 			public void onKeyDown() {
@@ -1312,14 +1350,14 @@ public class MainWindow extends Application implements FxAdministrationInterface
 	private void initalizeOpenFile(){
 		if(!app.closeFile()){return;}
 
-		File f = showOpenFileDialog(localeBundle.getString("mainwindow.dialogs.open_file.title"), "", "", app.storageManager.getFileChooserExtensionFilter());
+		File f = showOpenFileDialog(localeBundle.getString("mainwindow.dialogs.open_file.title"), "", "", getFileChooserExtensionFilter());
 		if(f != null){
 			app.openFile(f);
 		}
 	}
 
 	private void initalizeSaveFileAs(){
-		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.save_file.title"), app.currentFile.getFilepath().getAbsolutePath(), "", app.storageManager.getFileChooserExtensionFilter());
+		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.save_file.title"), app.currentFile.getFilepath().getAbsolutePath(), "", getFileChooserExtensionFilter());
 		if(f != null){
 			String fileTypeIdentifier = app.storageManager.getIdentifierByExtension(de.akubix.keyminder.lib.Tools.getFileExtension(f.getName()), "");
 			if(fileTypeIdentifier.equals("")){
@@ -1359,7 +1397,7 @@ public class MainWindow extends Application implements FxAdministrationInterface
 			  fileChooser.getExtensionFilters().addAll(fileExtensions);
 		}
 		else{
-			  fileChooser.getExtensionFilters().addAll(app.storageManager.getFileChooserExtensionFilter());
+			  fileChooser.getExtensionFilters().addAll(getFileChooserExtensionFilter());
 		}
 
 		if(initalFileName != null && !initalFileName.equals("")){
@@ -1420,11 +1458,11 @@ public class MainWindow extends Application implements FxAdministrationInterface
 	 * ======================================================================================================================================================
 	 */
 
-	private List<de.akubix.keyminder.core.interfaces.events.SidebarNodeChangeEvent> sidebarPanelNodeChangeEvenHandler = new ArrayList<de.akubix.keyminder.core.interfaces.events.SidebarNodeChangeEvent>();
+	private List<SidebarNodeChangedEvent> sidebarPanelNodeChangeEvenHandler = new ArrayList<>();
 	private boolean sidebarAvailable = false;
 
 	@Override
-	public Tab addSidebarPanel(String tabtitle, Node panel, de.akubix.keyminder.core.interfaces.events.SidebarNodeChangeEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked) {
+	public Tab addSidebarPanel(String tabtitle, Node panel, SidebarNodeChangedEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked) {
 		if(sidebarTabPanel.getTabs().size() == 0){createSidebar();}
 		sidebarAvailable = true;
 
@@ -1474,7 +1512,7 @@ public class MainWindow extends Application implements FxAdministrationInterface
 		app.addEventHandler(TreeNodeEvent.OnSelectedItemChanged, (node) -> {
 				l.setText(node.getText());
 				boolean sidebarIsEmpty[] = new boolean[]{false};
-				sidebarPanelNodeChangeEvenHandler.forEach((event) -> sidebarIsEmpty[0] = event.selectedNodeChanged(node) || sidebarIsEmpty[0]);
+				sidebarPanelNodeChangeEvenHandler.forEach((event) -> sidebarIsEmpty[0] = event.panelIsNotEmpty(node) || sidebarIsEmpty[0]);
 				showSidebar(sidebarIsEmpty[0]);
 			});
 
@@ -1651,7 +1689,7 @@ public class MainWindow extends Application implements FxAdministrationInterface
 	}
 
 	@Override
-	public void addMenuEntry(MenuItem item, de.akubix.keyminder.core.etc.MenuEntryPosition pos, boolean add2TreeDependentItems) {
+	public void addMenuEntry(MenuItem item, MenuEntryPosition pos, boolean add2TreeDependentItems) {
 		switch(pos){
 			case FILE:
 				menu_File.getItems().add(item);
@@ -1739,7 +1777,7 @@ public class MainWindow extends Application implements FxAdministrationInterface
 
 	@Override
 	public void alert(String text) {
-		if(isFXThread()){
+		if(isUserInterfaceThread()){
 			alert(AlertType.INFORMATION, "", null, text);
 		}
 		else{
@@ -1751,7 +1789,7 @@ public class MainWindow extends Application implements FxAdministrationInterface
 	public void alert(AlertType type, String title, String headline, String contentText){
 		final String alertTile = title.equals("") ? ApplicationInstance.APP_NAME : title;
 
-		if(isFXThread()){
+		if(isUserInterfaceThread()){
 			showAlert(type, alertTile, headline, contentText);
 		}
 		else{
@@ -1846,8 +1884,12 @@ public class MainWindow extends Application implements FxAdministrationInterface
 		}
 	}
 
-	@Override
-	public boolean showSaveChangesDialog() throws UserCanceledOperationException {
+	/**
+	 * Show a save changes dialog
+	 * @return {@code true} if the changes should be saved or {@code false} should be discarded
+	 * @throws UserCanceledOperationException if the user has pressed the "Cancel" button
+	 */
+	private boolean showSaveChangesDialog() throws UserCanceledOperationException {
 		de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result r = de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.show(this);
 		if(r == Result.Cancel){throw new UserCanceledOperationException("Cancel button was pressed.");}
 		return (r == Result.SaveChanges);

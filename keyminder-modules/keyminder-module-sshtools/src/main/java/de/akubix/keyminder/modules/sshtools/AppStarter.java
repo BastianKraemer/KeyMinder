@@ -27,7 +27,9 @@ import org.w3c.dom.Node;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.core.etc.MenuEntryPosition;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.MenuEntryPosition;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.scene.control.Menu;
@@ -71,9 +73,16 @@ public class AppStarter {
 				socksSupport = false;
 			}
 			if(!noItemsAndCommands){
-				if(app.isFxUserInterfaceAvailable()){
-					MenuItem contextMenuItem = FxCommons.createFxMenuItem(attrib.getNodeValue(), ImageMap.getIcon(icon), (event) -> app.getFxUserInterface().updateStatus(sshtools.startApplication(this, false, null)));
-					app.getFxUserInterface().addMenuEntry(contextMenuItem, MenuEntryPosition.CONTEXTMENU, true);
+				if(JavaFxUserInterface.isLoaded(app)){
+					final JavaFxUserInterfaceApi fxUI = JavaFxUserInterface.getInstance(this.app);
+
+					fxUI.addMenuEntry(
+						FxCommons.createFxMenuItem(
+							attrib.getNodeValue(),
+							ImageMap.getIcon(icon),
+							(event) -> fxUI.updateStatus(sshtools.startApplication(this, false, null))
+						),
+						MenuEntryPosition.CONTEXTMENU, true);
 
 					if(socksSupport){
 						if(icon.equals("")){
@@ -83,7 +92,7 @@ public class AppStarter {
 							contextMenuItemUsingSocks = new Menu(attrib.getNodeValue() + " using socks", ImageMap.getFxImageView(icon));
 						}
 
-						app.getFxUserInterface().addMenuEntry(contextMenuItemUsingSocks, MenuEntryPosition.CONTEXTMENU, true);
+						fxUI.addMenuEntry(contextMenuItemUsingSocks, MenuEntryPosition.CONTEXTMENU, true);
 					}
 				}
 			}
@@ -103,9 +112,9 @@ public class AppStarter {
 		return xapp.generateCommandLineParameters(id, treeNode);
 	}
 
-	public void createUsingSocksItem(String socksProfileId, String socksProfileName){
+	public void createUsingSocksItem(String socksProfileId, String socksProfileName, JavaFxUserInterfaceApi fxUI){
 		if(socksSupport && enableMenuItems){
-			MenuItem m = FxCommons.createFxMenuItem(socksProfileName, "", (event) -> app.getFxUserInterface().updateStatus(sshtools.startApplication(this, false, socksProfileId)));
+			MenuItem m = FxCommons.createFxMenuItem(socksProfileName, "", (event) -> fxUI.updateStatus(sshtools.startApplication(this, false, socksProfileId)));
 			contextMenuItemUsingSocks.getItems().add(m);
 			m.setDisable(true);
 			socksItems.put(socksProfileId, m);
