@@ -1,6 +1,7 @@
 package de.akubix.keyminder.core;
 
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.ui.KeyMinderUserInterface;
 import de.akubix.keyminder.ui.UserInterface;
 
 public class KeyMinderInstanceBuilder {
@@ -15,6 +16,7 @@ public class KeyMinderInstanceBuilder {
 		return app;
 	}
 
+	@KeyMinderUserInterface(id="testUI", name="")
 	private static class TestInputSourceProvider implements UserInterface {
 		@Override
 		public void updateStatus(String text) {}
