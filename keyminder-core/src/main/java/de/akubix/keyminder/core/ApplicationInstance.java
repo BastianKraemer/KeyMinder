@@ -82,7 +82,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	private File settingsFile;
 	private UserInterface ui;
 
-	public Map<String, String> settings = new HashMap<String, String>();
+	public Map<String, String> settings = new HashMap<>();
 	public FileConfiguration currentFile = null;
 
 	private Map<String, List<Object>> eventCollection = new HashMap<>();
@@ -794,7 +794,7 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	}
 
 	public List<Object> getEventHandler(String eventName){
-		return eventCollection.get(eventName);
+		return eventCollection.getOrDefault(eventName, new ArrayList<>(0));
 	}
 
 	/*
