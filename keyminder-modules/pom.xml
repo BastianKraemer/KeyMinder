@@ -10,6 +10,7 @@
 	<artifactId>keyminder-modules</artifactId>
 	<name>KeyMinder Modules</name>
 	<packaging>pom</packaging>
+
 	<modules>
 		<module>keyminder-module-sshtools</module>
 		<module>keyminder-module-sidebar</module>
@@ -35,4 +36,20 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources/</directory>
+			</resource>
+			<resource>
+				<directory>src/main/resources/de/akubix/keyminder/modules/</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>*.properties</include>
+				</includes>
+				<targetPath>de/akubix/keyminder/modules/</targetPath>
+			</resource>
+		</resources>
+	</build>
 </project>
