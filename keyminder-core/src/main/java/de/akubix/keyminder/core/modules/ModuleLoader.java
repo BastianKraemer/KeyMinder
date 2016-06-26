@@ -32,6 +32,10 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.exceptions.ModuleStartupException;
 
+/**
+ * This class is used manage all modules.
+ * It loads all available modules by using the Java {@link ServiceLoader} and handles the module configuration (enable/disable modules)
+ */
 public class ModuleLoader {
 	private Map<String, ModuleInfo> allModules = new HashMap<String, ModuleInfo>();
 	private ApplicationInstance app;
@@ -39,6 +43,9 @@ public class ModuleLoader {
 		this.app = app;
 	}
 
+	/**
+	 * Loads all modules in the class path using the Java {@link ServiceLoader}
+	 */
 	public void loadModules(){
 		List<String> enabledModules = Arrays.asList(app.getSettingsValue(ApplicationInstance.SETTINGS_KEY_ENABLED_MODULES).split(";"));
 
@@ -77,6 +84,11 @@ public class ModuleLoader {
 		}
 	}
 
+	/**
+	 * Starts a module observing the {@link Preload} annotation
+	 * @param moduleName The name of the module
+	 * @param initiators A list of module names which requested that other should be started at first
+	 */
 	private void startModule(String moduleName, List<String> initiators){
 		if(!allModules.containsKey(moduleName)){return;}
 
