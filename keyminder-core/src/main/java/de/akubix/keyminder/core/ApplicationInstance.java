@@ -38,7 +38,6 @@ import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.events.Compliance;
 import de.akubix.keyminder.core.events.ComplianceEventHandler;
 import de.akubix.keyminder.core.events.DefaultEventHandler;
-import de.akubix.keyminder.core.events.EventHost;
 import de.akubix.keyminder.core.events.EventTypes;
 import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
@@ -62,7 +61,7 @@ import de.akubix.keyminder.ui.UserInterface;
  * This class is the core of this application, it provides all functions and methods for the whole event handling, manages the loading of all modules
  * and creates the database. Furthermore it is the only interface to load and store data from respectively into files.
  */
-public class ApplicationInstance implements EventHost, ShellOutputWriter {
+public class ApplicationInstance implements ShellOutputWriter {
 
 	/* Static configurations variables */
 	public static final String APP_NAME = "KeyMinder";
@@ -676,7 +675,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 	 * ========================================================================================================================================================
 	 */
 
-	@Override
 	/**
 	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
 	 * @param eventName the name of the event
@@ -686,7 +684,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		addEventHandler(eventName.toString(), eventHandler);
 	}
 
-	@Override
 	/**
 	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
 	 * @param eventName the name of the event
@@ -696,7 +693,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		addEventHandler(eventName.toString(), eventHandler);
 	}
 
-	@Override
 	/**
 	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
 	 * @param eventName the name of the event
@@ -706,7 +702,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		addEventHandler(eventName.toString(), eventHandler);
 	}
 
-	@Override
 	/**
 	 * Adds an event handler. All events have to be fired by the thread of the user interface (if there is one).
 	 * @param eventName the name of the event
@@ -723,7 +718,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		}
 	}
 
-	@Override
 	/**
 	 * This method will fire an event, according to this all registered event handlers for this event will be called.
 	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
@@ -742,7 +736,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		}
 	}
 
-	@Override
 	/**
 	 * This method will fire an event, according to this all registered event handlers for this event will be called.
 	 * Currently this event is only fired to ask if the file has unsaved changes an can be closed.
@@ -773,7 +766,6 @@ public class ApplicationInstance implements EventHost, ShellOutputWriter {
 		return returnValue;
 	}
 
-	@Override
 	/**
 	 * This method will fire an event, according to this all registered event handlers for this event will be called.
 	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
