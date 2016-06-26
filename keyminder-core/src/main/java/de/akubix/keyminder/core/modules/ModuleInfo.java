@@ -1,27 +1,33 @@
 package de.akubix.keyminder.core.modules;
 
-import de.akubix.keyminder.core.interfaces.Module;
-import de.akubix.keyminder.core.interfaces.ModuleProperties;
+import java.io.IOException;
+import java.util.Properties;
 
 public class ModuleInfo {
-	private final Module moduleInstance;
+	private Module moduleInstace;
+	private final String propertiesFile;
 	private boolean isEnabled;
-	private final ModuleProperties properties;
+	private final boolean requiredUIisAvailable;
+	private final String requiredUIName;
 	private boolean moduleIsStarted;
 
-	protected ModuleInfo(Module instance, ModuleProperties moduleProperties, boolean isEnabled){
-		this.moduleInstance = instance;
+	protected ModuleInfo(Module moduleInstace, String propertiesFile, boolean requiredUIisAvailable, String requiredUIName, boolean isEnabled){
+		this.moduleInstace = moduleInstace;
+		this.propertiesFile = propertiesFile;
+		this.requiredUIisAvailable = requiredUIisAvailable;
+		this.requiredUIName = requiredUIName;
 		this.isEnabled = isEnabled;
-		this.properties = moduleProperties;
 		this.moduleIsStarted = false;
 	}
 
 	public Module getInstance(){
-		return this.moduleInstance;
+		return this.moduleInstace;
 	}
 
-	public ModuleProperties getProperties(){
-		return this.properties;
+	public Properties getProperties() throws NullPointerException, IOException {
+		Properties properties = new Properties();
+		properties.load(getClass().getResourceAsStream(this.propertiesFile));
+		return properties;
 	}
 
 	public boolean isStarted(){
@@ -32,11 +38,24 @@ public class ModuleInfo {
 		this.moduleIsStarted = true;
 	}
 
+	public void startFailed(){
+		this.moduleIsStarted = false;
+		this.moduleInstace = null;
+	}
+
 	public boolean isEnabled(){
 		return isEnabled;
 	}
 
 	public void setEnabled(boolean value){
 		this.isEnabled = value;
+	}
+
+	public boolean requiredUIisAvailable(){
+		return this.requiredUIisAvailable;
+	}
+
+	public String getRequiredUIName(){
+		return this.requiredUIName;
 	}
 }

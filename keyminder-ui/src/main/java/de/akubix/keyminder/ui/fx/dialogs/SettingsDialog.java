@@ -18,15 +18,16 @@
 */
 package de.akubix.keyminder.ui.fx.dialogs;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.function.BiConsumer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.KeyMinder;
-import de.akubix.keyminder.core.interfaces.ModuleProperties;
 import de.akubix.keyminder.core.modules.ModuleInfo;
 import de.akubix.keyminder.core.modules.ModuleLoader;
+import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
@@ -297,18 +298,23 @@ public class SettingsDialog {
 		ModuleLoader moduleLoader = app.getModuleLoader();
 		for(String moduleName: de.akubix.keyminder.lib.Tools.asSortedList(moduleLoader.getModules())){
 			ModuleInfo moduleInfo = moduleLoader.getModuleInfo(moduleName);
-			CheckBox cb;
-			if(moduleInfo.getProperties() != null){
-				ModuleProperties mp = moduleInfo.getProperties();
-				cb = new CheckBox(!mp.name().equals("") ? mp.name() : moduleName);
-				cb.setTooltip(new Tooltip(String.format(fxUI.getLocaleBundleString("settings.modules.moduleinfo_author") + ": %s\n" +
-														fxUI.getLocaleBundleString("settings.modules.moduleinfo_version") + "%s\n\n%s",
-														mp.author(),
-														mp.version().equals(".") ? KeyMinder.getApplicationVersion() : moduleInfo.getProperties().version(),
-														de.akubix.keyminder.lib.Tools.forceLineBreak(mp.description(), 60))));
+			final CheckBox cb = new CheckBox(moduleName);
+			try{
+				Properties properties = moduleInfo.getProperties();
+				cb.setTooltip(
+						new Tooltip(
+							String.format(
+								fxUI.getLocaleBundleString("settings.modules.moduleinfo_author") + ": %s\n" +
+								fxUI.getLocaleBundleString("settings.modules.moduleinfo_version") + ": %s\n\n%s",
+								properties.getOrDefault("author", "-"),
+								properties.getOrDefault("version", "-"),
+								Tools.forceLineBreak(
+									properties.getOrDefault("description_" + app.getLocale().getLanguage(),	properties.getOrDefault("description", "-")).toString(),
+									80)
+				)));
 			}
-			else{
-				cb = new CheckBox(moduleName);
+			catch(IOException | NullPointerException ex){
+				cb.setTooltip(new Tooltip("Error loading module property file."));
 			}
 
 			if(moduleInfo.isEnabled() && !moduleInfo.isStarted()){cb.setText(cb.getText() + " (!)");}

@@ -23,41 +23,26 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.exceptions.ModuleStartupException;
-import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.scene.control.Alert.AlertType;
 
-@de.akubix.keyminder.core.interfaces.ModuleProperties(
-		name="KeyClip",
-		description = "This module allows you to transfer your login credentials directly to another application using the clip board.",
-		version = ".",
-		dependencies = "",
-		author="Bastian Kraemer")
 /**
  * Module KeyClip: Provides a functionality which allows the user to transfer a certain user name and password to another application using the clip board.
  */
-public class KeyClip implements de.akubix.keyminder.core.interfaces.Module {
+public class KeyClip {
 
-	private JavaFxUserInterfaceApi fxUI;
-	private ApplicationInstance app;
+	private final JavaFxUserInterfaceApi fxUI;
+	private final ApplicationInstance app;
 	private boolean trayItemCreated = false;
 	private String pw = "";
 
-	@Override
-	public void onStartup(ApplicationInstance instance) throws ModuleStartupException {
+	public KeyClip(ApplicationInstance instance, JavaFxUserInterfaceApi fxUI){
+		this.app = instance;
+		this.fxUI = fxUI;
 
-		if(JavaFxUserInterface.isLoaded(instance)){
-			this.fxUI = JavaFxUserInterface.getInstance(instance);
-			this.app = instance;
-
-			// Provide the KeyClip feature as command
-			instance.getShell().addCommand("keyclip", getClass().getPackage().getName() + ".KeyClipCmd");
-		}
-		else{
-			throw new ModuleStartupException("JavaFX User Interface is not available.", ModuleStartupException.ModuleErrorLevel.FxUserInterfaceNotAvailable);
-		}
+		// Provide the KeyClip feature as command
+		instance.getShell().addCommand("keyclip", getClass().getPackage().getName() + ".KeyClipCmd");
 	}
 
 	public void copyUserAndPassword(String username, String password){

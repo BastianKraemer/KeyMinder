@@ -35,8 +35,6 @@ import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.events.Compliance;
 import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
-import de.akubix.keyminder.core.exceptions.ModuleStartupException;
-import de.akubix.keyminder.core.interfaces.Module;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
@@ -72,26 +70,18 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
-@de.akubix.keyminder.core.interfaces.ModuleProperties(
-		name="Deadline",
-		description = "This module allows you to define dates on which tree nodes will expire. " +
-					  "Furthermore this module will show you a warning if there is a node which will expire during the next days.",
-		version = ".",
-		dependencies = "",
-		author="Bastian Kraemer")
-public class Deadline implements Module {
+public class Deadline {
 	protected static final String NODE_EXPIRATION_ATTRIBUTE = "expiration_date";
 	private static final String WARNING_DIFFERENCE_SETTINGS_VALUE = "deadline.warndifference";
 	private static long warningDifferenceInMilliseconds;
 	private static int warningDifferenceInDays;
-	private ApplicationInstance app;
+	private final ApplicationInstance app;
 	private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-	private boolean javaFxUserInterfaceLoaded;
-	private ResourceBundle locale;
+	private final boolean javaFxUserInterfaceLoaded;
+	private final ResourceBundle locale;
 
-	@Override
-	public void onStartup(ApplicationInstance instance) throws ModuleStartupException {
+	public Deadline(ApplicationInstance instance){
 		this.app = instance;
 		this.locale = LocaleLoader.loadLanguagePack("modules", "deadline", app.getLocale());
 		this.javaFxUserInterfaceLoaded = JavaFxUserInterface.isLoaded(instance);
