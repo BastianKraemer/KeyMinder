@@ -1,6 +1,7 @@
 package de.akubix.keyminder.core.modules;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Properties;
 
 public class ModuleInfo {
@@ -26,7 +27,7 @@ public class ModuleInfo {
 
 	public Properties getProperties() throws NullPointerException, IOException {
 		Properties properties = new Properties();
-		properties.load(getClass().getResourceAsStream(this.propertiesFile));
+		properties.load(new InputStreamReader(getClass().getResourceAsStream(this.propertiesFile), "UTF-8"));
 		return properties;
 	}
 
