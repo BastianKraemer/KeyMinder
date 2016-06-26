@@ -18,8 +18,10 @@
 */
 package de.akubix.keyminder.shell.commands;
 
+import java.io.IOException;
+import java.util.Properties;
+
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.modules.ModuleInfo;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
@@ -66,22 +68,32 @@ public final class ModuleCmd extends AbstractShellCommand {
 
 				if(in.getParameters().containsKey("--info")){
 					ModuleInfo m = instance.getModuleLoader().getModuleInfo(moduleName);
-					if(m == null){throw new IllegalArgumentException("Module does not exist.");}
-					if(m.getProperties() != null){
-						out.println(String.format(	"Modulename: \t%s\n" +
-													"Version: \t%s\n" +
-													"Author: \t%s\n" +
-													"Status: \t%s\n\n" +
-													"Description:\n%s",
-									m.getProperties().name(),
-									m.getProperties().version().equals(".") ? KeyMinder.getApplicationVersion() : m.getProperties().version(),
-									m.getProperties().author(),
-									(m.isEnabled() ? (m.isStarted() ? "ENABLED" : "ENABLED (Startup error)" ): "DISABLED"),
-									m.getProperties().description()));
+					if(m == null){
+						throw new IllegalArgumentException("Module does not exist.");
 					}
-					else{
-						out.printf("No information for module '%s' available.\n", moduleName);
+
+					try {
+						Properties properties;
+						properties = m.getProperties();
+						out.println(String.format(
+							"Module name: \t%s\n" +
+							"Version: \t%s\n" +
+							"Author: \t%s\n" +
+							"Status: \t%s\n\n" +
+							"Description:\n%s",
+							moduleName,
+							properties.getOrDefault("version", "-"),
+							properties.getOrDefault("author", "-"),
+							(m.isEnabled() ? (m.isStarted() ? "ENABLED" : "ENABLED (Startup error)" ): "DISABLED"),
+							properties.getOrDefault("description", "-")));
+
+					} catch (IOException | NullPointerException e) {
+						out.setColor(AnsiColor.RED);
+						out.println("ERROR: Cannot load module property file: " + e.getMessage());
 					}
+				}
+				else{
+					out.printf("No information for module '%s' available.\n", moduleName);
 				}
 			}
 			catch(IllegalArgumentException IllArgEx){

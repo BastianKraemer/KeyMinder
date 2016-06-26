@@ -17,6 +17,6 @@ public class ModuleStartupException extends Exception {
 	}
 
 	public static enum ModuleErrorLevel {
-		Critical, Default, OSNotSupported, FxUserInterfaceNotAvailable
+		Critical, Default, OSNotSupported
 	}
 }

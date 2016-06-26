@@ -18,6 +18,7 @@
 */
 package de.akubix.keyminder.core.modules;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -29,9 +30,12 @@ import java.util.Set;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
-import de.akubix.keyminder.core.interfaces.Module;
-import de.akubix.keyminder.core.interfaces.ModuleProperties;
+import de.akubix.keyminder.core.exceptions.ModuleStartupException;
 
+/**
+ * This class is used manage all modules.
+ * It loads all available modules by using the Java {@link ServiceLoader} and handles the module configuration (enable/disable modules)
+ */
 public class ModuleLoader {
 	private Map<String, ModuleInfo> allModules = new HashMap<String, ModuleInfo>();
 	private ApplicationInstance app;
@@ -39,6 +43,9 @@ public class ModuleLoader {
 		this.app = app;
 	}
 
+	/**
+	 * Loads all modules in the class path using the Java {@link ServiceLoader}
+	 */
 	public void loadModules(){
 		List<String> enabledModules = Arrays.asList(app.getSettingsValue(ApplicationInstance.SETTINGS_KEY_ENABLED_MODULES).split(";"));
 
@@ -47,16 +54,27 @@ public class ModuleLoader {
 			Module m = (Module) moduleIterator.next();
 
 			//Get the module description by reading the class annotation
-			ModuleProperties moduleDescription = m.getClass().getAnnotation(de.akubix.keyminder.core.interfaces.ModuleProperties.class);
+			KeyMinderModule moduleAnnotation = m.getClass().getAnnotation(KeyMinderModule.class);
 
-			if(moduleDescription != null){
-				if(enabledModules.contains(moduleDescription.name())){
-					allModules.put(moduleDescription.name(), new ModuleInfo(m, moduleDescription, true));
+			if(moduleAnnotation != null){
+
+				RequireUserInterface uiRequirement = m.getClass().getAnnotation(RequireUserInterface.class);
+
+				boolean uiCheck = true;
+				String requiredUserInterfaceName = null;
+
+				if(uiRequirement != null){
+					requiredUserInterfaceName = uiRequirement.value();
+					uiCheck = app.getUserInterfaceInformation().id().equals(requiredUserInterfaceName);
 				}
-				else{
-					//Module is not enabled
-					allModules.put(moduleDescription.name(), new ModuleInfo(m, moduleDescription, false));
-				}
+
+				allModules.put(
+					moduleAnnotation.name(),
+					new ModuleInfo(m, moduleAnnotation.properties(), uiCheck, requiredUserInterfaceName, enabledModules.contains(moduleAnnotation.name()))
+				);
+			}
+			else if(KeyMinder.verbose_mode){
+				app.log(String.format("Cannot load Module '%s'. Missing annotation '@%s'.", m.getClass().getName(), KeyMinderModule.class.getName()));
 			}
 		}
 
@@ -66,30 +84,40 @@ public class ModuleLoader {
 		}
 	}
 
+	/**
+	 * Starts a module observing the {@link Preload} annotation
+	 * @param moduleName The name of the module
+	 * @param initiators A list of module names which requested that other should be started at first
+	 */
 	private void startModule(String moduleName, List<String> initiators){
 		if(!allModules.containsKey(moduleName)){return;}
 
 		ModuleInfo m = allModules.get(moduleName);
 		if(!m.isStarted() && m.isEnabled()){
-			String dependencies = (m.getProperties() == null ? "" : m.getProperties().dependencies().replace(" ", ""));
-			if(!dependencies.equals("")){
+			if(!m.requiredUIisAvailable()){
+				app.log(String.format("Cannot start module '%s': Required user interface '%s' is not available.", moduleName, m.getRequiredUIName()));
+				m.startFailed();
+				return;
+			}
+			Preload preloadModules = m.getClass().getAnnotation(Preload.class);
+			if(preloadModules != null){
 				initiators.add(moduleName);
-				for(String dependent_module: dependencies.split(";")){
-					if(!initiators.contains(dependent_module)){
-						startModule(dependent_module, initiators);
+				for(String preload: preloadModules.value()){
+					if(!initiators.contains(preload)){
+						startModule(preload, initiators);
 					}
 					else{
-						app.println(String.format("Warning: Cannot resolve module dependencies of '%s', because they are cyclic.", initiators.get(0)));
+						app.log(String.format("Warning: Cannot resolve cyclic preload list of module '%s'.", initiators.get(0)));
 					}
 				}
 				initiators.remove(moduleName);
 			}
 
-			if(startModule(moduleName, m.getInstance())){
+			if(callModuleStartupMethod(moduleName, m)){
 				m.setStarted();
 			}
 			else{
-				allModules.put(moduleName, new ModuleInfo(null, m.getProperties(), true)); //Remove the instance from the module list
+				m.startFailed();
 			}
 		}
 	}
@@ -97,31 +125,36 @@ public class ModuleLoader {
 	/**
 	 * Starts a module an handles the errors if the start fails
 	 * @param name
-	 * @param moduleInstance
+	 * @param moduleInfo
 	 * @return {@code true} if the module has been successfully started, {@code false} if not
 	 */
-	private boolean startModule(String name, Module moduleInstance){
+	private boolean callModuleStartupMethod(String name, ModuleInfo moduleInfo){
+
+		Module moduleInstance = moduleInfo.getInstance();
 		if(moduleInstance == null){return false;}
+
 		try {
 			if(KeyMinder.environment.containsKey("verbose_mode")){
 				app.println(String.format("Starting module \"%s\"... ", name));
 			}
 
-			moduleInstance.onStartup(app);
+			moduleInstance.startupModule(app, moduleInfo.getProperties());
 			return true;
-
-		} catch (de.akubix.keyminder.core.exceptions.ModuleStartupException e) {
+		}
+		catch (IOException | NullPointerException e){
+			app.log(String.format("Start of module '%s' failed: Unable to load module property file.", name));
+		}
+		catch (ModuleStartupException e) {
 			switch(e.getErrorLevel()){
 				case Critical:
-					app.println("Critical error while loading module \"" + name + "\": " +e.getMessage());
+					app.log(String.format("Critical error while loading module '%s': %s", name, e.getMessage()));
 					break;
 				case Default:
-					app.println("Cannot load module \"" + name + "\": " +e.getMessage());
+					app.log(String.format("Cannot load module '%s': %s", name, e.getMessage()));
 					break;
-				case FxUserInterfaceNotAvailable:
 				case OSNotSupported:
 					if(!KeyMinder.environment.containsKey("silent_mode")){
-						app.println("Cannot load module \"" + name + "\": " +e.getMessage());
+						app.log(String.format("Cannot load module '%s': %s", name, e.getMessage()));
 					}
 					break;
 			}

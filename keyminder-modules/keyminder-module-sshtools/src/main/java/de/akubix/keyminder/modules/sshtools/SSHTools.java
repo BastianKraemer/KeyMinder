@@ -85,36 +85,29 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 
-@de.akubix.keyminder.core.interfaces.ModuleProperties(
-	name="SSH-Tools",
-	description = "Adds a sidebar to " + ApplicationInstance.APP_NAME + ", which allows you to store the configuration of a 'ssh connection' in a single node." +
-				  "You also will be able to launch these configurations with \"PuTTY\" or another custom application by using the context menu.\n\nThis module is for advanced users.",
-	version = ".",
-	dependencies = "KeyClip;Sidebar",
-	author="Bastian Kraemer")
-public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
+public class SSHTools {
 
-	private ApplicationInstance app;
-	private de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI = null;
+	private final ApplicationInstance app;
+	private final JavaFxUserInterfaceApi fxUI;
 
 	private String defaultUsername, defaultPassword;
 
 	private List<String> socksProfileIDs = new ArrayList<String>();
-	private Map<String, Process> runningSocksProfiles = new HashMap<>();
-	private Map<String, CheckMenuItem> socksMenuItems = new HashMap<>();
+	private final Map<String, Process> runningSocksProfiles = new HashMap<>();
+	private final Map<String, CheckMenuItem> socksMenuItems = new HashMap<>();
 
 	private Menu socksMenu;
-	private Map<String, AppStarter> appStarter = new HashMap<>();
+	private final Map<String, AppStarter> appStarter = new HashMap<>();
 	private AppStarter socksAppStarter = null;
-	private ResourceBundle locale;
+	private final ResourceBundle locale;
 
 	private static final String SETTINGS_KEY_SOCKS_ACTION = "sshtools.actionprofile_socks"; //Contains the path to the XML application profile for "Socks"
 	private static final String SETTINGS_KEY_APP_PROFILES_PATH = "sshtools.app_profile_path";
-	@Override
-	public void onStartup(ApplicationInstance instance) throws de.akubix.keyminder.core.exceptions.ModuleStartupException {
 
-		app = instance;
-		locale = LocaleLoader.loadLanguagePack("modules", "sshtools", app.getLocale());
+	public SSHTools(ApplicationInstance instance) {
+
+		this.app = instance;
+		this.locale = LocaleLoader.loadLanguagePack("modules", "sshtools", app.getLocale());
 
 		if(KeyMinder.environment.get("os").equals("Linux") && !System.getProperty("user.name").equals("root")){
 			instance.log("Warning (SSH-Tools): Privileged ports can only be forwarded by root. " + ApplicationInstance.APP_NAME + " won't be able to forward ports lower than 1024.");
@@ -127,7 +120,7 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 		app.getShell().addCommand("run", getClass().getPackage().getName() + ".AppStartCmd");
 
 		if(JavaFxUserInterface.isLoaded(app)){
-			fxUI = JavaFxUserInterface.getInstance(app);
+			this.fxUI = JavaFxUserInterface.getInstance(app);
 
 			EventHandler<ActionEvent> keyclipHandler = null;
 			if(app.getShell().commandExists("keyclip")){
@@ -185,6 +178,9 @@ public class SSHTools implements de.akubix.keyminder.core.interfaces.Module {
 					}
 				}), de.akubix.keyminder.ui.fx.MenuEntryPosition.TOOLS, false);
 			}
+		}
+		else{
+			this.fxUI = null;
 		}
 
 		// add event handlers

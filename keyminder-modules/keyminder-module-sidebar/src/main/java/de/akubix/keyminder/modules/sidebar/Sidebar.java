@@ -21,34 +21,16 @@ package de.akubix.keyminder.modules.sidebar;
 import java.util.ResourceBundle;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.exceptions.ModuleStartupException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
-import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 
-@de.akubix.keyminder.core.interfaces.ModuleProperties(
-		name="Sidebar",
-		description = "This module allows you to store usernames, passwords any many other informations in a single node.",
-		version = ".",
-		dependencies = "KeyClip",
-		author="Bastian Kraemer")
-public class Sidebar implements de.akubix.keyminder.core.interfaces.Module {
-
-	private ApplicationInstance app;
-	private ResourceBundle locale;
-
-	@Override
-	public void onStartup(ApplicationInstance instance) throws ModuleStartupException{
-		if(!JavaFxUserInterface.isLoaded(instance)){
-			throw new ModuleStartupException("JavaFX Interface not available", ModuleStartupException.ModuleErrorLevel.FxUserInterfaceNotAvailable);
-		}
-
-		this.app = instance;
-		this.locale = LocaleLoader.loadLanguagePack("modules", "sidebar", app.getLocale());
+public class Sidebar {
+	public Sidebar(ApplicationInstance app){
+		final ResourceBundle locale = LocaleLoader.loadLanguagePack("modules", "sidebar", app.getLocale());
 
 		FxSidebar sidebar;
 		sidebar = new FxSidebar(app, locale.getString("module.sidebar.tabtitle"), true, new EventHandler<ActionEvent>() {
