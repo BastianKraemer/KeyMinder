@@ -70,10 +70,10 @@ public class FileSettingsDialog {
 	public FileSettingsDialog(Stage primaryStage, ApplicationInstance instance){
 		this.app = instance;
 		this.fxUI = JavaFxUserInterface.getInstance(instance);
-		this.originalFileSettingsReference = app.currentFile.fileSettings;
-		this.fileSettingsCopy = new HashMap<String, String>();
+		this.originalFileSettingsReference = app.getCurrentFile().getFileSettings();
+		this.fileSettingsCopy = new HashMap<>();
 
-		de.akubix.keyminder.lib.Tools.hashCopy(app.currentFile.fileSettings, fileSettingsCopy);
+		de.akubix.keyminder.lib.Tools.hashCopy(app.getCurrentFile().getFileSettings(), fileSettingsCopy);
 
 		me = new Stage();
 		me.setTitle(ApplicationInstance.APP_NAME + " - " + fxUI.getLocaleBundleString("filesettings.title"));
@@ -90,7 +90,7 @@ public class FileSettingsDialog {
 		TabPane tabs = new TabPane();
 
 		// Allgemeine Einstellungen
-		if(app.currentFile == null){return false;}
+		if(!app.isAnyFileOpened()){return false;}
 
 		tabs.getTabs().add(createSecuritySettingsTab());
 
@@ -167,10 +167,10 @@ public class FileSettingsDialog {
 
 		final Separator passwordHintSeparator = new Separator(Orientation.HORIZONTAL);
 		final Label passwordHintLabel = new Label(fxUI.getLocaleBundleString("filesettings.security.label_password_hint"));
-		final TextField passwordHintTextField = new TextField(app.currentFile.fileAttributes.containsKey("PasswordHint") ? app.currentFile.fileAttributes.get("PasswordHint") : "");
+		final TextField passwordHintTextField = new TextField(app.getCurrentFile().getFileSettings().getOrDefault("PasswordHint", ""));
 
 		passwordHintTextField.setOnKeyReleased((event) -> {
-				app.currentFile.fileAttributes.put("PasswordHint", passwordHintTextField.getText());
+				app.getCurrentFile().getFileSettings().put("PasswordHint", passwordHintTextField.getText());
 				app.getTree().setTreeChangedStatus(true);
 			});
 
@@ -188,7 +188,7 @@ public class FileSettingsDialog {
 
 		cipherSelection.setOnAction((event) -> {
 				try {
-					app.currentFile.getEncryptionManager().setCipher(cipherSelection.getSelectionModel().getSelectedItem());
+					app.getCurrentFile().getEncryptionManager().setCipher(cipherSelection.getSelectionModel().getSelectedItem());
 				} catch (NoSuchAlgorithmException e) {
 					app.alert("ERROR: Cannot change encryption algorithm. The cipher does not exist."); // Should never occur.
 				}
@@ -211,11 +211,11 @@ public class FileSettingsDialog {
 			infoLabelSeparator.setVisible(value);
 		};
 
-		changeElementVisibility.accept(app.currentFile.isEncrypted());
+		changeElementVisibility.accept(app.getCurrentFile().isEncrypted());
 
-		if(app.currentFile.isEncrypted()){
+		if(app.getCurrentFile().isEncrypted()){
 			setEncryptFile.setText(fxUI.getLocaleBundleString("filesettings.security.button_changepassword"));
-			cipherSelection.getSelectionModel().select(app.currentFile.getEncryptionManager().getCipher().getCipherName());
+			cipherSelection.getSelectionModel().select(app.getCurrentFile().getEncryptionManager().getCipher().getCipherName());
 		}
 		else{
 			setNotEncryptFile.setDisable(true);
@@ -224,20 +224,20 @@ public class FileSettingsDialog {
 		setEncryptFile.setOnAction(new EventHandler<ActionEvent>() {
 			@Override
 			public void handle(ActionEvent event) {
-					boolean wasEncrypted = app.currentFile.isEncrypted();
+					boolean wasEncrypted = app.getCurrentFile().isEncrypted();
 					boolean enable = !wasEncrypted;
 
 					if(!enable){
 						try {
 							String currentPw = InputDialog.show(fxUI, fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.headline"), fxUI.getLocaleBundleString("filesettings.security.enter_current_password"), "", true);
-							enable = app.currentFile.getEncryptionManager().checkPassword(currentPw.toCharArray());
+							enable = app.getCurrentFile().getEncryptionManager().checkPassword(currentPw.toCharArray());
 						} catch (UserCanceledOperationException e) {return;}
 					}
 
 					if(enable){
-						if(app.currentFile.getEncryptionManager() == null){app.currentFile.encryptFile(new EncryptionManager(true));}
+						if(app.getCurrentFile().getEncryptionManager() == null){app.getCurrentFile().encryptFile(new EncryptionManager(true));}
 						try {
-							if(app.currentFile.getEncryptionManager().requestPasswordInputWithConfirm(app,
+							if(app.getCurrentFile().getEncryptionManager().requestPasswordInputWithConfirm(app,
 								fxUI.getLocaleBundleString("filesettings.security.button_changepassword"),
 								fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.text"),
 								fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.confirmtext")))
@@ -245,14 +245,14 @@ public class FileSettingsDialog {
 								// New password has been set
 								setNotEncryptFile.setDisable(false);
 								setEncryptFile.setText(fxUI.getLocaleBundleString("filesettings.security.button_changepassword"));
-								cipherSelection.getSelectionModel().select(app.currentFile.getEncryptionManager().getCipher().getCipherName());
+								cipherSelection.getSelectionModel().select(app.getCurrentFile().getEncryptionManager().getCipher().getCipherName());
 								app.saveFile();
 							}
 							else{
 								// Operation canceled
 								if(!wasEncrypted){
 									// Undo everything -> delete the created encryption manager
-									app.currentFile.disableEncryption();
+									app.getCurrentFile().disableEncryption();
 								}
 								fxUI.alert(AlertType.INFORMATION, ApplicationInstance.APP_NAME, fxUI.getLocaleBundleString("filesettings.security.wrong_password_notification_title"), fxUI.getLocaleBundleString("filesettings.security.dialog_changepassword.passwords_not_equal"));
 							}
@@ -261,7 +261,7 @@ public class FileSettingsDialog {
 					else{
 						fxUI.alert(AlertType.INFORMATION, ApplicationInstance.APP_NAME, fxUI.getLocaleBundleString("filesettings.security.wrong_password_notification_title"), fxUI.getLocaleBundleString("filesettings.security.wrong_password"));
 					}
-					changeElementVisibility.accept(app.currentFile.isEncrypted());
+					changeElementVisibility.accept(app.getCurrentFile().isEncrypted());
 				}
 		});
 
@@ -269,7 +269,7 @@ public class FileSettingsDialog {
 			@Override
 			public void handle(ActionEvent event) {
 
-				if(app.currentFile.isEncrypted()){
+				if(app.getCurrentFile().isEncrypted()){
 					Alert alert = new Alert(AlertType.CONFIRMATION);
 					alert.setTitle(ApplicationInstance.APP_NAME);
 					alert.setHeaderText(fxUI.getLocaleBundleString("filesettings.security.confirm_disable_encryption.title"));
@@ -290,8 +290,8 @@ public class FileSettingsDialog {
 						try {
 							String currentPw = InputDialog.show(fxUI, fxUI.getLocaleBundleString("filesettings.security.confirm_disable_encryption.title"), fxUI.getLocaleBundleString("filesettings.security.enter_current_password"), "", true);
 
-							if(app.currentFile.getEncryptionManager().checkPassword(currentPw.toCharArray())){
-								app.currentFile.disableEncryption();
+							if(app.getCurrentFile().getEncryptionManager().checkPassword(currentPw.toCharArray())){
+								app.getCurrentFile().disableEncryption();
 								setNotEncryptFile.setDisable(true);
 								setEncryptFile.setText(fxUI.getLocaleBundleString("filesettings.security.button_enable_encryption"));
 							}
@@ -300,7 +300,7 @@ public class FileSettingsDialog {
 							}
 						} catch (UserCanceledOperationException e) {}
 					}
-					changeElementVisibility.accept(app.currentFile.isEncrypted());
+					changeElementVisibility.accept(app.getCurrentFile().isEncrypted());
 				}
 			}
 		});

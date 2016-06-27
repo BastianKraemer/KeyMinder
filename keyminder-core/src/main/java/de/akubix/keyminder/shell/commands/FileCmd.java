@@ -23,6 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.FileConfiguration;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.lib.Tools;
@@ -113,7 +114,7 @@ public final class FileCmd extends AbstractShellCommand {
 				break;
 
 			case "save":
-				if(instance.currentFile != null){
+				if(instance.isAnyFileOpened()){
 					result = instance.saveFile();
 					printColoredStatus(out, result, "File saved.", "Error: File couldn't be saved.");
 				}
@@ -127,13 +128,13 @@ public final class FileCmd extends AbstractShellCommand {
 			case "saveas":
 			case "save_as":
 			case "save-as":
-				if(instance.currentFile != null){
+				if(instance.isAnyFileOpened()){
 					if(!requireKeys(out, in.getParameters(), "--path")){return CommandOutput.error();}
 					String newFilePath = in.getParameters().get("--path")[0];
 					if(in.getParameters().containsKey("--type")){
 						String newFileType = in.getParameters().get("--type")[0];
 						try{
-							instance.currentFile.changeFileTypeIdentifier(instance, newFileType);
+							instance.getCurrentFile().changeFileTypeIdentifier(instance, newFileType);
 						}
 						catch(IllegalArgumentException illArgeEx){
 							out.println(String.format("Unkonw file type identifier \"%s\".", newFileType));
@@ -141,14 +142,14 @@ public final class FileCmd extends AbstractShellCommand {
 						}
 					}
 					else{
-						instance.currentFile.changeFileTypeIdentifier(
+						instance.getCurrentFile().changeFileTypeIdentifier(
 							instance,
-							instance.storageManager.getIdentifierByExtension(
+							instance.getStorageManager().getIdentifierByExtension(
 								Tools.getFileExtension(newFilePath),
-								instance.currentFile.getFileTypeIdentifier()));
+								instance.getCurrentFile().getFileTypeIdentifier()));
 					}
 
-					instance.currentFile.changeFilepath(new File(newFilePath));
+					instance.getCurrentFile().changeFilepath(new File(newFilePath));
 					result = instance.saveFile();
 					printColoredStatus(out, result, "File saved.", "Error: File couldn't be saved.");
 				}
@@ -160,7 +161,7 @@ public final class FileCmd extends AbstractShellCommand {
 				break;
 
 			case "close":
-				if(instance.currentFile != null){
+				if(instance.isAnyFileOpened()){
 					result = instance.closeFile();
 					printColoredStatus(out, result, "File closed.", "The action has been canceled by a plugin or the user...");
 				}
@@ -172,11 +173,12 @@ public final class FileCmd extends AbstractShellCommand {
 				break;
 
 			case "info":
-				if(instance.currentFile != null){
-					out.println("Filepath:\t" + instance.currentFile.getFilepath().getAbsolutePath());
-					out.println("File type:\t" + instance.currentFile.getFileTypeIdentifier());
-					out.println("Format version:\t" + instance.currentFile.getFileFormatVersion());
-					out.println("Encryption:\t" + (instance.currentFile.isEncrypted() ? instance.currentFile.getEncryptionManager().getCipher().getCipherName() : "Disabled") + "\n");
+				if(instance.isAnyFileOpened()){
+					FileConfiguration currentFile = instance.getCurrentFile();
+					out.println("Filepath:\t" + currentFile.getFilepath().getAbsolutePath());
+					out.println("File type:\t" + currentFile.getFileTypeIdentifier());
+					out.println("Format version:\t" + currentFile.getFileFormatVersion());
+					out.println("Encryption:\t" + (currentFile.isEncrypted() ? currentFile.getEncryptionManager().getCipher().getCipherName() : "Disabled") + "\n");
 				}
 				else{
 					out.println("No file opened.");
@@ -187,14 +189,14 @@ public final class FileCmd extends AbstractShellCommand {
 
 			case "types":
 				out.println("Supported file types:");
-				instance.storageManager.forEachFileType((str) -> out.print(str + " "));
+				instance.getStorageManager().forEachFileType((str) -> out.print(str + " "));
 				out.print("\n\nKnown file extensions:\n");
-				instance.storageManager.forEachKnownExtension((extension, assignedType) -> out.println(String.format("%-16s\t%s", extension, assignedType)));
+				instance.getStorageManager().forEachKnownExtension((extension, assignedType) -> out.println(String.format("%-16s\t%s", extension, assignedType)));
 				break;
 
 			case "set-cipher":
-				if(instance.currentFile != null){
-					if(!instance.currentFile.isEncrypted()){
+				if(instance.isAnyFileOpened()){
+					if(!instance.getCurrentFile().isEncrypted()){
 						out.println("Please use 'file set-password' at first to enable the file encryption.");
 						return CommandOutput.error();
 					}
@@ -206,7 +208,7 @@ public final class FileCmd extends AbstractShellCommand {
 							out.println("Please use 'file reset-password' to disable the encryption of your password file.");
 							return CommandOutput.error();
 						}
-						instance.currentFile.getEncryptionManager().setCipher(cipherName);
+						instance.getCurrentFile().getEncryptionManager().setCipher(cipherName);
 						out.setColor(AnsiColor.GREEN);
 						out.printf("Encryption algorithmn has been changed to '%s'\n", cipherName);
 						out.setColor(AnsiColor.RESET);
@@ -227,21 +229,22 @@ public final class FileCmd extends AbstractShellCommand {
 			case "set-password":
 			case "set-pw":
 				try{
-					boolean wasEncrypted = instance.currentFile.isEncrypted();
-					boolean enableChangePw = !instance.currentFile.isEncrypted();
+					FileConfiguration currentFile = instance.getCurrentFile();
+					boolean wasEncrypted = currentFile.isEncrypted();
+					boolean enableChangePw = !wasEncrypted;
 
 					// let the user enter his current password (if the file is encrypted)
 					if(!enableChangePw){
-						enableChangePw = (instance.currentFile.getEncryptionManager().checkPassword(
+						enableChangePw = (currentFile.getEncryptionManager().checkPassword(
 											instance.requestPasswordInput("Change file password", "Please enter your current file password: ", "")));
 					}
 
 					if(enableChangePw){
-						if(!instance.currentFile.isEncrypted()){
-							instance.currentFile.encryptFile(new EncryptionManager(true));
+						if(!currentFile.isEncrypted()){
+							currentFile.encryptFile(new EncryptionManager(true));
 						}
 
-						if(instance.currentFile.getEncryptionManager().requestPasswordInputWithConfirm(
+						if(currentFile.getEncryptionManager().requestPasswordInputWithConfirm(
 								instance,
 								wasEncrypted ? "Change file password" : "Set file password",
 								"Please enter your " + (wasEncrypted ? "new " : "") + "file password: ", "Please enter your password again: ")){
@@ -254,7 +257,7 @@ public final class FileCmd extends AbstractShellCommand {
 						else{
 							if(!wasEncrypted){
 								// Undo everything -> delete the created encryption manager
-								instance.currentFile.disableEncryption();
+								currentFile.disableEncryption();
 							}
 
 							// Operation has been canceled
@@ -273,15 +276,15 @@ public final class FileCmd extends AbstractShellCommand {
 
 			case "reset-password":
 			case "reset-pw":
-				if(!instance.currentFile.isEncrypted()){
+				if(!instance.getCurrentFile().isEncrypted()){
 					out.println("Encryption is already disabled.");
 					break;
 				}
 
 				try {
-					if(instance.currentFile.getEncryptionManager().checkPassword(
+					if(instance.getCurrentFile().getEncryptionManager().checkPassword(
 							instance.requestPasswordInput("Change file password", "Please enter your current file password: ", ""))){
-						instance.currentFile.disableEncryption();
+						instance.getCurrentFile().disableEncryption();
 						out.println("Encryption of passwordfile disabled (not recommended).");
 						out.setColor(AnsiColor.CYAN);
 						out.println("Save your password file to write the unencrypted file to your harddisk.");

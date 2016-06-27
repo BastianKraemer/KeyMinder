@@ -498,7 +498,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	private void updateWindowTitle() {
 		me.setTitle(
 			ApplicationInstance.APP_NAME
-			+ ((app.getSettingsValueAsBoolean("windowtitle.showfilename", true) && app.currentFile != null) ? " - " + app.currentFile.getFilepath().getName() : "")
+			+ ((app.getSettingsValueAsBoolean("windowtitle.showfilename", true) && app.isAnyFileOpened()) ? " - " + app.getCurrentFile().getFilepath().getName() : "")
 			+ (app.getSettingsValueAsBoolean("windowtitle.showversion", false) ? " (Version " + KeyMinder.getApplicationVersion() + ")" : ""));
 	}
 
@@ -509,7 +509,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		}
 
 		nextSelectedItemChangeEventWasFiredByMe = false;
-		lastFileDialogDirectory = app.currentFile.getFilepath().getParent();
+		lastFileDialogDirectory = app.getCurrentFile().getFilepath().getParent();
 		treeDependentElementsDisableProperty.set(false);
 
 		if(dataTree.getSelectedNode().getId() != 0){
@@ -586,16 +586,16 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.close"), "", new EventHandler<ActionEvent>() {
 							@Override public void handle(ActionEvent e){
-								if(app.currentFile != null){
+								if(app.isAnyFileOpened()){
 									if(app.closeFile()){
 										updateStatus(localeBundle.getString("mainwindow.messages.file_successfully_closed"));
 									}
 								}
 							}}, true));
 
-		if(app.settings.containsKey("ui.filelist")){
+		if(app.settingsContainsKey("ui.filelist")){
 			Menu openFileMenu = new Menu(localeBundle.getString("mainwindow.menu.file.recently_used"));
-			String[] myFiles = app.settings.get("ui.filelist").split(";");
+			String[] myFiles = app.getSettingsValue("ui.filelist").split(";");
 			for(int i = 0; i < myFiles.length; i++){
 				File f = new File(myFiles[i]);
 				MenuItem item = createMenuItem(f.getName(), "", (event) -> app.openFile((File) ((MenuItem) event.getSource()).getUserData()), false);
@@ -726,9 +726,9 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		 */
 		// Node rootIcon = new ImageView(new Image(getClass().getResourceAsStream("file://...")));
 
-		TreeItem<TreeNode> rootItem = new TreeItem<TreeNode>(dataTree.getRootNode());//, rootIcon);
+		TreeItem<TreeNode> rootItem = new TreeItem<>(dataTree.getRootNode());//, rootIcon);
 		rootItem.setExpanded(true);
-		fxtree = new TreeView<TreeNode> (rootItem);
+		fxtree = new TreeView<> (rootItem);
 		fxtree.setId("Tree");
 		fxtree.setShowRoot(false);
 		fxtree.setEditable(true);
@@ -948,7 +948,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	 * @see FileChooser.ExtensionFilter
 	 */
 	private FileChooser.ExtensionFilter[] getFileChooserExtensionFilter(){
-		List<FileExtension> knownFileExtensions = app.storageManager.getKnownExtensions();
+		List<FileExtension> knownFileExtensions = app.getStorageManager().getKnownExtensions();
 		FileChooser.ExtensionFilter[] arr = new FileChooser.ExtensionFilter[knownFileExtensions.size() + 1];
 
 		for(int i = 0; i < knownFileExtensions.size(); i++){
@@ -982,7 +982,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		final JavaFxUserInterfaceApi fxUI = this;
 
-		BooleanSupplier condition_FileOpened = () -> app.currentFile != null;
+		BooleanSupplier condition_FileOpened = () -> app.isAnyFileOpened();
 		BooleanSupplier condition_nodesAvailable = () -> (dataTree.getRootNode().countChildNodes() > 0);
 
 		// Possible Key-Combinations
@@ -1219,7 +1219,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 	private void addChildNodes2FxTree(TreeItem<TreeNode> parentNode){
 		parentNode.getValue().forEachChildNode((childNode) -> {
-			TreeItem<TreeNode> node = new TreeItem<TreeNode>(childNode);
+			TreeItem<TreeNode> node = new TreeItem<>(childNode);
 			treeNodeTranslator.put(childNode, node);
 			parentNode.getChildren().add(node);
 			addChildNodes2FxTree(node);
@@ -1267,7 +1267,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	}
 
 	private void displayNewTreePart(TreeNode newNode) {
-		TreeItem<TreeNode> node = new TreeItem<TreeNode>(newNode);
+		TreeItem<TreeNode> node = new TreeItem<>(newNode);
 		treeNodeTranslator.put(newNode, node);
 
 		TreeNode parentNode = newNode.getParentNode();
@@ -1357,16 +1357,16 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	}
 
 	private void initalizeSaveFileAs(){
-		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.save_file.title"), app.currentFile.getFilepath().getAbsolutePath(), "", getFileChooserExtensionFilter());
+		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.save_file.title"), app.getCurrentFile().getFilepath().getAbsolutePath(), "", getFileChooserExtensionFilter());
 		if(f != null){
-			String fileTypeIdentifier = app.storageManager.getIdentifierByExtension(de.akubix.keyminder.lib.Tools.getFileExtension(f.getName()), "");
+			String fileTypeIdentifier = app.getStorageManager().getIdentifierByExtension(de.akubix.keyminder.lib.Tools.getFileExtension(f.getName()), "");
 			if(fileTypeIdentifier.equals("")){
 				app.alert(String.format(localeBundle.getString("mainwindow.dialogs.save_file.unsupported_filetype_message"), de.akubix.keyminder.lib.Tools.getFileExtension(f.getAbsolutePath()), de.akubix.keyminder.core.io.StorageManager.defaultFileType));
 				fileTypeIdentifier = de.akubix.keyminder.core.io.StorageManager.defaultFileType;
 			}
 
-			app.currentFile.changeFilepath(f);
-			app.currentFile.changeFileTypeIdentifier(app, fileTypeIdentifier);
+			app.getCurrentFile().changeFilepath(f);
+			app.getCurrentFile().changeFileTypeIdentifier(app, fileTypeIdentifier);
 			app.saveFile();
 		}
 	}

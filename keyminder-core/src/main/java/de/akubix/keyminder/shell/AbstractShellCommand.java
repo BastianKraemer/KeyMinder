@@ -38,7 +38,7 @@ public abstract class AbstractShellCommand implements ShellCommand{
 	@Override
 	public CommandInput parseArguments(ApplicationInstance instance, List<String> args) throws CommandException {
 
-		if(getClass().getAnnotation(RequireOpenedFile.class) != null && instance.currentFile == null){
+		if(getClass().getAnnotation(RequireOpenedFile.class) != null && !instance.isAnyFileOpened()){
 			throw new CommandException("Error: You have to open a password file before you can use this command.");
 		}
 

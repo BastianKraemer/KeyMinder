@@ -81,15 +81,15 @@ public class ApplicationInstance implements ShellOutputWriter {
 	private File settingsFile;
 	private UserInterface ui;
 
-	public Map<String, String> settings = new HashMap<>();
-	public FileConfiguration currentFile = null;
+	private final Map<String, String> settings = new HashMap<>();
+	private FileConfiguration currentFile = null;
 
 	private Map<String, List<Object>> eventCollection = new HashMap<>();
 
 	private StandardTree tree;
 	private final Shell shell;
 	private final ModuleLoader moduleLoader;
-	public final StorageManager storageManager;
+	private final StorageManager storageManager;
 	private final ResourceBundle locale;
 	private final KeyMinderUserInterface userInterfaceInformation;
 
@@ -194,6 +194,22 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 	public KeyMinderUserInterface getUserInterfaceInformation(){
 		return this.userInterfaceInformation;
+	}
+
+	public StorageManager getStorageManager(){
+		return this.storageManager;
+	}
+
+	public Map<String, String> getSettingsMap(){
+		return this.settings;
+	}
+
+	public FileConfiguration getCurrentFile(){
+		return this.currentFile;
+	}
+
+	public boolean isAnyFileOpened(){
+		return (this.currentFile != null);
 	}
 
 	/*
@@ -326,14 +342,14 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 	public boolean fileSettingsContainsKey(String name){
 		if(currentFile != null){
-			return currentFile.fileSettings.containsKey(name);
+			return currentFile.getFileSettings().containsKey(name);
 		}
 		return false;
 	}
 
 	public String getFileSettingsValue(String name){
 		if(currentFile != null){
-			return currentFile.fileSettings.getOrDefault(name, "");
+			return currentFile.getFileSettings().getOrDefault(name, "");
 		}
 		return "";
 	}
@@ -346,7 +362,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 		if(!name.matches("[a-zA-Z0-9_:\\.]+")){
 			throw new IllegalArgumentException("The name for the file settings value contains an illegal character. Allowed characters: 'A-Z', 'a-z', '0-9', '.', '_' and ':'.");
 		}
-		currentFile.fileSettings.put(name, value);
+		currentFile.getFileSettings().put(name, value);
 	}
 
 	public boolean removeFileSettingsValue(String name){
@@ -354,7 +370,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 			throw new IllegalStateException("Unable to change the file settings if not file is opened!");
 		}
 
-		return (currentFile.fileSettings.remove(name) != null);
+		return (currentFile.getFileSettings().remove(name) != null);
 	}
 
 	public Set<String> getSettingsKeySet(){
@@ -366,7 +382,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 			throw new IllegalStateException("Unable to change the file settings if not file is opened!");
 		}
 
-		return currentFile.fileSettings.keySet();
+		return currentFile.getFileSettings().keySet();
 	}
 
 	/**

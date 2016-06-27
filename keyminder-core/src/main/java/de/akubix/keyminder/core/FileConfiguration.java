@@ -28,11 +28,11 @@ public class FileConfiguration {
 	private boolean encrypt = false;
 	private String version;
 	private String fileTypeIdentifier;
-	private de.akubix.keyminder.core.encryption.EncryptionManager encryptionManager;
-	public final Map<String, String> fileAttributes;
-	public final Map<String, String> fileSettings;
+	private EncryptionManager encryptionManager;
+	private final Map<String, String> fileAttributes;
+	private final Map<String, String> fileSettings;
 
-	public FileConfiguration(File file, String fileVersion, boolean encrypt, String fileTypeIdentifier, de.akubix.keyminder.core.encryption.EncryptionManager encryptionManager,
+	public FileConfiguration(File file, String fileVersion, boolean encrypt, String fileTypeIdentifier, EncryptionManager encryptionManager,
 							 Map<String, String> fileAttributes, Map<String, String> fileSettings){
 		this.filepath = file;
 		this.version = fileVersion;
@@ -120,7 +120,7 @@ public class FileConfiguration {
 	 * @throws IllegalArgumentException if the fileTypeIdentifier is not valid
 	 */
 	public void changeFileTypeIdentifier(ApplicationInstance instance, String newFileTypeIdentifier) throws IllegalArgumentException {
-		if(instance.storageManager.hasStorageHandler(newFileTypeIdentifier)){
+		if(instance.getStorageManager().hasStorageHandler(newFileTypeIdentifier)){
 			this.fileTypeIdentifier = newFileTypeIdentifier;
 		}
 		else{
@@ -132,7 +132,21 @@ public class FileConfiguration {
 	 * Use this method to access the encryption manager which will encrypt the document.
 	 * @return the current file type identifier or {@code null} if the file is not encrypted.
 	 */
-	public de.akubix.keyminder.core.encryption.EncryptionManager getEncryptionManager() {
+	public EncryptionManager getEncryptionManager() {
 		return encryptionManager;
+	}
+
+	/**
+	 * @return the file attributes
+	 */
+	public Map<String, String> getFileAttributes() {
+		return this.fileAttributes;
+	}
+
+	/**
+	 * @return the file settings
+	 */
+	public Map<String, String> getFileSettings() {
+		return this.fileSettings;
 	}
 }

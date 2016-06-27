@@ -287,7 +287,7 @@ public class KeyMindFileHandler implements StorageHandler {
 	}
 
 	private static StandardNode createTreeNode(org.w3c.dom.Node xmlNode, Tree tree){
-		Map<String, String> attribs = new HashMap<String, String>();
+		Map<String, String> attribs = new HashMap<>();
 		String text = "";
 		String color = "";
 		int id = 0;
@@ -338,7 +338,7 @@ public class KeyMindFileHandler implements StorageHandler {
 			org.w3c.dom.Node configNode = xmldoc.createElement("configuration");
 			org.w3c.dom.Node dataNode = xmldoc.createElement("data");
 
-			XMLCore.map2FlatXMLNodes(configNode, fileConfig.fileAttributes);
+			XMLCore.map2FlatXMLNodes(configNode, fileConfig.getFileAttributes());
 
 			xmldoc.getDocumentElement().appendChild(configNode);
 			xmldoc.getDocumentElement().appendChild(dataNode);
@@ -349,7 +349,7 @@ public class KeyMindFileHandler implements StorageHandler {
 				org.w3c.dom.Node settingsNode = subxmldoc.createElement("settings");
 				org.w3c.dom.Node treeNode = subxmldoc.createElement("tree");
 
-				XMLCore.convertHashToXMLNodes(settingsNode, fileConfig.fileSettings);
+				XMLCore.convertHashToXMLNodes(settingsNode, fileConfig.getFileSettings());
 				appendChildNodesToXMLFile(subxmldoc, treeNode, rootNode);
 
 				subxmldoc.getDocumentElement().appendChild(settingsNode);
@@ -382,7 +382,7 @@ public class KeyMindFileHandler implements StorageHandler {
 				org.w3c.dom.Node settingsNode = xmldoc.createElement("settings");
 				org.w3c.dom.Node treeNode = xmldoc.createElement("tree");
 
-				XMLCore.convertHashToXMLNodes(settingsNode, fileConfig.fileSettings);
+				XMLCore.convertHashToXMLNodes(settingsNode, fileConfig.getFileSettings());
 				appendChildNodesToXMLFile(xmldoc, treeNode, rootNode);
 
 				dataNode.appendChild(settingsNode);

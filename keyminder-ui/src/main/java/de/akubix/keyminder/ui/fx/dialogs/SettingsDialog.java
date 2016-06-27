@@ -70,14 +70,11 @@ public class SettingsDialog {
 	private JavaFxUserInterfaceApi fxUI;
 	private Map<String, String> settingscopy;
 
-	private Map<String, String> originalGeneralSettingsReference;
-
 	public SettingsDialog(Stage primaryStage, ApplicationInstance instance) throws IllegalStateException {
 		this.app = instance;
 		this.fxUI = JavaFxUserInterface.getInstance(instance);
-		this.originalGeneralSettingsReference = app.settings;
-		this.settingscopy = new HashMap<String, String>();
-		de.akubix.keyminder.lib.Tools.hashCopy(originalGeneralSettingsReference, settingscopy);
+		this.settingscopy = new HashMap<>();
+		de.akubix.keyminder.lib.Tools.hashCopy(app.getSettingsMap(), settingscopy);
 
 		me = new Stage();
 		me.setTitle(ApplicationInstance.APP_NAME + " - " + fxUI.getLocaleBundleString("settings.title"));
@@ -106,7 +103,7 @@ public class SettingsDialog {
 			@Override
 			public void handle(ActionEvent event) {
 
-				de.akubix.keyminder.lib.Tools.hashCopy(settingscopy, originalGeneralSettingsReference);
+				de.akubix.keyminder.lib.Tools.hashCopy(settingscopy, app.getSettingsMap());
 
 				//Check if the user enabled or disabled some modules
 				ModuleLoader moduleLoader =  app.getModuleLoader();

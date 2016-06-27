@@ -52,7 +52,7 @@ public final class ConfigCmd extends AbstractShellCommand {
 		boolean noneOfTheAbove = true;
 
 		if(in.getParameters().containsKey("--fileconfig")){
-			if(instance.currentFile == null){
+			if(!instance.isAnyFileOpened()){
 				out.setColor(AnsiColor.RED);
 				out.println("No file opened.");
 				return CommandOutput.error();
