@@ -9,7 +9,7 @@ import de.akubix.keyminder.shell.annotations.Operands;
  * <p>An object of this class is given to each command when it is executed.</p>
  * <p>All command line arguments are stored in the {@link CommandInput#parameters} map,
  * furthermore there could be an input from the previous command stored in the {@link CommandInput#inputData} object.
- * <br/>In most cases, the {@link CommandInput#treeNode} field will contain the currently selected {@link TreeNode}, but
+ * <br>In most cases, the {@link CommandInput#treeNode} field will contain the currently selected {@link TreeNode}, but
  * it is possible to use the {@link Operands} annotation to reference another tree node.</p>
  */
 public class CommandInput {
@@ -20,9 +20,9 @@ public class CommandInput {
 	private boolean pipedOutput;
 
 	/**
-	 * Create a new command input object. The value for {@link CommandInput#inputData} is set to {@link null} by default.
-	 * @param parameters
-	 * @param treeNode
+	 * Create a new command input object. The value for {@link CommandInput#inputData} is set to {@code null} by default.
+	 * @param parameters The parameters of the command
+	 * @param treeNode a tree node the command my work with (this is the currently selected node by default)
 	 */
 	public CommandInput(Map<String, String[]> parameters, TreeNode treeNode){
 		this.parameters = parameters;

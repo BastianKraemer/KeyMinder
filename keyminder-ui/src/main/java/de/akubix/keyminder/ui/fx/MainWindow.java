@@ -976,7 +976,6 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	 */
 
 	private void startupFxUI(){
-		// TODO FXUI Startup
 
 		// Define all "hot keys"
 

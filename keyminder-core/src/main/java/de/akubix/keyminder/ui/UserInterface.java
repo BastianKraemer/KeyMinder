@@ -51,7 +51,7 @@ public interface UserInterface {
 	 * @param title The title for the window (this can be ignored if the UI is working on the console only)
 	 * @param headline A headline for the question
 	 * @param contentText The message that contains to the input dialog
-	 * @return
+	 * @return {@code true} if the user has chosen yes, {@code false} if not
 	 */
 	public boolean getYesNoChoice(String title, String headline, String contentText);
 
@@ -63,7 +63,7 @@ public interface UserInterface {
 
 	/**
 	 * Write something to the log (this log is designed to be printed somewhere in the UI and can be ignored)
-	 * @param text
+	 * @param text the text to log
 	 */
 	public void log(String text);
 

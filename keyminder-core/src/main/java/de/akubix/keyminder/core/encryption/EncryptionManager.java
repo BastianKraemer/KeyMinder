@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.lib.AESCore;
 
@@ -45,7 +46,7 @@ public class EncryptionManager {
 
 	/**
 	 * Create a encryption manager
-	 * Note: This constructor does not set the password. You have to call {@link #requestPasswordInputWithConfirm(de.akubix.keyminder.core.ApplicationInstance, String, String, String)} after this manually.
+	 * Note: This constructor does not set the password. You have to call {@link #requestPasswordInputWithConfirm(ApplicationInstance, String, String, String)} after this manually.
 	 * @param useDefaultCipher use {@code true} if the default cipher should be used, otherwise the encryption is disabled.
 	 */
 	public EncryptionManager(boolean useDefaultCipher){
@@ -191,7 +192,7 @@ public class EncryptionManager {
 	}
 
 	/**
-	 * Initializes an update of the password which has been assigned to the encryption manager using the {@link de.akubix.keyminder.core.ApplicationInstance#requestStringInput(String, String, String, boolean)} method of the application instance.
+	 * Initializes an update of the password which has been assigned to the encryption manager using the {@link ApplicationInstance#requestStringInput(String, String, String)} method of the application instance.
 	 * Furthermore the user has to input the password twice to avoid typing errors.
 	 * @param instance the application instance
 	 * @param windowTitle the window title
@@ -200,7 +201,7 @@ public class EncryptionManager {
 	 * @return {@code true} if the password has been changed, {@code false} if not
 	 * @throws UserCanceledOperationException if the user canceled the operation
 	 */
-	public boolean requestPasswordInputWithConfirm(de.akubix.keyminder.core.ApplicationInstance instance, String windowTitle, String labelText, String labelTextConfirm) throws UserCanceledOperationException {
+	public boolean requestPasswordInputWithConfirm(ApplicationInstance instance, String windowTitle, String labelText, String labelTextConfirm) throws UserCanceledOperationException {
 		char[] pw = null;
 		try{
 			pw = instance.requestPasswordInput(windowTitle, labelText, "");

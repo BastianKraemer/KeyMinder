@@ -218,10 +218,9 @@ public class ApplicationInstance implements ShellOutputWriter {
 	 * ========================================================================================================================================================
 	 */
 
-	// TODO: Startup
-
 	/**
 	 * The Startup-Method must be called by the UserInterface when it is ready.
+	 * @param enableModuleLoading specify if modules should be loaded or not
 	 */
 	public void startup(boolean enableModuleLoading){
 		if(enableModuleLoading){
@@ -738,7 +737,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 	 * This method will fire an event, according to this all registered event handlers for this event will be called.
 	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
 	 * @param event the event that should be triggered
-	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
+	 * @throws IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
 	public synchronized void fireEvent(EventTypes.DefaultEvent event) throws IllegalCallException {
 		if(!ui.isUserInterfaceThread()){
@@ -757,12 +756,10 @@ public class ApplicationInstance implements ShellOutputWriter {
 	 * Currently this event is only fired to ask if the file has unsaved changes an can be closed.
 	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
 	 * @param event the event that should be fired
-	 * @param cancelOn this method will return the parameter 'cancelValue' if one event handler returns this boolean value
-	 * @param cancelValue the value that will be returned if one event handler returns the value of 'cancelOn'
-	 * @return if everything is okay this method will return '!cancelValue', if not it will be 'cancelValue'
-	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
+	 * @return the {@link Compliance} of all event handler
+	 * @throws IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
 	 */
-	public synchronized Compliance fireEvent(EventTypes.ComplianceEvent event) throws IllegalCallException{
+	public synchronized Compliance fireEvent(EventTypes.ComplianceEvent event) throws IllegalCallException {
 		if(!ui.isUserInterfaceThread()){
 			throw new IllegalCallException("All events must be fired with the user interface thread.");
 		}
@@ -787,7 +784,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 	 * Note: If the any (graphical) user interface is been loaded, this method has to be called with the UI thread.
 	 * @param event the event that should be triggered
 	 * @param node the node that belongs to this event
-	 * @throws core.exceptions.IllegalCallException If the JavaFX user interface is loaded, an this method is not called with JavaFX Thread.
+	 * @throws IllegalCallException If this method is not called by the thread of the user interface
 	 */
 	public synchronized void fireEvent(EventTypes.TreeNodeEvent event, TreeNode node) throws IllegalCallException {
 		if(!ui.isUserInterfaceThread()){
@@ -831,7 +828,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 	 * @param text the label text
 	 * @param passwordHint the password hint (if any)
 	 * @return The password as char array
-	 * @throws UserCanceledOperationException
+	 * @throws UserCanceledOperationException if the user canceled the operation
 	 */
 	public char[] requestPasswordInput(String title, String text, String passwordHint) throws UserCanceledOperationException {
 		return ui.getPasswordInput(title, text, passwordHint);
@@ -839,8 +836,8 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 	/**
 	 * Request a yes no input dialog (if the JavaFX user interface is loaded it will be shown as graphical dialog)
-	 * @param windowTitle the window title
-	 * @param labelText the label text
+	 * @param title the window title
+	 * @param text the label text
 	 * @return {@code true} if the user clicked "yes", {@code false} if it was "no"
 	 */
 	public boolean requestYesNoDialog(String title, String text) {

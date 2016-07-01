@@ -67,7 +67,7 @@ public class Shell {
 	private final Map<String, String> aliasMap = new HashMap<>();
 
 	/**
-	 * Create a new Shell instance
+	 * Creates a new {@link Shell} instance
 	 * @param instance The application instance that is bound to the shell
 	 */
 	public Shell(ApplicationInstance instance){
@@ -75,18 +75,18 @@ public class Shell {
 	}
 
 	/**
-	 * Add a command to the shell
+	 * Adds a command to the shell
 	 * @param name The name of the command
-	 * @param classPath
+	 * @param packageAndClassName the complete package and class name
 	 */
-	public void addCommand(String name, String classPath){
+	public void addCommand(String name, String packageAndClassName){
 		ClassLoader classLoader = this.getClass().getClassLoader();
-		addCommand(name, classPath, classLoader);
+		addCommand(name, packageAndClassName, classLoader);
 	}
 
 	/**
 	 * Loads a command list from an ini file
-	 * @param resourcePath
+	 * @param resourcePath the path to the ini file
 	 */
 	public void loadCommandsFromIniFile(String resourcePath){
 		try {
@@ -102,8 +102,8 @@ public class Shell {
 
 	/**
 	 * Adds an alias command to the shell
-	 * @param alias
-	 * @param value
+	 * @param alias the alias
+	 * @param value the command that should be executed instead
 	 */
 	public void addAlias(String alias, String value){
 		aliasMap.put(alias, value);
@@ -181,7 +181,7 @@ public class Shell {
 	/**
 	 * Executes a command string
 	 * @param commandLineInput The command string
-	 * @throws CommandException
+	 * @throws CommandException if something went wrong (for example an invalid user input)
 	 * @throws UserCanceledOperationException when the user entered the 'exit' command
 	 */
 	public void runShellCommand(String commandLineInput) throws CommandException, UserCanceledOperationException {
@@ -190,8 +190,8 @@ public class Shell {
 
 	/**
 	 * Checks whether a command exists or not
-	 * @param commandName
-	 * @return
+	 * @param commandName the comamnd name
+	 * @return {@code true} if the command exists, {@code false} if not
 	 */
 	public boolean commandExists(String commandName){
 		return availableCommands.containsKey(commandName);
@@ -201,7 +201,7 @@ public class Shell {
 	 * Executes a command string
 	 * @param outWriter The output writer
 	 * @param commandLineInput The command string
-	 * @throws CommandException
+	 * @throws CommandException if something went wrong (for example an invalid user input)
 	 * @throws UserCanceledOperationException when the user entered the 'exit' command
 	 */
 	public void runShellCommand(ShellOutputWriter outWriter, String commandLineInput) throws CommandException, UserCanceledOperationException {
@@ -276,12 +276,12 @@ public class Shell {
 
 	/**
 	 * Parses a command line string to generate a list of {@link ParsedCommand}.
-	 * Therefore the string is split by spaces that are not quoted or command separators like ';', '|' or '&&'.
+	 * Therefore the string is split by spaces that are not quoted or command separators like {@code ';'}, {@code '|'} or {@code '&&'}.
 	 * @param input The string which should be split
 	 * @return The list of parsed commands
 	 */
 	protected static List<ParsedCommand> parseCommandLineString(String input){
-		if(input.equals("")){return new ArrayList<ParsedCommand>(0);}
+		if(input.equals("")){return new ArrayList<>(0);}
 		CommandBuilder cb = new CommandBuilder();
 
 		/* The following code is based on an example written by StackOverflow (stackoverflow.com) user Jan Goyvaerts and is licensed

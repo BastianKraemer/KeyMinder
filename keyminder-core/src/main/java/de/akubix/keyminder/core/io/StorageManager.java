@@ -140,7 +140,7 @@ public class StorageManager {
 
 	/**
 	 * Returns a list of known file extensions
-	 * @return
+	 * @return the list of known file extensions
 	 */
 	public List<FileExtension> getKnownExtensions(){
 		return knownFileExtensions;

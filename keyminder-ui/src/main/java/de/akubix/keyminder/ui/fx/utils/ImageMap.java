@@ -27,8 +27,8 @@ public class ImageMap {
 
 	/**
 	 * Returns the path of an image file selected by a keyword
-	 * @param keyword
-	 * @return
+	 * @param keyword the key of the image
+	 * @return the path to the image
 	 */
 	public static String getIcon(String keyword){
 		loadProperties();
@@ -37,8 +37,8 @@ public class ImageMap {
 
 	/**
 	 * Returns a JavaFX Image selected by a keyword
-	 * @param keyword
-	 * @return
+	 * @param keyword the key of the image
+	 * @return the image
 	 */
 	public static Image getFxImage(String keyword){
 		loadProperties();
@@ -52,8 +52,8 @@ public class ImageMap {
 
 	/**
 	 * Returns a JavaFX ImageView selected by a keyword
-	 * @param keyword
-	 * @return
+	 * @param keyword the key of the image
+	 * @return the {@link ImageView}
 	 */
 	public static ImageView getFxImageView(String keyword){
 		loadProperties();
@@ -67,7 +67,7 @@ public class ImageMap {
 
 	/**
 	 * Adds the KeyMinder icons with the sizes 16x16, 32x32 and 256x256 pixels to a stage
-	 * @param stage
+	 * @param stage the JavaFx {@link Stage}
 	 */
 	public static void addDefaultIconsToStage(Stage stage){
 		loadProperties();

@@ -92,7 +92,7 @@ public class SSHTools {
 
 	private String defaultUsername, defaultPassword;
 
-	private List<String> socksProfileIDs = new ArrayList<String>();
+	private List<String> socksProfileIDs = new ArrayList<>();
 	private final Map<String, Process> runningSocksProfiles = new HashMap<>();
 	private final Map<String, CheckMenuItem> socksMenuItems = new HashMap<>();
 
@@ -428,7 +428,7 @@ public class SSHTools {
 	}
 
 	private List<String> loadSocksProfileIDsFromString(String str){
-		List<String> list = new ArrayList<String>();
+		List<String> list = new ArrayList<>();
 		if(!str.equals("")){
 			for(String item: str.split(",")){
 				list.add(item);
@@ -523,8 +523,8 @@ public class SSHTools {
 
 	/**
 	 * Start a socks profile using the selected "XML application profile"
-	 * @param socksProfileId
-	 * @return
+	 * @param socksProfileId the socks profile id
+	 * @return {@code true} if the operation was successful, {@code false} if not
 	 */
 	public boolean startSocksProfile(String socksProfileId){
 		if(socksAppStarter == null){app.log("ERROR: Cannot start Profile - no application definied. Please update your settings."); return false;}
@@ -578,7 +578,7 @@ public class SSHTools {
 
 	/**
 	 * Stop a socks profile
-	 * @param socksProfileID
+	 * @param socksProfileID the socks profile id
 	 */
 	public void stopSocksProfile(String socksProfileID){
 		Process socksProcess = runningSocksProfiles.get(socksProfileID);
@@ -860,7 +860,7 @@ public class SSHTools {
 
 			HBox hbox = new HBox(4);
 
-			ComboBox<String> profileSelection = new ComboBox<String>();
+			ComboBox<String> profileSelection = new ComboBox<>();
 			profileSelection.setMaxWidth(Double.MAX_VALUE);
 
 			if(socksProfileIDs_clone.size() > 0){
@@ -1100,7 +1100,7 @@ public class SSHTools {
 		 * Source: http://stackoverflow.com/questions/366202/regex-for-splitting-a-string-using-space-when-not-surrounded-by-single-or-double
 		 * The code hasn't been modified.
 		 */
-		List<String> matchList = new ArrayList<String>();
+		List<String> matchList = new ArrayList<>();
 		Pattern regex = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'");
 		Matcher regexMatcher = regex.matcher(paramString);
 		while (regexMatcher.find()) {
