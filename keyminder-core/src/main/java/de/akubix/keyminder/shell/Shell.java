@@ -69,6 +69,7 @@ public class Shell {
 
 	private final Map<String, Class<? extends ShellCommand>> availableCommands = new HashMap<>();
 	private final Map<String, String> aliasMap = new HashMap<>();
+	private final Map<String, String> runtimeVariables = new HashMap<>();
 
 	/**
 	 * Creates a new {@link Shell} instance
@@ -111,6 +112,14 @@ public class Shell {
 	 */
 	public void addAlias(String alias, String value){
 		aliasMap.put(alias, value);
+	}
+
+	public void setRuntimeVariable(String key, String value){
+		runtimeVariables.put(key, value);
+	}
+
+	public void removeRuntimeVariable(String key){
+		runtimeVariables.remove(key);
 	}
 
 	public Set<String> getCommandSet(){
@@ -209,7 +218,7 @@ public class Shell {
 	 * @throws UserCanceledOperationException when the user entered the 'exit' command
 	 */
 	public void runShellCommand(ShellOutputWriter outWriter, String commandLineInput) throws CommandException, UserCanceledOperationException {
-		List<ParsedCommand> cmdList = parseCommandLineString(replaceVariables(commandLineInput.trim(), (var) -> instance.lookup(var)));
+		List<ParsedCommand> cmdList = parseCommandLineString(replaceVariables(commandLineInput.trim(), (var) -> instance.lookup(var, runtimeVariables)));
 
 		for(int i = 0; i < cmdList.size(); i++){
 			ParsedCommand p = cmdList.get(i);
