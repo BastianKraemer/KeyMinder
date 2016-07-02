@@ -23,10 +23,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.regex.MatchResult;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -205,7 +209,7 @@ public class Shell {
 	 * @throws UserCanceledOperationException when the user entered the 'exit' command
 	 */
 	public void runShellCommand(ShellOutputWriter outWriter, String commandLineInput) throws CommandException, UserCanceledOperationException {
-		List<ParsedCommand> cmdList = parseCommandLineString(commandLineInput.trim());
+		List<ParsedCommand> cmdList = parseCommandLineString(replaceVariables(commandLineInput.trim(), (var) -> instance.lookup(var)));
 
 		for(int i = 0; i < cmdList.size(); i++){
 			ParsedCommand p = cmdList.get(i);
@@ -314,5 +318,68 @@ public class Shell {
 
 	private static String unescape(String str){
 		return str.replaceAll("#U\\+005C", "\\\\").replaceAll("#U\\+0022", "\"").replaceAll("#U\\+0027", "'").replaceAll("#U\\+0023", "#");
+	}
+
+	/**
+	 * Replaces all Variables (${variable}) in a string
+	 * @param source The String the variables should be replaced in
+	 * @return The String with all replaced variables (if possible)
+	 */
+	public static String replaceVariables(String source, Function<String, String> lookupFunction){
+		// Regular expression to allow all characters in variables except "$"
+		//	-> \\$\\{[^\\$]+\\}
+		// Regular expression to allow only A-Z, a-z and 0-9 for variable names
+		// 	-> \\$\\{[a-zA-Z0-9]*\\}
+
+		for(MatchResult match : allMatches(Pattern.compile("\\$\\{[^\\$]+\\}"), source)){
+			source = source.replace(match.group(), lookupFunction.apply(match.group().substring(2, match.group().length() - 1)));
+		}
+		return source;
+	}
+
+	/* The following code was written by StackOverflow (stackoverflow.com) user Mike Samuel and is licensed under CC BY-SA 3.0
+	 * "Creative Commons Attribution-ShareAlike 3.0 Unported", http://creativecommons.org/licenses/by-sa/3.0/)
+	 *
+	 * Source: http://stackoverflow.com/questions/6020384/create-array-of-regex-matches
+	 * The code has not been modified.
+	 */
+	private static Iterable<MatchResult> allMatches(final Pattern p, final CharSequence input){
+		return new Iterable<MatchResult>() {
+			@Override
+			public Iterator<MatchResult> iterator() {
+				return new Iterator<MatchResult>()
+				{
+					// Use a matcher internally.
+					final Matcher matcher = p.matcher(input);
+					// Keep a match around that supports any interleaving of hasNext/next calls.
+					MatchResult pending;
+
+					@Override
+					public boolean hasNext() {
+					  // Lazily fill pending, and avoid calling find() multiple times if the
+					  // clients call hasNext() repeatedly before sampling via next().
+					  if (pending == null && matcher.find()) {
+					    pending = matcher.toMatchResult();
+					  }
+					  return pending != null;
+					}
+
+					@Override
+					public MatchResult next() {
+					  // Fill pending if necessary (as when clients call next() without
+					  // checking hasNext()), throw if not possible.
+						if (!hasNext()) { throw new NoSuchElementException(); }
+						// Consume pending so next call to hasNext() does a find().
+						MatchResult next = pending;
+						pending = null;
+						return next;
+					}
+
+					/** Required to satisfy the interface, but unsupported. */
+					@Override
+					public void remove() { throw new UnsupportedOperationException(); }
+				};
+			}
+		};
 	}
 }

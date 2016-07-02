@@ -22,14 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.ResourceBundle;
-import java.util.regex.MatchResult;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -42,9 +37,10 @@ import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.locale.LocaleLoader;
+import de.akubix.keyminder.shell.Shell;
 import de.akubix.keyminder.ui.console.ConsoleMode;
-import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import javafx.stage.FileChooser;
 
 /**
@@ -339,16 +335,7 @@ public class XMLApplicationProfileParser
 	 * @return The String with all replaced variables (if possible)
 	 */
 	private String replaceVariablesInString(String source){
-		// Regular expression to allow all characters in variables except "$"
-		//	-> \\$\\{[^\\$]*\\}
-		// Regular expression to allow only A-Z, a-z and 0-9 for variable names
-		// 	-> \\$\\{[a-zA-Z0-9]*\\}
-
-		for(MatchResult match : allMatches(Pattern.compile("\\$\\{[^\\$]*\\}"), source))
-		{
-			source = source.replace(match.group(), getValueOfVariable(match.group().substring(2, match.group().length() - 1)));
-		}
-		return source;
+		return Shell.replaceVariables(source, (var) -> getValueOfVariable(var));
 	}
 
 	/**
@@ -357,14 +344,6 @@ public class XMLApplicationProfileParser
 	 * @return The value of the variable OR "" if there is no value for this variable
 	 */
 	private String getValueOfVariable(String varName) throws IllegalArgumentException{
-		// There are multiple sources for the values of the variables: The variables of this document stored in 'variables' or as part of the node attributes or ...
-		// Hint: Take a look at the order - you can "overwrite" node attributes because they will be first looked up in 'variables'
-		if(variables.containsKey(varName)){return variables.get(varName);}
-		if(treeNode != null){if(treeNode.hasAttribute(varName)){return treeNode.getAttribute(varName);}}
-		if(app.fileSettingsContainsKey(varName)){return app.getFileSettingsValue(varName);}
-		if(app.settingsContainsKey(varName)){return app.getSettingsValue(varName);}
-		if(treeNode != null){if(varName.toLowerCase().equals("text")){return treeNode.getText();}}
-
 		/* Some "special function variables":
 		 * ${_clipboard_} will return the current clip board value
 		 * ${_openfiledialog_} will open a file dialog and return the file name
@@ -411,7 +390,7 @@ public class XMLApplicationProfileParser
 			throw new IllegalArgumentException(e.getMessage());
 		}
 
-		return "";
+		return app.lookup(varName, treeNode, variables);
 	}
 
 	private String parseSplitTag(org.w3c.dom.Node xmlNode) throws IllegalArgumentException {
@@ -431,53 +410,5 @@ public class XMLApplicationProfileParser
 		}
 
 		return ret.toString();
-	}
-
-	/* The following code was written by StackOverflow (stackoverflow.com) user Mike Samuel and is licensed under CC BY-SA 3.0
-	 * "Creative Commons Attribution-ShareAlike 3.0 Unported", http://creativecommons.org/licenses/by-sa/3.0/)
-	 *
-	 * Source: http://stackoverflow.com/questions/6020384/create-array-of-regex-matches
-	 * The code has not been modified.
-	 */
-
-	private static Iterable<MatchResult> allMatches(final Pattern p, final CharSequence input)
-	{
-		return new Iterable<MatchResult>() {
-			@Override
-			public Iterator<MatchResult> iterator() {
-				return new Iterator<MatchResult>()
-				{
-					// Use a matcher internally.
-					final Matcher matcher = p.matcher(input);
-					// Keep a match around that supports any interleaving of hasNext/next calls.
-					MatchResult pending;
-
-					@Override
-					public boolean hasNext() {
-					  // Lazily fill pending, and avoid calling find() multiple times if the
-					  // clients call hasNext() repeatedly before sampling via next().
-					  if (pending == null && matcher.find()) {
-					    pending = matcher.toMatchResult();
-					  }
-					  return pending != null;
-					}
-
-					@Override
-					public MatchResult next() {
-					  // Fill pending if necessary (as when clients call next() without
-					  // checking hasNext()), throw if not possible.
-						if (!hasNext()) { throw new NoSuchElementException(); }
-						// Consume pending so next call to hasNext() does a find().
-						MatchResult next = pending;
-						pending = null;
-						return next;
-					}
-
-					/** Required to satisfy the interface, but unsupported. */
-					@Override
-					public void remove() { throw new UnsupportedOperationException(); }
-				};
-			}
-		};
 	}
 }

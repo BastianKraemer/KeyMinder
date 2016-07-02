@@ -563,6 +563,60 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 	/*
 	 * ========================================================================================================================================================
+	 * Variables
+	 * ========================================================================================================================================================
+	 */
+
+	public String lookup(String varName) throws IllegalArgumentException {
+		return lookup(varName, (tree.getSelectedNode().getId() != 0 ? tree.getSelectedNode() : null), null);
+	}
+
+	public String lookup(String varName, Map<String, String> additionalVarMap) throws IllegalArgumentException {
+		return lookup(varName, (tree.getSelectedNode().getId() != 0 ? tree.getSelectedNode() : null), additionalVarMap);
+	}
+
+	public String lookup(String varName, TreeNode treeNode) throws IllegalArgumentException {
+		return lookup(varName, treeNode, null);
+	}
+
+	/**
+	 * Returns the value of the variable
+	 * @param varName The name of the variable (without ${...})
+	 * @return The value of the variable OR "" if there is no value for this variable
+	 */
+	public String lookup(String varName, TreeNode treeNode, Map<String, String> additionalVarMap){
+
+		// There are multiple sources for the values of the variables: The variables of this document stored in 'variables' or as part of the node attributes or ...
+		// Hint: Take a look at the order - you can "overwrite" node attributes because they will be first looked up in 'variables'
+
+		if(additionalVarMap != null){
+			if(additionalVarMap.containsKey(varName)){return additionalVarMap.get(varName);}
+		}
+
+		if(treeNode != null){
+			if(treeNode.hasAttribute(varName)){
+				return treeNode.getAttribute(varName);
+			}
+		}
+
+
+		if(fileSettingsContainsKey(varName)){
+			return getFileSettingsValue(varName);
+		}
+
+		if(settingsContainsKey(varName)){
+			return getSettingsValue(varName);
+		}
+
+		if(varName.toLowerCase().equals("text") && treeNode != null){
+				return treeNode.getText();
+		}
+
+		return "";
+	}
+
+	/*
+	 * ========================================================================================================================================================
 	 * Node links
 	 * ========================================================================================================================================================
 	 */
