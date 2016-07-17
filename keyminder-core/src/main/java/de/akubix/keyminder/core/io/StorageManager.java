@@ -35,8 +35,8 @@ public class StorageManager {
 			(String idetifier) -> {
 				return new KeyMindFileHandler(idetifier);
 			},
-			new FileExtension(".keymind", "KeyMinder XML File (*.keymind)"),
-			new FileExtension(".xml", "XML-File (*.xml)"));
+			new FileExtension("*.keymind", "KeyMinder XML File (*.keymind)"),
+			new FileExtension("*.xml", "XML-File (*.xml)"));
 	}
 
 	private Map<String, StorageHandlerInstanceFabric> fileTypes = new HashMap<>();
