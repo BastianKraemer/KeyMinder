@@ -8,8 +8,8 @@ import java.net.URISyntaxException;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -21,19 +21,19 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 
-public abstract class FxSidebarHyperlink implements FxSidebarElement {
+abstract class FxSidebarHyperlink implements FxSidebarElement {
 
 	private final Hyperlink hyperlink;
 	private final BorderPane row;
 
-	public FxSidebarHyperlink(ApplicationInstance instance){
+	protected FxSidebarHyperlink(ApplicationInstance instance) {
 		this(instance, false);
 	}
 
 	public FxSidebarHyperlink(ApplicationInstance instance, boolean useMailTo) throws IllegalStateException {
 		final JavaFxUserInterfaceApi fxUI = JavaFxUserInterface.getInstance(instance);
 		hyperlink = new Hyperlink();
-		hyperlink.prefWidthProperty().bind(fxUI.getSidbarWidthProperty().subtract(12));
+		//hyperlink.prefWidthProperty().bind(fxUI.getSidbarWidthProperty().subtract(12));
 		hyperlink.setMinHeight(24);
 
 		Button edit = new Button("", ImageMap.getFxImageView(("icon_edit")));

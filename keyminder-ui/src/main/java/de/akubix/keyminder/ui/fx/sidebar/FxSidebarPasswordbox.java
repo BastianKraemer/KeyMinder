@@ -1,8 +1,9 @@
 package de.akubix.keyminder.ui.fx.sidebar;
 
+import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -16,12 +17,13 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 
-public abstract class FxSidebarPasswordbox implements FxSidebarElement {
+abstract class FxSidebarPasswordbox implements FxSidebarElement {
 
 	private TextInputControl inputElement;
-	private final
-	BorderPane row;
-	public FxSidebarPasswordbox(de.akubix.keyminder.core.ApplicationInstance instance) {
+	private final BorderPane row;
+
+	protected FxSidebarPasswordbox(ApplicationInstance instance) {
+
 		final JavaFxUserInterfaceApi fxUI = JavaFxUserInterface.getInstance(instance);
 		row = new BorderPane();
 		inputElement = createPasswordbox(instance, true);

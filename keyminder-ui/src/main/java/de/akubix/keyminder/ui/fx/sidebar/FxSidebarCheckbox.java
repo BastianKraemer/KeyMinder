@@ -1,5 +1,6 @@
 package de.akubix.keyminder.ui.fx.sidebar;
 
+import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -7,11 +8,11 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
 
-public abstract class FxSidebarCheckbox implements FxSidebarElement {
+abstract class FxSidebarCheckbox implements FxSidebarElement {
 
 	private CheckBox checkbox;
-	public FxSidebarCheckbox(de.akubix.keyminder.core.ApplicationInstance instance, String checkboxLabelText)
-	{
+	protected FxSidebarCheckbox(ApplicationInstance instance, String checkboxLabelText) {
+
 		checkbox = new CheckBox(checkboxLabelText);
 		checkbox.setPadding(new Insets(15,0,5,10));
 		checkbox.setOnAction(new EventHandler<ActionEvent>() {

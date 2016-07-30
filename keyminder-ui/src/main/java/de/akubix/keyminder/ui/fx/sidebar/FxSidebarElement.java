@@ -19,7 +19,7 @@ public interface FxSidebarElement {
 	/**
 	 * Loads all data you need from the attributes of this tree node
 	 * @param node the tree node which contains the data
-	 * @return {@code true} if the data has bee loaded or {@code false} if the tree node doesn't contain this data
+	 * @return {@code true} if the data has been loaded or {@code false} if the tree node doesn't contain the requested information
 	 */
 	public boolean loadData(TreeNode node);
 

@@ -6,12 +6,12 @@ import javafx.scene.Node;
 import javafx.scene.control.TextArea;
 import javafx.scene.input.KeyEvent;
 
-public abstract class FxSidebarTextarea implements FxSidebarElement {
+abstract class FxSidebarTextarea implements FxSidebarElement {
 
 	private final TextArea textarea;
 
-	public FxSidebarTextarea(de.akubix.keyminder.core.ApplicationInstance instance)
-	{
+	protected FxSidebarTextarea(de.akubix.keyminder.core.ApplicationInstance instance) {
+
 		textarea = new TextArea();
 		textarea.setMaxHeight(100);
 		textarea.setFocusTraversable(false);
