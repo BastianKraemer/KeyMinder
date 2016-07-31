@@ -200,7 +200,7 @@ public class SettingsDialog {
 				settingscopy.put(ApplicationInstance.SETTINGS_KEY_DEFAULT_FILE, defaultFile.getText());
 			}});
 
-		final CheckBox windowTitleFilename = new CheckBox("settings.general.show_current_file_in_window_title");
+		final CheckBox windowTitleFilename = new CheckBox(fxUI.getLocaleBundleString("settings.general.show_current_file_in_window_title"));
 		windowTitleFilename.setSelected(app.getSettingsValueAsBoolean("windowtitle.showfilename", true));
 		windowTitleFilename.selectedProperty().addListener(new ChangeListener<Boolean>() {
 			@Override
