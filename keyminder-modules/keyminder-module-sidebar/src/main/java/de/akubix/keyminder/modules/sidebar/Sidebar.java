@@ -21,42 +21,38 @@ package de.akubix.keyminder.modules.sidebar;
 import java.util.ResourceBundle;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.locale.LocaleLoader;
-import de.akubix.keyminder.shell.CommandException;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 
 public class Sidebar {
 	public Sidebar(ApplicationInstance app){
-		final ResourceBundle locale = LocaleLoader.loadLanguagePack("modules", "sidebar", app.getLocale());
 
-		FxSidebar sidebar;
-		sidebar = new FxSidebar(app, locale.getString("module.sidebar.tabtitle"), true, new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				try {
-					app.getShell().runShellCommand("keyclip");
-				} catch (CommandException | UserCanceledOperationException e){
-					app.alert(e.getMessage());
-				}
-		}});
+		if(JavaFxUserInterface.isLoaded(app)){
+			JavaFxUserInterfaceApi javaFxUserInterfaceApi = JavaFxUserInterface.getInstance(app);
 
-		sidebar.addLabel(locale.getString("module.sidebar.username"));
-		sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextbox("username"), "username");
+			final ResourceBundle locale = LocaleLoader.loadLanguagePack("modules", "sidebar", app.getLocale());
 
-		sidebar.addLabel(locale.getString("module.sidebar.password"));
-		sidebar.addElementToSidebar(sidebar.createDefaultSidebarPasswordbox("password"), "password");
-		sidebar.addSeperator();
+			FxSidebar sidebar = new FxSidebar(app, javaFxUserInterfaceApi);
 
-		sidebar.addLabel(locale.getString("module.sidebar.email"));
-		sidebar.addElementToSidebar(sidebar.createDefaultSidebarHyperlink("email", true), "email");
+			sidebar.addLabel(locale.getString("module.sidebar.username"));
+			sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextbox("username"), "username");
 
-		sidebar.addLabel(locale.getString("module.sidebar.website"));
-		sidebar.addElementToSidebar(sidebar.createDefaultSidebarHyperlink("url", false), "url");
+			sidebar.addLabel(locale.getString("module.sidebar.password"));
+			sidebar.addElementToSidebar(sidebar.createDefaultSidebarPasswordbox("password"), "password");
+			sidebar.addSeparator();
 
-		sidebar.addLabel(locale.getString("module.sidebar.etc"));
-		sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextarea("etc"), "etc");
+			sidebar.addLabel(locale.getString("module.sidebar.email"));
+			sidebar.addElementToSidebar(sidebar.createDefaultSidebarHyperlink("email", true), "email");
+
+			sidebar.addLabel(locale.getString("module.sidebar.website"));
+			sidebar.addElementToSidebar(sidebar.createDefaultSidebarHyperlink("url", false), "url");
+
+			sidebar.addLabel(locale.getString("module.sidebar.etc"));
+			sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextarea("etc"), "etc");
+
+			javaFxUserInterfaceApi.addSidebarPanel(locale.getString("module.sidebar.tabtitle"), sidebar, 0, true);
+		}
 	}
 }

@@ -44,7 +44,6 @@ import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.locale.LocaleLoader;
-import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
@@ -122,18 +121,7 @@ public class SSHTools {
 		if(JavaFxUserInterface.isLoaded(app)){
 			this.fxUI = JavaFxUserInterface.getInstance(app);
 
-			EventHandler<ActionEvent> keyclipHandler = null;
-			if(app.getShell().commandExists("keyclip")){
-				keyclipHandler = (event) -> {
-					try {
-						app.getShell().runShellCommand("keyclip");
-					} catch (CommandException | UserCanceledOperationException e){
-						app.alert(e.getMessage());
-					}
-				};
-			}
-
-			FxSidebar sidebar = new FxSidebar(app, locale.getString("module.sshtools.tabtitle"), true, keyclipHandler);
+			FxSidebar sidebar = new FxSidebar(app,  fxUI);
 			sidebar.addLabel(locale.getString("module.sshtools.ssh_host"));
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextbox("ssh_host"), "ssh_host");
 
@@ -142,15 +130,17 @@ public class SSHTools {
 
 			sidebar.addLabel(locale.getString("module.sshtools.ssh_portforwarding"));
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextarea("ssh_portforwarding"), "ssh_portforwarding");
-			sidebar.addSeperator();
+			sidebar.addSeparator();
 
 			sidebar.addLabel(locale.getString("module.sshtools.ssh_user"));
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextbox("ssh_user"), "ssh_user");
 
 			sidebar.addLabel(locale.getString("module.sshtools.ssh_password"));
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarPasswordbox("ssh_password"), "ssh_password");
-			sidebar.addSeperator();
+			sidebar.addSeparator();
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarCheckbox("ssh_x11", "Use X11"), "ssh_x11");
+
+			fxUI.addSidebarPanel(locale.getString("module.sshtools.tabtitle"), sidebar, 10, true);
 
 			// Menu to start new Socks Connections
 

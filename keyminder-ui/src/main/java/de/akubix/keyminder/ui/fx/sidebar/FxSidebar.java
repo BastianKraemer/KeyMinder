@@ -23,72 +23,43 @@ import java.util.Map;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.core.events.DefaultEventHandler;
-import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
-import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.control.Separator;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 
 public class FxSidebar {
 
-	private Map<String, FxSidebarElement> elements = new HashMap<>();
-	private final ApplicationInstance instance;
-	private final JavaFxUserInterfaceApi fxUI;
+	private final Map<String, FxSidebarElement> elements = new HashMap<>();
+	private final ApplicationInstance app;
+	private final JavaFxUserInterfaceApi javaFxUserInterfaceApi;
 	private final VBox sidebarContainer;
-	private final javafx.scene.control.Tab sidebarTab;
 	private boolean firstLabel = true;
 
-	public FxSidebar(ApplicationInstance instance, String sidebarTitle, boolean disableSidebarWhileNoFileIsOpened, EventHandler<ActionEvent> keySendHandler) throws IllegalStateException {
+	public FxSidebar(ApplicationInstance app, JavaFxUserInterfaceApi javaFxUserInterfaceApi) throws IllegalStateException {
 
-		this.fxUI = JavaFxUserInterface.getInstance(instance);
-		this.instance = instance;
+		this.javaFxUserInterfaceApi = javaFxUserInterfaceApi;
+		this.app = app;
+
 		this.sidebarContainer = new VBox();
-
 		this.sidebarContainer.setPadding(new Insets(4,4,0,10));
-		ScrollPane scrollPane = new ScrollPane(sidebarContainer);
-		scrollPane.setHbarPolicy(ScrollBarPolicy.NEVER);
-		scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+	}
 
-		this.sidebarContainer.prefWidthProperty().bind(fxUI.getSidbarWidthProperty().subtract(12));
-		scrollPane.prefWidthProperty().bind(fxUI.getSidbarWidthProperty());
+	public Pane getContainer(){
+		return this.sidebarContainer;
+	}
 
-		this.sidebarTab = fxUI.addSidebarPanel(sidebarTitle, scrollPane, (node) -> {
-			boolean b[] = new boolean[]{false};
-			elements.values().forEach((fxSidebarEl) -> {b[0] = fxSidebarEl.loadData(node) || b[0];});
-			return b[0];
-		}, keySendHandler);
-
-		if(disableSidebarWhileNoFileIsOpened){
-			sidebarTab.setDisable(true);
-
-			instance.addEventHandler(DefaultEvent.OnFileOpened, new DefaultEventHandler() {
-				@Override
-				public void eventFired() {
-					sidebarTab.setDisable(false);
-				}
-			});
-
-			instance.addEventHandler(DefaultEvent.OnFileClosed, new DefaultEventHandler() {
-				@Override
-				public void eventFired() {
-					sidebarTab.setDisable(true);
-					for(String key: elements.keySet())
-					{
-						elements.get(key).setUIValue("");
-					}
-				}
-			});
+	public boolean update(TreeNode node){
+		boolean isNotEmpty = false;
+		for(FxSidebarElement el: elements.values()){
+			isNotEmpty = el.loadData(node) || isNotEmpty;
 		}
+		return isNotEmpty;
 	}
 
 	public void addElementToSidebar(FxSidebarElement sidebarElement, String name){
@@ -107,52 +78,15 @@ public class FxSidebar {
 		sidebarContainer.getChildren().add(l);
 	}
 
-	public void addSeperator(){
+	public void addSeparator(){
 		Separator s = new Separator(Orientation.HORIZONTAL);
 		s.setPadding(new Insets(5, -10,0,-10));
 		sidebarContainer.getChildren().add(s);
 	}
 
 	public FxSidebarElement createDefaultSidebarTextbox(String hashKey){
-		return new FxSidebarTextbox(instance) {
-			@Override
-			public void storeData(TreeNode node) {
-				String value = this.getUIValue();
-				if(!node.getAttribute(hashKey).equals(value))
-				{
-					node.setAttribute(hashKey, value);
-				}
-			}
 
-			@Override
-			public boolean loadData(TreeNode node) {
-				this.setUIValue(node.getAttribute(hashKey));
-				return node.hasAttribute(hashKey);
-			}
-		};
-	}
-
-	public FxSidebarElement createDefaultSidebarPasswordbox(String hashKey){
-		return new FxSidebarPasswordbox(instance) {
-			@Override
-			public void storeData(TreeNode node) {
-				String value = this.getUIValue();
-				if(!node.getAttribute(hashKey).equals(value))
-				{
-					node.setAttribute(hashKey, value);
-				}
-			}
-
-			@Override
-			public boolean loadData(TreeNode node) {
-				this.setUIValue(node.getAttribute(hashKey));
-				return node.hasAttribute(hashKey);
-			}
-		};
-	}
-
-	public FxSidebarElement createDefaultSidebarCheckbox(String hashKey, String checkboxLabelText){
-		return new FxSidebarCheckbox(instance, checkboxLabelText) {
+		return new FxSidebarTextbox(app) {
 			@Override
 			public void storeData(TreeNode node) {
 				String value = this.getUIValue();
@@ -169,14 +103,13 @@ public class FxSidebar {
 		};
 	}
 
-	public FxSidebarElement createDefaultSidebarTextarea(String hashKey)
-	{
-		return new FxSidebarTextarea(instance) {
+	public FxSidebarElement createDefaultSidebarPasswordbox(String hashKey){
+
+		return new FxSidebarPasswordbox(app) {
 			@Override
 			public void storeData(TreeNode node) {
 				String value = this.getUIValue();
-				if(!node.getAttribute(hashKey).equals(value))
-				{
+				if(!node.getAttribute(hashKey).equals(value)){
 					node.setAttribute(hashKey, value);
 				}
 			}
@@ -189,27 +122,74 @@ public class FxSidebar {
 		};
 	}
 
-	public FxSidebarElement createDefaultSidebarHyperlink(String hashKey, boolean useMailTo)
-	{
-		return new FxSidebarHyperlink(instance, useMailTo) {
+	public FxSidebarElement createDefaultSidebarCheckbox(String hashKey, String checkboxLabelText){
+
+		return new FxSidebarCheckbox(app, checkboxLabelText) {
 			@Override
 			public void storeData(TreeNode node) {
+				String value = this.getUIValue();
+				if(!node.getAttribute(hashKey).equals(value)){
+					node.setAttribute(hashKey, value);
+				}
+			}
+
+			@Override
+			public boolean loadData(TreeNode node) {
+				this.setUIValue(node.getAttribute(hashKey));
+				return node.hasAttribute(hashKey);
+			}
+		};
+	}
+
+	public FxSidebarElement createDefaultSidebarTextarea(String hashKey) {
+
+		return new FxSidebarTextarea(app) {
+			@Override
+			public void storeData(TreeNode node) {
+				String value = this.getUIValue();
+				if(!node.getAttribute(hashKey).equals(value)){
+					node.setAttribute(hashKey, value);
+				}
+			}
+
+			@Override
+			public boolean loadData(TreeNode node) {
+				this.setUIValue(node.getAttribute(hashKey));
+				return node.hasAttribute(hashKey);
+			}
+		};
+	}
+
+	public FxSidebarElement createDefaultSidebarHyperlink(String hashKey, boolean useMailTo) {
+
+		return new FxSidebarHyperlink(app, useMailTo) {
+			@Override
+			public void storeData(TreeNode node) {
+
 				String defaultText = getUIValue();
-				InputDialog id = new InputDialog(fxUI, fxUI.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.edit_email" : "mainwindow.sidebar.hyperlink.edit_link"),
-																			 fxUI.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.dialog.edit_email" : "mainwindow.sidebar.hyperlink.dialog.edit_link"),
-																			 defaultText.equals("...") ? "" : defaultText, false);
+
+				InputDialog id = new InputDialog(
+					javaFxUserInterfaceApi,
+					javaFxUserInterfaceApi.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.edit_email" : "mainwindow.sidebar.hyperlink.edit_link"),
+					javaFxUserInterfaceApi.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.dialog.edit_email" : "mainwindow.sidebar.hyperlink.dialog.edit_link"),
+					defaultText.equals("...") ? "" : defaultText,
+					false
+				);
 
 				try{
 					String input = id.getInput();
 					if(input != null && !input.equals("")){
+
 						node.setAttribute(hashKey, input);
 						setUIValue(input);
-						fxUI.updateStatus(fxUI.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.messages.email_edited" : "mainwindow.sidebar.hyperlink.messages.link_edited"));
+						javaFxUserInterfaceApi.updateStatus(
+							javaFxUserInterfaceApi.getLocaleBundleString(useMailTo ? "mainwindow.sidebar.hyperlink.messages.email_edited" : "mainwindow.sidebar.hyperlink.messages.link_edited")
+						);
 					}
 				}
 				catch(UserCanceledOperationException e){}
 
-				fxUI.focusMainWindow();
+				javaFxUserInterfaceApi.focusMainWindow();
 			}
 
 			@Override

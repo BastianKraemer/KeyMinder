@@ -48,11 +48,12 @@ import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
 import de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.events.HotKeyEvent;
-import de.akubix.keyminder.ui.fx.events.SidebarNodeChangedEvent;
+import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -77,6 +78,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
@@ -150,6 +153,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	private Menu menu_Extras;
 	private Menu menu_Quicklinks = null;
 
+	private List<FxSidebar> fxSidebarList = new ArrayList<>();
 	private SimpleBooleanProperty treeDependentElementsDisableProperty = new SimpleBooleanProperty(true);
 	private List<Node> assignedNotificationsItems = new ArrayList<>(2);
 	private ResourceBundle localeBundle;
@@ -1451,42 +1455,43 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		addTreePanel(panel, true);
 	}
 
-	/*
-	 * ======================================================================================================================================================
-	 * Interface "core.interfaces.FXUserInterface"
-	 * ======================================================================================================================================================
-	 */
-
-	private List<SidebarNodeChangedEvent> sidebarPanelNodeChangeEvenHandler = new ArrayList<>();
-	private boolean sidebarAvailable = false;
+	@Override
+	public ReadOnlyDoubleProperty getSidebarWidthProperty(){
+		return sidebarPanel.widthProperty();
+	}
 
 	@Override
-	public Tab addSidebarPanel(String tabtitle, Node panel, SidebarNodeChangedEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked) {
+	public Tab addSidebarPanel(String sidebarTabTitle, FxSidebar sidebar, int index, boolean disableSidebarWhileNoFileIsOpened) {
+
 		if(sidebarTabPanel.getTabs().size() == 0){createSidebar();}
-		sidebarAvailable = true;
 
-		Tab myTabPage = new Tab(tabtitle);
-		myTabPage.setContent(panel);
+		Tab myTabPage = new Tab(sidebarTabTitle);
+
+		ScrollPane scrollPane = new ScrollPane(sidebar.getContainer());
+		scrollPane.setHbarPolicy(ScrollBarPolicy.NEVER);
+		scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+
+		sidebar.getContainer().prefWidthProperty().bind(sidebarPanel.widthProperty().subtract(12));
+		scrollPane.prefWidthProperty().bind(sidebarPanel.widthProperty());
+
+		myTabPage.setContent(scrollPane);
 		myTabPage.setClosable(false);
+		myTabPage.setDisable(true);
 
-		if(keyClipSidebarButton != null){
-		sidebarTabPanel.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Tab>() {
-			@Override
-			public void changed(ObservableValue<? extends Tab> ov, Tab oldTab, Tab newTab) {
-				if(myTabPage.equals(newTab)){
-					if(onKeyClipButtonClicked == null){
-						keyClipSidebarButton.setVisible(false);
-					}
-					else{
-						keyClipSidebarButton.setOnAction(onKeyClipButtonClicked);
-						keyClipSidebarButton.setVisible(true);
-					}
-				}
-			}});
+		if(disableSidebarWhileNoFileIsOpened){
+			app.addEventHandler(DefaultEvent.OnFileOpened, () -> myTabPage.setDisable(false));
+			app.addEventHandler(DefaultEvent.OnFileClosed, () -> myTabPage.setDisable(true));
 		}
 
-		sidebarPanelNodeChangeEvenHandler.add(onSelectedNodeChanged);
-		sidebarTabPanel.getTabs().add(myTabPage);
+		if(sidebarTabPanel.getTabs().size() < index){
+			sidebarTabPanel.getTabs().add(myTabPage);
+			fxSidebarList.add(sidebar);
+		}
+		else {
+			sidebarTabPanel.getTabs().add(index, myTabPage);
+			fxSidebarList.add(index, sidebar);
+		}
+
 		return myTabPage;
 	}
 
@@ -1500,7 +1505,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		grid.setId("SidebarToolPanel");
 		grid.setAlignment(Pos.CENTER);
 		grid.setVgap(4);
-		grid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.show"), "icon_add", 24, (event) -> {if(sidebarAvailable){showSidebar(true);}}), 0, 0);
+		grid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.show"), "icon_add", 24, (event) -> {if(sidebarTabPanel.getTabs().size() == 0){showSidebar(true);}}), 0, 0);
 		grid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.edit_node"), "icon_edit", 24, (event) -> showEditCurrentNodeDialog()), 0, 1);
 		grid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.move_node_up"), "icon_up", 24, (event) -> dataTree.moveNodeVertical(dataTree.getSelectedNode(), -1)), 0, 2);
 		grid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.move_node_down"), "icon_down", 24, (event) -> dataTree.moveNodeVertical(dataTree.getSelectedNode(), 1)), 0, 3);
@@ -1509,11 +1514,14 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		sidebarToolPanel = grid;
 
 		app.addEventHandler(TreeNodeEvent.OnSelectedItemChanged, (node) -> {
-				l.setText(node.getText());
-				boolean sidebarIsEmpty[] = new boolean[]{false};
-				sidebarPanelNodeChangeEvenHandler.forEach((event) -> sidebarIsEmpty[0] = event.panelIsNotEmpty(node) || sidebarIsEmpty[0]);
-				showSidebar(sidebarIsEmpty[0]);
-			});
+			l.setText(node.getText());
+			boolean sidebarIsNotEmpty = false;
+			for(FxSidebar sidebar: fxSidebarList){
+				sidebarIsNotEmpty = sidebar.update(node) || sidebarIsNotEmpty;
+			}
+
+			showSidebar(sidebarIsNotEmpty);
+		});
 
 		bp.setMaxHeight(28);
 		bp.getStyleClass().add("lightHeader");
@@ -1680,11 +1688,6 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 				lastSidebarVisiblityValue = value;
 			}
 		}
-	}
-
-	@Override
-	public javafx.beans.property.ReadOnlyDoubleProperty getSidbarWidthProperty(){
-		return sidebarPanel.widthProperty();
 	}
 
 	@Override

@@ -8,24 +8,28 @@ import java.util.function.BiConsumer;
 import de.akubix.keyminder.ui.UserInterface;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.events.HotKeyEvent;
-import de.akubix.keyminder.ui.fx.events.SidebarNodeChangedEvent;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
+import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.scene.Node;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.input.KeyCode;
 import javafx.stage.FileChooser;
 
 public interface JavaFxUserInterfaceApi extends UserInterface {
 
-	// Additional FX Components
-	public javafx.scene.control.Tab addSidebarPanel(String tabtitle, Node panel, SidebarNodeChangedEvent onSelectedNodeChanged, EventHandler<ActionEvent> onKeyClipButtonClicked);
-	public javafx.beans.property.ReadOnlyDoubleProperty getSidbarWidthProperty();
+	// Menu entries
 	public void addMenuEntry(MenuItem item, MenuEntryPosition pos, boolean add2TreeDependentItems);
 	public void addMenu(Menu menu, boolean add2TreeDependentItems);
+
+	// Sidebar
+	public ReadOnlyDoubleProperty getSidebarWidthProperty();
+	public Tab addSidebarPanel(String sidebarTabTitle, FxSidebar sidebar, int index, boolean disableSidebarWhileNoFileIsOpened);
+
+	// Notifications and panels
 	public void addNotificationItem(Node item, boolean assignToThisFile);
 	public void removeNotificationItem(Node item);
 	public void addTreePanel(Node item, boolean assignToThisFile);
