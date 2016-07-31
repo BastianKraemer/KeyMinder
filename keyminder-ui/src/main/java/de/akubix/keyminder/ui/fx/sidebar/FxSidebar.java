@@ -20,6 +20,7 @@ package de.akubix.keyminder.ui.fx.sidebar;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
@@ -40,6 +41,7 @@ public class FxSidebar {
 	private final JavaFxUserInterfaceApi javaFxUserInterfaceApi;
 	private final VBox sidebarContainer;
 	private boolean firstLabel = true;
+	private Supplier<String[]> usefulValuesSupplier = null;
 
 	public FxSidebar(ApplicationInstance app, JavaFxUserInterfaceApi javaFxUserInterfaceApi) throws IllegalStateException {
 
@@ -60,6 +62,15 @@ public class FxSidebar {
 			isNotEmpty = el.loadData(node) || isNotEmpty;
 		}
 		return isNotEmpty;
+	}
+
+	public String getValueOf(String name){
+		if(elements.containsKey(name)){
+			return elements.get(name).getUIValue();
+		}
+		else{
+			return null;
+		}
 	}
 
 	public void addElementToSidebar(FxSidebarElement sidebarElement, String name){
@@ -199,5 +210,23 @@ public class FxSidebar {
 				return hasValue;
 			}
 		};
+	}
+
+	public void setUsernameAndPasswordSupplier(Supplier<String[]> usefulValuesSupplier){
+		this.usefulValuesSupplier = usefulValuesSupplier;
+	}
+
+	public boolean hasUsernameAndPasswordSupplier(){
+		return this.usefulValuesSupplier != null;
+	}
+
+	/**
+	 * Returns a supplier the provides the user name and password that have been entered in this sidebar.
+	 * Note: The supplier is optional, so the returned value can be {@code null}.
+	 * @return The supplier
+	 * @see FxSidebar#hasUsernameAndPasswordSupplier()
+	 */
+	public Supplier<String[]> getUserNameAndPasswordSupplier(){
+		return usefulValuesSupplier;
 	}
 }

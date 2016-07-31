@@ -52,6 +52,8 @@ public class Sidebar {
 			sidebar.addLabel(locale.getString("module.sidebar.etc"));
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextarea("etc"), "etc");
 
+			sidebar.setUsernameAndPasswordSupplier(() -> new String[]{sidebar.getValueOf("username"), sidebar.getValueOf("password")});
+
 			javaFxUserInterfaceApi.addSidebarPanel(locale.getString("module.sidebar.tabtitle"), sidebar, 0, true);
 		}
 	}

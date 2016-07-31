@@ -23,9 +23,16 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.core.events.DefaultEventHandler;
+import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
+import de.akubix.keyminder.ui.fx.IdentifiableElement;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.MainWindow;
+import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.Button;
+import javafx.scene.control.TabPane;
 
 /**
  * Module KeyClip: Provides a functionality which allows the user to transfer a certain user name and password to another application using the clip board.
@@ -42,7 +49,34 @@ public class KeyClip {
 		this.fxUI = fxUI;
 
 		// Provide the KeyClip feature as command
-		instance.getShell().addCommand("keyclip", getClass().getPackage().getName() + ".KeyClipCmd");
+		instance.getShell().addCommand("keyclip", KeyClipCmd.class.getName());
+
+		Button keyClipSidebarButton = MainWindow.createSmallButton("KeyClip", "icon_arrow-rotate-box", 24, (event) -> {
+			String[] data = fxUI.getCurrentSidebar().getUserNameAndPasswordSupplier().get();
+
+			if(data.length >= 2){
+				copyUserAndPassword(data[0], data[1]);
+			}
+		});
+
+		DefaultEventHandler updateButtonEnableState = () -> {
+			if(app.isAnyFileOpened()){
+				FxSidebar sidebar = fxUI.getCurrentSidebar();
+				if(sidebar != null && sidebar.hasUsernameAndPasswordSupplier()){
+					keyClipSidebarButton.setDisable(false);
+					return;
+				}
+			}
+			keyClipSidebarButton.setDisable(true);
+		};
+
+		TabPane tabs = (TabPane) fxUI.lookupElement(IdentifiableElement.SIDEBAR_TAB_PANEL);
+		tabs.getSelectionModel().selectedItemProperty().addListener((changeListener) -> updateButtonEnableState.eventFired());
+
+		app.addEventHandler(DefaultEvent.OnFileOpened, updateButtonEnableState);
+		app.addEventHandler(DefaultEvent.OnFileClosed, updateButtonEnableState);
+
+		fxUI.addCustomElement(keyClipSidebarButton, IdentifiableElement.SIDEBAR_HEADER);
 	}
 
 	public void copyUserAndPassword(String username, String password){
