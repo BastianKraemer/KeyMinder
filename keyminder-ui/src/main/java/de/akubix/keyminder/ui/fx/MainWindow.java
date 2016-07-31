@@ -137,7 +137,6 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	private BorderPane sidebarPanel;
 	private TabPane sidebarTabPanel;
 	private Node sidebarToolPanel;
-	private Button keyClipSidebarButton;
 	private BorderPane centerPane;
 	private BorderPane searchBoard;
 	private final Pane notificationArea = new HBox();
@@ -460,13 +459,13 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 					}
 				});
 
-			// Startup the application core (load the optional modules, ...)
-			app.startup(true);
-
 			// Show the main window
 			ImageMap.addDefaultIconsToStage(me);
 
 			me.show();
+
+			// Startup the application core (load the optional modules, ...)
+			app.startup(true);
 
 			runAsFXThread(new Runnable() {
 				@Override
@@ -479,6 +478,10 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 					}
 				}
 			});
+
+			if(sidebarTabPanel.getTabs().size() > 0){
+				sidebarTabPanel.getSelectionModel().select(0);
+			}
 	}
 
 	private void selectedNodeChanged(TreeNode selectedNode){
@@ -880,15 +883,6 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		fxtree.setContextMenu(treeContextMenu);
 
-		sidebarPanel = new BorderPane();
-		sidebarPanel.setMinWidth(200);
-		sidebarPanel.setId("Sidebar");
-		sidebarTabPanel = new TabPane();
-		sidebarTabPanel.setSide(Side.BOTTOM);
-		sidebarTabPanel.setId("SidebarTabPanel");
-		sidebarTabPanel.setStyle("-fx-border-width: 0");
-		sidebarPanel.setCenter(sidebarTabPanel);
-
 		// Searching
 		searchBoard = new BorderPane();
 		searchBoard.setId("SearchPanel");
@@ -934,6 +928,75 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		bottomPanel.setRight(notificationArea);
 		bottomPanel.setId("StatusBar");
 		root.setBottom(bottomPanel);
+
+		/* ===================================================================================
+		 * 	Sidebar
+		 * ===================================================================================
+		 */
+
+		sidebarPanel = new BorderPane();
+		sidebarPanel.setMinWidth(200);
+		sidebarPanel.setId("Sidebar");
+		sidebarTabPanel = new TabPane();
+		sidebarTabPanel.setSide(Side.BOTTOM);
+		sidebarTabPanel.setId(IdentifiableElement.SIDEBAR_TAB_PANEL.getId());
+		sidebarTabPanel.setStyle("-fx-border-width: 0");
+		sidebarPanel.setCenter(sidebarTabPanel);
+
+		Label siidebarTopLabel = new Label();
+		BorderPane bp = new BorderPane(siidebarTopLabel);
+
+		siidebarTopLabel.setPadding(new Insets(2,3,3,3));
+
+		GridPane sidebarGrid = new GridPane();
+		sidebarGrid.setId("SidebarToolPanel");
+		sidebarGrid.setAlignment(Pos.CENTER);
+		sidebarGrid.setVgap(4);
+
+		sidebarGrid.add(
+			createSmallButton(
+				localeBundle.getString("mainwindow.sidebar.collapsed.show"), "icon_add", 24, (event) -> {
+				if(sidebarTabPanel.getTabs().size() > 0){
+					showSidebar(true);
+				}
+				else {
+					showAddTreeNodeDialog(false);
+				}
+			}), 0, 0);
+		sidebarGrid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.edit_node"), "icon_edit", 24, (event) -> showEditCurrentNodeDialog()), 0, 1);
+		sidebarGrid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.move_node_up"), "icon_up", 24, (event) -> dataTree.moveNodeVertical(dataTree.getSelectedNode(), -1)), 0, 2);
+		sidebarGrid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.move_node_down"), "icon_down", 24, (event) -> dataTree.moveNodeVertical(dataTree.getSelectedNode(), 1)), 0, 3);
+		sidebarGrid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.copy_text"), "icon_copy", 24, (event) -> setClipboardText(getSelectedTreeNode().getText())), 0, 4);
+
+		this.sidebarToolPanel = sidebarGrid;
+
+		app.addEventHandler(TreeNodeEvent.OnSelectedItemChanged, (node) -> {
+			siidebarTopLabel.setText(node.getText());
+			boolean sidebarIsNotEmpty = false;
+			for(FxSidebar sidebar: fxSidebarList){
+				sidebarIsNotEmpty = sidebar.update(node) || sidebarIsNotEmpty;
+			}
+
+			showSidebar(sidebarIsNotEmpty);
+		});
+
+		bp.setMaxHeight(28);
+		bp.getStyleClass().add("lightHeader");
+
+		HBox hbox = new HBox(0);
+		hbox.setId(IdentifiableElement.SIDEBAR_HEADER.getId());
+
+		app.addEventHandler(DefaultEvent.OnFileClosed, () -> siidebarTopLabel.setText(""));
+
+		if(!app.getSettingsValueAsBoolean("nodes.disable_quicklinks", false)){
+			hbox.getChildren().add(createSidebarNodeLinkButton());
+			hbox.getChildren().add(createQuicklinkButton());
+		}
+
+		bp.setRight(hbox);
+
+		sidebarPanel.setTop(bp);
+		showSidebar(true);
 	}
 
 	private void showCreateNewFileDialog(boolean encryptFile){
@@ -1427,6 +1490,12 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		return f;
 	}
 
+	/*
+	 * ======================================================================================================================================================
+	 * UI
+	 * ======================================================================================================================================================
+	 */
+
 	private MenuItem createMenuItem(String text, String iconname, EventHandler<ActionEvent> event, boolean add2TreeDependentItems){
 		MenuItem menuItem = new MenuItem(text);
 		menuItem.setOnAction(event);
@@ -1456,14 +1525,34 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	}
 
 	@Override
+	public void addCustomElement(Node node, IdentifiableElement parentElement) throws IllegalArgumentException {
+
+		if(!parentElement.allowAddCustomElementOperation()){
+			throw new IllegalArgumentException("You cannot add new nodes to this element.");
+		}
+
+		Pane pane = (Pane) me.getScene().lookup(parentElement.getLookupId());
+		pane.getChildren().add(node);
+	}
+
+	@Override
+	public Node lookupElement(IdentifiableElement element){
+		return me.getScene().lookup(element.getLookupId());
+	}
+
+	@Override
 	public ReadOnlyDoubleProperty getSidebarWidthProperty(){
 		return sidebarPanel.widthProperty();
 	}
 
 	@Override
-	public Tab addSidebarPanel(String sidebarTabTitle, FxSidebar sidebar, int index, boolean disableSidebarWhileNoFileIsOpened) {
+	public FxSidebar getCurrentSidebar(){
+		int result = sidebarTabPanel.getSelectionModel().getSelectedIndex();
+		return result >= 0 ? this.fxSidebarList.get(result) : null;
+	}
 
-		if(sidebarTabPanel.getTabs().size() == 0){createSidebar();}
+	@Override
+	public Tab addSidebarPanel(String sidebarTabTitle, FxSidebar sidebar, int index, boolean disableSidebarWhileNoFileIsOpened) {
 
 		Tab myTabPage = new Tab(sidebarTabTitle);
 
@@ -1493,58 +1582,6 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		}
 
 		return myTabPage;
-	}
-
-	private void createSidebar(){
-		Label l = new Label();
-		BorderPane bp = new BorderPane(l);
-
-		l.setPadding(new Insets(2,3,3,3));
-
-		GridPane grid = new GridPane();
-		grid.setId("SidebarToolPanel");
-		grid.setAlignment(Pos.CENTER);
-		grid.setVgap(4);
-		grid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.show"), "icon_add", 24, (event) -> {if(sidebarTabPanel.getTabs().size() == 0){showSidebar(true);}}), 0, 0);
-		grid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.edit_node"), "icon_edit", 24, (event) -> showEditCurrentNodeDialog()), 0, 1);
-		grid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.move_node_up"), "icon_up", 24, (event) -> dataTree.moveNodeVertical(dataTree.getSelectedNode(), -1)), 0, 2);
-		grid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.move_node_down"), "icon_down", 24, (event) -> dataTree.moveNodeVertical(dataTree.getSelectedNode(), 1)), 0, 3);
-		grid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.copy_text"), "icon_copy", 24, (event) -> setClipboardText(getSelectedTreeNode().getText())), 0, 4);
-
-		sidebarToolPanel = grid;
-
-		app.addEventHandler(TreeNodeEvent.OnSelectedItemChanged, (node) -> {
-			l.setText(node.getText());
-			boolean sidebarIsNotEmpty = false;
-			for(FxSidebar sidebar: fxSidebarList){
-				sidebarIsNotEmpty = sidebar.update(node) || sidebarIsNotEmpty;
-			}
-
-			showSidebar(sidebarIsNotEmpty);
-		});
-
-		bp.setMaxHeight(28);
-		bp.getStyleClass().add("lightHeader");
-
-		HBox hbox = new HBox(0);
-		hbox.getChildren().add(createSidebarNodeLinkButton());
-
-		app.addEventHandler(DefaultEvent.OnFileClosed, () -> l.setText(""));
-
-		if(!app.getSettingsValueAsBoolean("nodes.disable_quicklinks", false)){
-			hbox.getChildren().add(createQuicklinkButton());
-		}
-
-		if(app.getShell().commandExists("keyclip")){
-			keyClipSidebarButton = createSmallButton("KeyClip", "icon_arrow-rotate-box", 24, null);
-			keyClipSidebarButton.disableProperty().bind(treeDependentElementsDisableProperty);
-			hbox.getChildren().add(keyClipSidebarButton);
-		}
-
-		if(hbox.getChildren().size() > 0){bp.setRight(hbox);}
-
-		sidebarPanel.setTop(bp);
-		showSidebar(true);
 	}
 
 	/**

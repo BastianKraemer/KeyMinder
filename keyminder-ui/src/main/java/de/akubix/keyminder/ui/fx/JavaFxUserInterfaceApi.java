@@ -25,9 +25,13 @@ public interface JavaFxUserInterfaceApi extends UserInterface {
 	public void addMenuEntry(MenuItem item, MenuEntryPosition pos, boolean add2TreeDependentItems);
 	public void addMenu(Menu menu, boolean add2TreeDependentItems);
 
+	public void addCustomElement(Node node, IdentifiableElement parentElement) throws IllegalArgumentException;
+	public Node lookupElement(IdentifiableElement element);
+
 	// Sidebar
-	public ReadOnlyDoubleProperty getSidebarWidthProperty();
 	public Tab addSidebarPanel(String sidebarTabTitle, FxSidebar sidebar, int index, boolean disableSidebarWhileNoFileIsOpened);
+	public FxSidebar getCurrentSidebar();
+	public ReadOnlyDoubleProperty getSidebarWidthProperty();
 
 	// Notifications and panels
 	public void addNotificationItem(Node item, boolean assignToThisFile);
@@ -58,6 +62,5 @@ public interface JavaFxUserInterfaceApi extends UserInterface {
 	public void focusMainWindow();
 
 	// Events
-
 	public void addEventListener(FxSettingsEvent eventName, BiConsumer<TabPane, Map<String, String>> eventData);
 }
