@@ -16,7 +16,7 @@
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-package de.akubix.keyminder.lib;
+package de.akubix.keyminder.util.search.matcher;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -25,12 +25,13 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.util.search.NodeMatchResult;
+
 /**
  * This class allows you to create rules to search for nodes observing creation or modification date
- * In the future maybe there will be an interface for this to provide more search conditions
  */
-@Deprecated
-public class NodeTimeCondition {
+public class TimeMatcher implements NodeMatcher {
 	private Instant referenceDate;
 	private long milliSeconds;
 	private CompareType compareType;
@@ -42,7 +43,7 @@ public class NodeTimeCondition {
 	 * @param compareType created/modified before or after this date?
 	 * @param date the date you want to compare to
 	 */
-	public NodeTimeCondition(String attributeName, CompareType compareType, Instant date){
+	public TimeMatcher(String attributeName, CompareType compareType, Instant date){
 		this.referenceDate = date;
 		this.milliSeconds = date.getEpochSecond() * 1000;
 		this.compareType = compareType;
@@ -56,7 +57,7 @@ public class NodeTimeCondition {
 	 * @param date the date you want to compare to
 	 * @throws ParseException if the entered date is not a valid date
 	 */
-	public NodeTimeCondition(String attributeName, CompareType compareType, String date) throws ParseException {
+	public TimeMatcher(String attributeName, CompareType compareType, String date) throws ParseException {
 		this(attributeName, compareType, new SimpleDateFormat("dd.MM.yy").parse(date).toInstant());
 	}
 
@@ -65,13 +66,18 @@ public class NodeTimeCondition {
 	 * @param node the tree node
 	 * @return {@code true} if the condition matches, {@code false} if not
 	 */
-	public boolean compareTo(de.akubix.keyminder.core.db.TreeNode node){
+	@Override
+	public NodeMatchResult matches(TreeNode node){
 		try{
 			if(compareType == CompareType.Before){
-				return Long.parseLong(node.getAttribute(attributeName)) <= milliSeconds;
+				if(Long.parseLong(node.getAttribute(attributeName)) <= milliSeconds){
+					return new NodeMatchResult(node).addAttributeMatch(attributeName, null);
+				}
 			}
 			else if(compareType == CompareType.After){
-				return Long.parseLong(node.getAttribute(attributeName)) >= milliSeconds;
+				if(Long.parseLong(node.getAttribute(attributeName)) >= milliSeconds){
+					return new NodeMatchResult(node).addAttributeMatch(attributeName, null);
+				}
 			}
 			else{
 				// At same Day
@@ -79,12 +85,14 @@ public class NodeTimeCondition {
 				ZonedDateTime refzdt = referenceDate.atZone((ZoneId.systemDefault()));
 				ZonedDateTime zdt = nodeTime.atZone((ZoneId.systemDefault()));
 
-				return (refzdt.getYear() == zdt.getYear() && refzdt.getDayOfYear() == zdt.getDayOfYear());
+				if(refzdt.getYear() == zdt.getYear() && refzdt.getDayOfYear() == zdt.getDayOfYear()){
+					return new NodeMatchResult(node).addAttributeMatch(attributeName, null);
+				}
 			}
 		}
-		catch (NumberFormatException | DateTimeException ex){
-			return false;
-		}
+		catch (NumberFormatException | DateTimeException ex){}
+
+		return NodeMatchResult.noMatch();
 	}
 
 	enum CompareType {

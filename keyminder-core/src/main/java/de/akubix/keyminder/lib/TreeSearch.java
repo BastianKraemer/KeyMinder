@@ -27,6 +27,7 @@ import de.akubix.keyminder.core.db.TreeNode;
  * It provides some methods to find tree nodes using a regular expression.
  * All search methods will select the next matching tree node (if available) and exit.
  */
+@Deprecated
 public class TreeSearch {
 
 	private TreeSearch(){}
