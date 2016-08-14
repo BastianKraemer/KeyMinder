@@ -18,6 +18,8 @@
 */
 package de.akubix.keyminder.lib;
 
+import java.util.Map;
+
 import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
 /**
@@ -169,8 +171,8 @@ public class TreeSearch {
 			if(checkAdditionalConditions(node, timeConditions)){return true;}
 		}
 		else{
-			for(String value: node.getUnrestrictedAccess().getAttributeValueSet()){
-				if(value.matches(regExPattern + find)){
+			for(Map.Entry<String, String> entry: node.getAttributeSet()){
+				if(entry.getValue().matches(regExPattern + find)){
 					if(checkAdditionalConditions(node, timeConditions)){return true;}
 				}
 			}

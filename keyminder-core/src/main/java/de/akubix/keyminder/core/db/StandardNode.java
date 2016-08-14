@@ -19,6 +19,7 @@
 package de.akubix.keyminder.core.db;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -37,7 +38,7 @@ public class StandardNode implements TreeNode{
 	private String text;
 	private String color = "";
 	protected Map<String, String> attributes;
-	protected ArrayList<Integer> childNodes = new ArrayList<Integer>();
+	protected ArrayList<Integer> childNodes = new ArrayList<>();
 	protected int parentNodeID = -1;
 
 	protected StandardNode(StandardTree myTree, int nodeId) {
@@ -48,7 +49,7 @@ public class StandardNode implements TreeNode{
 		this.myTree = myTree;
 		this.nodeID = nodeId;
 		this.text = text;
-		this.attributes = new HashMap<String, String>();
+		this.attributes = new HashMap<>();
 		if(myTree.enableNodeTimestamps)
 		{
 			attributes.put(de.akubix.keyminder.core.ApplicationInstance.NODE_ATTRIBUTE_CREATION_DATE, Long.toString(System.currentTimeMillis()));
@@ -225,8 +226,9 @@ public class StandardNode implements TreeNode{
 		return 0;
 	}
 
-	public java.util.Collection<String> getAttributeValueSet(){
-		return attributes.values();
+	@Override
+	public Set<Map.Entry<String, String>> getAttributeSet(){
+		return Collections.unmodifiableSet(this.attributes.entrySet());
 	}
 
 	public synchronized void clearAttributes(boolean doAutoCommitForUndo){

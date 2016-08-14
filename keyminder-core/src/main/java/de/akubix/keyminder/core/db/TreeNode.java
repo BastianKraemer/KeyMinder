@@ -18,6 +18,7 @@
 */
 package de.akubix.keyminder.core.db;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -148,4 +149,10 @@ public interface TreeNode {
 	 * @return the {@link Set} of attributes
 	 */
 	public Set<String> listAttributes();
+
+	/**
+	 *Returns a set with all node attributes
+	 * @return
+	 */
+	public Set<Map.Entry<String, String>> getAttributeSet();
 }
