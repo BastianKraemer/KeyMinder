@@ -19,11 +19,18 @@
 package de.akubix.keyminder.ui.fx.dialogs;
 
 import java.time.ZoneId;
+import java.util.function.Supplier;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.Tree;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
+import de.akubix.keyminder.util.search.MatchReplace;
+import de.akubix.keyminder.util.search.NodeMatchResult;
+import de.akubix.keyminder.util.search.NodeWalker;
+import de.akubix.keyminder.util.search.matcher.TextMatcher;
+import de.akubix.keyminder.util.search.matcher.TimeMatcher;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -51,7 +58,8 @@ public class FindAndReplaceDialog {
 	private TextField findTextField;
 	private TextField replaceTextField;
 	private CheckBox ignoreCase;
-	private de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI;
+	private JavaFxUserInterfaceApi fxUI;
+
 	private FindAndReplaceDialog(Stage primaryStage, Tree tree, de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI){
 		this.tree = tree;
 		this.fxUI = fxUI;
@@ -97,14 +105,13 @@ public class FindAndReplaceDialog {
 		DatePicker datePicker = new DatePicker();
 		datePicker.setMinWidth(290);
 
-		ComboBox<String> nodeAttribSelector = new ComboBox<String>();
-		nodeAttribSelector.getItems().addAll(fxUI.getLocaleBundleString("dialogs.findreplace.combobox.modificationdate"),
-											fxUI.getLocaleBundleString("dialogs.findreplace.combobox.creationdate"));
+		final ComboBox<String> nodeAttribSelector = new ComboBox<>();
+		nodeAttribSelector.getItems().addAll(fxUI.getLocaleBundleString("dialogs.findreplace.combobox.modificationdate"), fxUI.getLocaleBundleString("dialogs.findreplace.combobox.creationdate"));
 		nodeAttribSelector.getSelectionModel().select(0);
 		nodeAttribSelector.setMinWidth(190);
 
 		HBox dateHBox = new HBox(4);
-		ComboBox<String> compareType = new ComboBox<String>();
+		ComboBox<String> compareType = new ComboBox<>();
 		compareType.getItems().addAll(fxUI.getLocaleBundleString("dialogs.findreplace.combobox.selector_before"),
 									  fxUI.getLocaleBundleString("dialogs.findreplace.combobox.selector_after"),
 									  fxUI.getLocaleBundleString("dialogs.findreplace.combobox.selector_at"));
@@ -121,46 +128,57 @@ public class FindAndReplaceDialog {
 		BorderPane.setMargin(vbox, new Insets(4,10,0,10));
 		root.setCenter(vbox);
 
+		// Event methods
+
+		final Supplier<String> timeConditionNodeAttrubiteNameSupplier = () -> nodeAttribSelector.getValue().equals(fxUI.getLocaleBundleString("dialogs.findreplace.combobox.modificationdate")) ? "modified" : "created";
+
+		final EventHandler<ActionEvent> onFindButtonClicked = (event) -> {
+			NodeWalker.SearchResult result;
+			if(datePicker.getValue() != null) {
+
+				result = NodeWalker.find(
+					tree,
+					new TextMatcher(findTextField.getText(), true, ignoreCase.isSelected()),
+					new TimeMatcher(
+						timeConditionNodeAttrubiteNameSupplier.get(),
+						TimeMatcher.getCompareTypeFromString(compareType.getValue()), datePicker.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+
+			}
+			else {
+				result = NodeWalker.find(tree, new TextMatcher(findTextField.getText(), true, ignoreCase.isSelected()));
+			}
+
+			if(result.getState() == NodeWalker.SearchState.NOT_FOUND){
+				fxUI.updateStatus(fxUI.getLocaleBundleString("mainwindow.find.text_not_found"));
+			}
+			else if(result.getState() == NodeWalker.SearchState.END_REACHED){
+				fxUI.updateStatus(fxUI.getLocaleBundleString("mainwindow.find.end_of_document_reached"));
+			}
+		};
+
+		// find and replace buttons
+
 		HBox bottom = new HBox(4);
 
 		Button findButton = new Button(fxUI.getLocaleBundleString("dialogs.findreplace.findbuttontext"));
-		findButton.setOnAction(new EventHandler<ActionEvent>() {
-
-			@Override
-			public void handle(ActionEvent event) {
-				de.akubix.keyminder.lib.TreeSearch.SearchResult r;
-				if(datePicker.getValue() != null)
-				{
-					String nodeAttributeName = nodeAttribSelector.getValue().equals(fxUI.getLocaleBundleString("dialogs.findreplace.combobox.modificationdate")) ? "modified" : "created";
-					de.akubix.keyminder.lib.NodeTimeCondition condition = new de.akubix.keyminder.lib.NodeTimeCondition(nodeAttributeName, de.akubix.keyminder.lib.NodeTimeCondition.getCompareTypeFromString(compareType.getValue()), datePicker.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-					r = de.akubix.keyminder.lib.TreeSearch.find(findTextField.getText(), tree, ignoreCase.isSelected(), condition);
-				}
-				else
-				{
-					r = de.akubix.keyminder.lib.TreeSearch.find(findTextField.getText(), tree, ignoreCase.isSelected());
-				}
-
-				if(r == de.akubix.keyminder.lib.TreeSearch.SearchResult.NOT_FOUND)
-				{
-					fxUI.updateStatus(fxUI.getLocaleBundleString("mainwindow.find.text_not_found"));
-				}
-				else if(r == de.akubix.keyminder.lib.TreeSearch.SearchResult.END_REACHED)
-				{
-					fxUI.updateStatus(fxUI.getLocaleBundleString("mainwindow.find.end_of_document_reached"));
-				}
-			}
-		});
+		findButton.setOnAction(onFindButtonClicked);
 
 		Button replaceButton = new Button(fxUI.getLocaleBundleString("dialogs.findreplace.replacebuttontext"));
-		replaceButton.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				if(replaceTextField.getText().equals(""))
-				{
-					de.akubix.keyminder.lib.TreeSearch.replaceTextOfNode(tree.getSelectedNode(), findTextField.getText(), replaceTextField.getText(), ignoreCase.isSelected());
-					de.akubix.keyminder.lib.TreeSearch.find(findTextField.getText(), tree, ignoreCase.isSelected());
+		replaceButton.setOnAction((event) -> {
+			if(replaceTextField.getText().equals("")){
+
+				NodeMatchResult matchResult = NodeWalker.nodeMatches(
+						tree.getSelectedNode(),
+						new TextMatcher(findTextField.getText(), true, ignoreCase.isSelected()),
+						new TimeMatcher(
+							timeConditionNodeAttrubiteNameSupplier.get(),
+							TimeMatcher.getCompareTypeFromString(compareType.getValue()), datePicker.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant()));
+
+				if(matchResult != null){
+					MatchReplace.simpleReplace(matchResult, replaceTextField.getText());
 				}
+
+				onFindButtonClicked.handle(null);
 			}
 		});
 
