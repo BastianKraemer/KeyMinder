@@ -1,5 +1,6 @@
 package de.akubix.keyminder.util.search;
 
+import java.util.Arrays;
 import java.util.List;
 
 import de.akubix.keyminder.core.db.Tree;
@@ -18,11 +19,19 @@ public final class NodeWalker {
 	};
 
 	/**
-	 * Find a node in a tree that contains a specified text (the search includes note attributes)
-	 * @param find Text to find in any node
+	 * Find a node in a tree that contains a specified text (the search includes node attributes)
 	 * @param tree the tree you want to search in
-	 * @param ignoreCase use {@code false} if the search should be case sensitive
-	 * @param timeConditions additional conditions for some time factors
+	 * @param matchConditions the match conditions
+	 * @return the search result
+	 */
+	public static SearchResult find(Tree tree, NodeMatcher... matchConditions){
+		return find(tree, Arrays.asList(matchConditions));
+	}
+
+	/**
+	 * Find a node in a tree that contains a specified text (the search includes node attributes)
+	 * @param tree the tree you want to search in
+	 * @param matchConditions the match conditions
 	 * @return the search result
 	 */
 	public static SearchResult find(Tree tree, List<NodeMatcher> matchConditions){
@@ -37,7 +46,11 @@ public final class NodeWalker {
 		}
 	}
 
-	private NodeMatchResult nodeMatches(TreeNode node){
+	public static NodeMatchResult nodeMatches(TreeNode node, NodeMatcher... matchConditions){
+		return nodeMatches(node, Arrays.asList(matchConditions));
+	}
+
+	public static NodeMatchResult nodeMatches(TreeNode node, List<NodeMatcher> matchConditions){
 
 		NodeMatchResult result = null;
 		for(NodeMatcher m: matchConditions){
@@ -59,10 +72,12 @@ public final class NodeWalker {
 			return SearchResult.endReached();
 		}
 
-		NodeMatchResult result = nodeMatches(parentNode);
-		if(result != null){
-			startNode.getTree().setSelectedNode(parentNode);
-			return SearchResult.match(result);
+		if(!init){
+			NodeMatchResult result = nodeMatches(parentNode, matchConditions);
+			if(result != null){
+				startNode.getTree().setSelectedNode(parentNode);
+				return SearchResult.match(result);
+			}
 		}
 
 		init = false;
@@ -73,7 +88,7 @@ public final class NodeWalker {
 			if(childNode.getId() == startNode.getId() && !init){return SearchResult.endReached();}
 
 			if(childNode.countChildNodes() == 0){
-				result = nodeMatches(parentNode);
+				NodeMatchResult result = nodeMatches(childNode, matchConditions);
 				if(result != null){
 					parentNode.getTree().setSelectedNode(childNode);
 					return SearchResult.match(result);
@@ -158,7 +173,7 @@ public final class NodeWalker {
 		}
 
 		private static SearchResult match(NodeMatchResult matchResult){
-			return new SearchResult(SearchState.NOT_FOUND, matchResult);
+			return new SearchResult(SearchState.FOUND, matchResult);
 		}
 
 		private static SearchResult none(){
