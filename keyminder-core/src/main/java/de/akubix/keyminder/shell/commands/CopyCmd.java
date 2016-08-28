@@ -22,12 +22,13 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
+import de.akubix.keyminder.shell.annotations.Alias;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
 import de.akubix.keyminder.shell.annotations.RequireOpenedFile;
-import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
@@ -46,6 +47,7 @@ import de.akubix.keyminder.shell.io.ShellOutputWriter;
 		"You can use '%' reference a piped tree node.\n\n" +
 		"Example: ${command.name} % /new/parent/node --move")
 @PipeInfo(in = "TreeNode or String", out = "TreeNode")
+@Alias("mv = cp --move")
 public final class CopyCmd extends AbstractShellCommand {
 
 	@Override

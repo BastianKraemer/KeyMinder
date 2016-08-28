@@ -39,6 +39,7 @@ import java.util.regex.Pattern;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.shell.annotations.Alias;
 import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
@@ -69,6 +70,7 @@ import de.akubix.keyminder.shell.parse.ShellExecOption;
 public class Shell {
 
 	private static final Pattern COMMAND_PATTERN = Pattern.compile("^[a-z0-9-_]+$");
+	private static final Pattern ALIAS_PATTERN = Pattern.compile("^([a-z0-9-_]+) *= *(.+)$");
 
 	private final ApplicationInstance instance;
 
@@ -106,6 +108,14 @@ public class Shell {
 			assert !availableCommands.containsKey(cmdName) : String.format("Duplicate entry for command name '%s'.", cmdName);
 
 			availableCommands.put(cmdName, (Class<? extends ShellCommand>) loadedClass);
+
+			Alias aliasAnnotation = loadedClass.getAnnotation(Alias.class);
+			if(aliasAnnotation != null){
+				for(String aliasDefinition: aliasAnnotation.value()){
+					loadAliasByDefinition(aliasDefinition);
+				}
+			}
+
 			return true;
 
 		} catch (ClassNotFoundException e){
@@ -116,6 +126,17 @@ public class Shell {
 		}
 
 		return false;
+	}
+
+	public void loadAliasByDefinition(String aliasDefinition){
+
+		Matcher m = ALIAS_PATTERN.matcher(aliasDefinition);
+		if(m.matches()){
+			addAlias(m.group(1), m.group(2));
+		}
+		else{
+			instance.println(String.format("Invalid alias definition: '%s'", aliasDefinition));
+		}
 	}
 
 	/**

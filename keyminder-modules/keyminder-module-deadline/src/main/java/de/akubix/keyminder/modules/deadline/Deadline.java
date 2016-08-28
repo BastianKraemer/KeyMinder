@@ -175,8 +175,6 @@ public class Deadline {
 
 		app.getShell().addCommand(DeadlineCmd.class.getName());
 		app.getShell().addCommand(DateConv.class.getName());
-		app.getShell().addAlias("date2epoch", "dateconv -d2e");
-		app.getShell().addAlias("epoch2date", "dateconv -e2d");
 	}
 
 	/* =========================================================== load settings e.g. default values =============================================================== */

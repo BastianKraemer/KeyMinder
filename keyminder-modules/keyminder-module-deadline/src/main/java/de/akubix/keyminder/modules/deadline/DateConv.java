@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
+import de.akubix.keyminder.shell.annotations.Alias;
 import de.akubix.keyminder.shell.annotations.AllowCallWithoutArguments;
 import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
@@ -29,6 +30,7 @@ import de.akubix.keyminder.shell.io.ShellOutputWriter;
 		"You can use '%' to take this value from the piped input data.\n" +
 		"If you want to convert a date like '01.06.2016 12:13:14' you can use the '--advanced' ('-a') switch.")
 @PipeInfo(in = "String, Long", out = "String")
+@Alias({"date2epoch = dateconv -d2e", "epoch2date = dateconv -e2d"})
 public class DateConv extends AbstractShellCommand {
 
 	@Override
