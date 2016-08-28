@@ -26,6 +26,7 @@ import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
+import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
 import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
@@ -35,8 +36,11 @@ import de.akubix.keyminder.util.search.MatchReplace;
 import de.akubix.keyminder.util.search.NodeMatchResult;
 
 @Operands(cnt = 1)
+@Option(name = "--regex", alias = {"-r", "--regex-replace"})
 @Description("Replaces the matching values from an search result with another custom value")
-@Usage(	"${command.name} <replacement text>\n\nNote: You have to pipe the result from a 'find' command to replace any values.")
+@Usage(	"${command.name} <replacement text> [-r]\n\n" +
+		"The '-r' (or '--regex') switch allows you to use regular expression match groups. Simply mention the group with '$0', '$1', etc.\n\n" +
+		"Note: You have to pipe the result from a 'find' command to replace any values.")
 @PipeInfo(in = "List of 'NodeMatchResult' or a single 'NodeMatchResult' object when using '--next'")
 public final class ReplaceCmd extends AbstractShellCommand {
 	@SuppressWarnings("unchecked")
@@ -62,12 +66,18 @@ public final class ReplaceCmd extends AbstractShellCommand {
 		}
 
 		int replaceCount = 0;
-		for(NodeMatchResult match: results){
-			if(MatchReplace.simpleReplace(match, in.getParameters().get("$0")[0])){
-				replaceCount++;
+		try{
+			for(NodeMatchResult match: results){
+				if(MatchReplace.replaceContent(match, in.getParameters().get("$0")[0], in.getParameters().containsKey("--regex"))){
+					replaceCount++;
+				}
 			}
-		}
 
+		}
+		catch(IllegalArgumentException e){
+			out.printf("ERROR: %s\n", e.getMessage());
+			return CommandOutput.error();
+		}
 
 		out.println("Replaced values: " + replaceCount);
 		return CommandOutput.success();

@@ -1,6 +1,7 @@
 package de.akubix.keyminder.util.search;
 
 import de.akubix.keyminder.util.search.NodeMatchResult.MatchElement;
+import de.akubix.keyminder.util.search.matcher.TextMatcher;
 
 public final class MatchReplace {
 
@@ -15,28 +16,37 @@ public final class MatchReplace {
 	 * @param replacement the string that will be the replacement
 	 * @return {@code true} if there has been anything replaced, {@code false} if not
 	 */
-	public static boolean simpleReplace(NodeMatchResult matchResult, String replacement) throws IllegalArgumentException {
+	public static boolean replaceContent(NodeMatchResult matchResult, String replacement, boolean allowRegularExpression) throws IllegalArgumentException {
 
-		boolean anyReplacePerformed = false;
+		try{
+			boolean anyReplacePerformed = false;
 
-		if(matchResult.nodeMatches()){
-			for(MatchElement match: matchResult.getMatchElements()){
-				if(match.hasMatcher()){
-					String newValue = match.getMatcher().replaceAll(replacement);
+			if(!allowRegularExpression){
+				replacement = TextMatcher.regularExpressionSpecialCharacterEscaping(replacement);
+			}
 
-					matchResult.getNode().getTree().beginUpdate();
-					anyReplacePerformed = true;
-					if(match.isTextMatch()){
-						matchResult.getNode().setText(newValue);
-					}
-					else{
-						matchResult.getNode().setAttribute(match.getAttributeName(), newValue);
+			if(matchResult.nodeMatches()){
+				for(MatchElement match: matchResult.getMatchElements()){
+					if(match.hasMatcher()){
+						String newValue = match.getMatcher().replaceAll(replacement);
+
+						matchResult.getNode().getTree().beginUpdate();
+						anyReplacePerformed = true;
+						if(match.isTextMatch()){
+							matchResult.getNode().setText(newValue);
+						}
+						else{
+							matchResult.getNode().setAttribute(match.getAttributeName(), newValue);
+						}
 					}
 				}
 			}
-		}
 
-		matchResult.getNode().getTree().endUpdate();
-		return anyReplacePerformed;
+			matchResult.getNode().getTree().endUpdate();
+			return anyReplacePerformed;
+		}
+		catch(Exception ex){
+			throw new IllegalArgumentException(ex.getMessage(), ex);
+		}
 	}
 }

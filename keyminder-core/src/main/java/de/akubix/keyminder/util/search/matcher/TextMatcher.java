@@ -20,7 +20,7 @@ public class TextMatcher implements NodeMatcher {
 	public TextMatcher(String regEx, boolean simpleSearching, NodeMatcherOption option, boolean ignoreCase) throws PatternSyntaxException {
 
 		if(simpleSearching){
-			regEx = ".*" + regEx.replaceAll("(\\.|\\[|\\]|\\(|\\)|\\-|\\{|\\}|\\^|\\$|\\?)", "\\\\$0").replace("*", ".*") + ".*";
+			regEx = ".*" + regularExpressionSpecialCharacterEscaping(regEx) + ".*";
 		}
 
 		if(ignoreCase){
@@ -56,6 +56,10 @@ public class TextMatcher implements NodeMatcher {
 		}
 
 		return result == null ? NodeMatchResult.noMatch() : result;
+	}
+
+	public static String regularExpressionSpecialCharacterEscaping(String str){
+		return str.replaceAll("(\\.|\\[|\\]|\\(|\\)|\\{|\\}|\\^|\\$|\\?|\\+|\\-|\\\\)", "\\\\$0").replace("*", ".*");
 	}
 
 	public static enum NodeMatcherOption {

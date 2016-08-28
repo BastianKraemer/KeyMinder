@@ -192,7 +192,7 @@ public final class FindAndReplaceDialog {
 			final NodeMatchResult matchResult = NodeWalker.nodeMatches(tree.getSelectedNode(), getNodeMatchConditions());
 
 			if(matchResult != null){
-				MatchReplace.simpleReplace(matchResult, replaceTextField.getText());
+				MatchReplace.replaceContent(matchResult, replaceTextField.getText(), false);
 			}
 
 			findNextNode();
