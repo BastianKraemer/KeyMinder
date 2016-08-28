@@ -22,12 +22,18 @@ import java.time.ZoneId;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.Tree;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import de.akubix.keyminder.util.search.MatchReplace;
+import de.akubix.keyminder.util.search.NodeMatchResult;
+import de.akubix.keyminder.util.search.NodeWalker;
+import de.akubix.keyminder.util.search.matcher.NodeMatcher;
+import de.akubix.keyminder.util.search.matcher.TextMatcher;
+import de.akubix.keyminder.util.search.matcher.TimeMatcher;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -41,21 +47,39 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 
-public class FindAndReplaceDialog {
+public final class FindAndReplaceDialog {
 
 	private static FindAndReplaceDialog instance = null;
-	private Stage me;
+	private final Stage me;
 	private Tree tree;
 	private TextField findTextField;
 	private TextField replaceTextField;
-	private CheckBox ignoreCase;
-	private de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI;
-	private FindAndReplaceDialog(Stage primaryStage, Tree tree, de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI){
+	private CheckBox isCaseSensitive;
+	private ComboBox<String> compareType;
+	private ComboBox<String> nodeAttribSelector;
+	private DatePicker datePicker;
+	private Button findButton;
+	private Button replaceButton;
+
+	private JavaFxUserInterfaceApi fxUI;
+
+	private FindAndReplaceDialog(Stage primaryStage, Tree tree, JavaFxUserInterfaceApi fxUI){
 		this.tree = tree;
 		this.fxUI = fxUI;
-		createScene();
+
+		Scene myScene = new Scene(createSceneContent(), 300, 270);
+		StylesheetMap.assignStylesheets(myScene);
+
+		me = new Stage();
+		me.setTitle(ApplicationInstance.APP_NAME + " - " + fxUI.getLocaleBundleString("dialogs.findreplace.title"));
+		me.setScene(myScene);
+
+		me.setResizable(false);
+		//me.initModality( Modality.NONE );
+		ImageMap.addDefaultIconsToStage(me);
+
+		me.setOnCloseRequest((event) -> instance = null);
 		me.initOwner(primaryStage);
 	}
 
@@ -77,121 +101,116 @@ public class FindAndReplaceDialog {
 		}
 	}
 
-	private void createScene(){
-		BorderPane root = new BorderPane();
-
-		Label title = new Label(fxUI.getLocaleBundleString("dialogs.findreplace.headerlabel"));
-		Pane top = new Pane(title);
-		top.getStyleClass().add("header");
-		root.setTop(top);
-
-		VBox vbox = new VBox(4);
+	private Parent createSceneContent(){
 
 		// Textfields
 		findTextField = new TextField();
 		replaceTextField = new TextField();
-
-		ignoreCase = new CheckBox(fxUI.getLocaleBundleString("dialogs.findreplace.ignorecaselabel"));
+		isCaseSensitive = new CheckBox(fxUI.getLocaleBundleString("dialogs.findreplace.ignorecaselabel"));
 
 		// Date-Picker
-		DatePicker datePicker = new DatePicker();
+		datePicker = new DatePicker();
 		datePicker.setMinWidth(290);
 
-		ComboBox<String> nodeAttribSelector = new ComboBox<String>();
-		nodeAttribSelector.getItems().addAll(fxUI.getLocaleBundleString("dialogs.findreplace.combobox.modificationdate"),
-											fxUI.getLocaleBundleString("dialogs.findreplace.combobox.creationdate"));
+		nodeAttribSelector = new ComboBox<>();
+		nodeAttribSelector.getItems().addAll(fxUI.getLocaleBundleString("dialogs.findreplace.combobox.modificationdate"), fxUI.getLocaleBundleString("dialogs.findreplace.combobox.creationdate"));
 		nodeAttribSelector.getSelectionModel().select(0);
 		nodeAttribSelector.setMinWidth(190);
 
-		HBox dateHBox = new HBox(4);
-		ComboBox<String> compareType = new ComboBox<String>();
+		compareType = new ComboBox<>();
 		compareType.getItems().addAll(fxUI.getLocaleBundleString("dialogs.findreplace.combobox.selector_before"),
 									  fxUI.getLocaleBundleString("dialogs.findreplace.combobox.selector_after"),
 									  fxUI.getLocaleBundleString("dialogs.findreplace.combobox.selector_at"));
+
 		compareType.getSelectionModel().select(0);
 		compareType.setMinWidth(96);
+
+		final HBox dateHBox = new HBox(4);
 		dateHBox.getChildren().addAll(nodeAttribSelector, compareType);
 
-		Separator s = new Separator();
+		final Separator s = new Separator();
 		s.setPadding(new Insets(10,0,10,0));
-		// Add to vbox
-		vbox.getChildren().addAll(new Label(fxUI.getLocaleBundleString("dialogs.findreplace.textfieldlabel")),
-								  findTextField, ignoreCase, new Label("Ersetzen durch:"), replaceTextField, s, dateHBox, datePicker);
 
-		BorderPane.setMargin(vbox, new Insets(4,10,0,10));
-		root.setCenter(vbox);
-
-		HBox bottom = new HBox(4);
-
-		Button findButton = new Button(fxUI.getLocaleBundleString("dialogs.findreplace.findbuttontext"));
-		findButton.setOnAction(new EventHandler<ActionEvent>() {
-
-			@Override
-			public void handle(ActionEvent event) {
-				de.akubix.keyminder.lib.TreeSearch.SearchResult r;
-				if(datePicker.getValue() != null)
-				{
-					String nodeAttributeName = nodeAttribSelector.getValue().equals(fxUI.getLocaleBundleString("dialogs.findreplace.combobox.modificationdate")) ? "modified" : "created";
-					de.akubix.keyminder.lib.NodeTimeCondition condition = new de.akubix.keyminder.lib.NodeTimeCondition(nodeAttributeName, de.akubix.keyminder.lib.NodeTimeCondition.getCompareTypeFromString(compareType.getValue()), datePicker.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant());
-
-					r = de.akubix.keyminder.lib.TreeSearch.find(findTextField.getText(), tree, ignoreCase.isSelected(), condition);
-				}
-				else
-				{
-					r = de.akubix.keyminder.lib.TreeSearch.find(findTextField.getText(), tree, ignoreCase.isSelected());
-				}
-
-				if(r == de.akubix.keyminder.lib.TreeSearch.SearchResult.NOT_FOUND)
-				{
-					fxUI.updateStatus(fxUI.getLocaleBundleString("mainwindow.find.text_not_found"));
-				}
-				else if(r == de.akubix.keyminder.lib.TreeSearch.SearchResult.END_REACHED)
-				{
-					fxUI.updateStatus(fxUI.getLocaleBundleString("mainwindow.find.end_of_document_reached"));
-				}
-			}
-		});
-
-		Button replaceButton = new Button(fxUI.getLocaleBundleString("dialogs.findreplace.replacebuttontext"));
-		replaceButton.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				if(replaceTextField.getText().equals(""))
-				{
-					de.akubix.keyminder.lib.TreeSearch.replaceTextOfNode(tree.getSelectedNode(), findTextField.getText(), replaceTextField.getText(), ignoreCase.isSelected());
-					de.akubix.keyminder.lib.TreeSearch.find(findTextField.getText(), tree, ignoreCase.isSelected());
-				}
-			}
-		});
-
+		findButton = new Button(fxUI.getLocaleBundleString("dialogs.findreplace.findbuttontext"));
 		findButton.setMinWidth(138);
-		replaceButton.setMinWidth(137);
-
-		bottom.setAlignment(Pos.CENTER);
-		bottom.getChildren().add(findButton);
-		bottom.getChildren().add(replaceButton);
-
 		findButton.setDefaultButton(true);
 
+		replaceButton = new Button(fxUI.getLocaleBundleString("dialogs.findreplace.replacebuttontext"));
+		replaceButton.setMinWidth(137);
+
+		findButton.setOnAction((event) -> findNextNode());
+		replaceButton.setOnAction((event) -> {
+			replaceNodeContent();
+			findNextNode();
+		});
+
+		HBox bottom = new HBox(4);
+		bottom.setAlignment(Pos.CENTER);
+		bottom.getChildren().addAll(findButton, replaceButton);
+
+		final BorderPane root = new BorderPane();
+
+		final Label title = new Label(fxUI.getLocaleBundleString("dialogs.findreplace.headerlabel"));
+		final Pane top = new Pane(title);
+		top.getStyleClass().add("header");
+
+
+		final VBox vbox = new VBox(4);
+		vbox.getChildren().addAll(new Label(fxUI.getLocaleBundleString("dialogs.findreplace.textfieldlabel")),
+								  findTextField, isCaseSensitive, new Label("Ersetzen durch:"), replaceTextField, s, dateHBox, datePicker);
+
+		BorderPane.setMargin(vbox, new Insets(4,10,0,10));
+
+		root.setTop(top);
+		root.setCenter(vbox);
 		root.setBottom(bottom);
 		BorderPane.setMargin(bottom, new Insets(0,10,10,10));
 
-		Scene myScene = new Scene(root, 300, 270);
-		StylesheetMap.assignStylesheets(myScene);
+		return root;
+	}
 
-		me = new Stage();
-		me.setTitle(ApplicationInstance.APP_NAME + " - " + fxUI.getLocaleBundleString("dialogs.findreplace.title"));
-		me.setScene(myScene);
+	private String getTimeConditionNodeAttrubiteName(){
+		return nodeAttribSelector.getValue().equals(fxUI.getLocaleBundleString("dialogs.findreplace.combobox.modificationdate")) ? "modified" : "created";
+	}
 
-		me.setResizable(false);
-		//me.initModality( Modality.NONE );
-		ImageMap.addDefaultIconsToStage(me);
+	private void findNextNode(){
 
-		me.setOnCloseRequest(new EventHandler<WindowEvent>() {
-			@Override
-			public void handle(WindowEvent event) {
-				instance = null;
+		final NodeWalker.SearchResult result = NodeWalker.find(tree, getNodeMatchConditions());
+
+		if(result.getState() == NodeWalker.SearchState.NOT_FOUND){
+			fxUI.updateStatus(fxUI.getLocaleBundleString("mainwindow.find.text_not_found"));
+		}
+		else if(result.getState() == NodeWalker.SearchState.END_REACHED){
+			fxUI.updateStatus(fxUI.getLocaleBundleString("mainwindow.find.end_of_document_reached"));
+		}
+	}
+
+	private void replaceNodeContent(){
+
+		if(!replaceTextField.getText().equals("")){
+
+			final NodeMatchResult matchResult = NodeWalker.nodeMatches(tree.getSelectedNode(), getNodeMatchConditions());
+
+			if(matchResult != null){
+				MatchReplace.replaceContent(matchResult, replaceTextField.getText(), false);
 			}
-		});
+
+			findNextNode();
+		}
+	}
+
+	private NodeMatcher[] getNodeMatchConditions(){
+
+		if(datePicker.getValue() != null) {
+			return new NodeMatcher[]{
+				new TextMatcher(findTextField.getText(), true, isCaseSensitive.isSelected()),
+				new TimeMatcher(getTimeConditionNodeAttrubiteName(), TimeMatcher.getCompareTypeFromString(compareType.getValue()), datePicker.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant())
+			};
+		}
+		else{
+			return new NodeMatcher[]{
+				new TextMatcher(findTextField.getText(), true, isCaseSensitive.isSelected())
+			};
+		}
 	}
 }

@@ -51,6 +51,10 @@ import de.akubix.keyminder.ui.fx.events.HotKeyEvent;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
+import de.akubix.keyminder.util.search.NodeWalker;
+import de.akubix.keyminder.util.search.NodeWalker.SearchResult;
+import de.akubix.keyminder.util.search.NodeWalker.SearchState;
+import de.akubix.keyminder.util.search.matcher.TextMatcher;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -889,28 +893,24 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		searchInput = new TextField("");
 		searchInput.setPromptText(localeBundle.getString("mainwindow.find.prompt_text"));
 		Button startSearch = new Button(localeBundle.getString("mainwindow.find.button_text"));
-		startSearch.setOnAction(new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent event) {
-				if(!searchInput.getText().equals("")){
-					de.akubix.keyminder.lib.TreeSearch.SearchResult result = de.akubix.keyminder.lib.TreeSearch.find(searchInput.getText(), dataTree, true);
-					if(result == de.akubix.keyminder.lib.TreeSearch.SearchResult.END_REACHED){
-						updateStatus(localeBundle.getString("mainwindow.find.end_of_document_reached"));
-					}
-					else if(result == de.akubix.keyminder.lib.TreeSearch.SearchResult.NOT_FOUND){
-						updateStatus(localeBundle.getString("mainwindow.find.text_not_found"));
-					}
+		startSearch.setOnAction((event) -> {
+			if(!searchInput.getText().equals("")){
+				SearchResult result = NodeWalker.find(dataTree, new TextMatcher(searchInput.getText(), true, true));
+
+				if(result.getState() == SearchState.END_REACHED){
+					updateStatus(localeBundle.getString("mainwindow.find.end_of_document_reached"));
+				}
+				else if(result.getState() == SearchState.NOT_FOUND){
+					updateStatus(localeBundle.getString("mainwindow.find.text_not_found"));
 				}
 			}
 		});
 
-		searchInput.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
-			@Override
-			public void handle(KeyEvent event) {
-				if(event.getCode() == KeyCode.ENTER){
-					startSearch.fire();
-				}
-			}});
+		searchInput.addEventFilter(KeyEvent.KEY_RELEASED, (event) -> {
+			if(event.getCode() == KeyCode.ENTER){
+				startSearch.fire();
+			}
+		});
 
 		searchBoard.setCenter(searchInput);
 		searchBoard.setRight(startSearch);
