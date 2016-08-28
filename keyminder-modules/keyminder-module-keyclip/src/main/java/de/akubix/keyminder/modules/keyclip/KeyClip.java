@@ -49,7 +49,7 @@ public class KeyClip {
 		this.fxUI = fxUI;
 
 		// Provide the KeyClip feature as command
-		instance.getShell().addCommand("keyclip", KeyClipCmd.class.getName());
+		instance.getShell().addCommand(KeyClipCmd.class.getName());
 
 		Button keyClipSidebarButton = MainWindow.createSmallButton("KeyClip", "icon_arrow-rotate-box", 24, (event) -> {
 			String[] data = fxUI.getCurrentSidebar().getUserNameAndPasswordSupplier().get();

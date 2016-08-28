@@ -115,8 +115,8 @@ public class SSHTools {
 		if(!checkProfileSettings(SETTINGS_KEY_SOCKS_ACTION)){app.setSettingsValue(SETTINGS_KEY_SOCKS_ACTION, "default:putty_socks");}
 		if(!checkProfileSettings(SETTINGS_KEY_APP_PROFILES_PATH)){app.setSettingsValue(SETTINGS_KEY_APP_PROFILES_PATH, "./sshtools");}
 
-		app.getShell().addCommand("socks", getClass().getPackage().getName() + ".SocksCmd");
-		app.getShell().addCommand("run", getClass().getPackage().getName() + ".AppStartCmd");
+		app.getShell().addCommand(SocksCmd.class.getName());
+		app.getShell().addCommand(AppStartCmd.class.getName());
 
 		if(JavaFxUserInterface.isLoaded(app)){
 			this.fxUI = JavaFxUserInterface.getInstance(app);

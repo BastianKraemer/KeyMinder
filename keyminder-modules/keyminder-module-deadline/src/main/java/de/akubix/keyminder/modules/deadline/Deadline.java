@@ -133,7 +133,7 @@ public class Deadline {
 
 					HBox hbox = new HBox(4);
 
-					Spinner<Integer> numberField = new Spinner<Integer>(1, 31, 14);
+					Spinner<Integer> numberField = new Spinner<>(1, 31, 14);
 					numberField.setEditable(true);
 					//SpinnerValueFactory.IntegerSpinnerValueFactory spinnerValueFactory = (IntegerSpinnerValueFactory) numberField.getValueFactory();
 
@@ -173,9 +173,8 @@ public class Deadline {
 			Add some commands to interact with this module via KeyMinder Shell (ConsoleMode or Terminal)
 		   ========================================================================================================================================== */
 
-		String packageName = getClass().getPackage().getName();
-		app.getShell().addCommand("deadline", packageName + ".DeadlineCmd");
-		app.getShell().addCommand("dateconv", packageName + ".DateConv");
+		app.getShell().addCommand(DeadlineCmd.class.getName());
+		app.getShell().addCommand(DateConv.class.getName());
 		app.getShell().addAlias("date2epoch", "dateconv -d2e");
 		app.getShell().addAlias("epoch2date", "dateconv -e2d");
 	}

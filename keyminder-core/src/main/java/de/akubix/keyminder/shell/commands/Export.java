@@ -25,11 +25,13 @@ import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
+@Command("export")
 @Operands(cnt = 1)
 @Option(name ="-d", alias={"--delete", "-rm", "--rm", "--del", "--unset"})
 @Option(name ="-i", alias={"--stdin", "--in"})

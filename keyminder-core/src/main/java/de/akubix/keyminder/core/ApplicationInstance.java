@@ -160,7 +160,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 		LocaleLoader.provideBundle("core", locale);
 
 		this.shell = new Shell(this);
-		shell.loadCommandsFromIniFile("/de/akubix/keyminder/shell/commands.ini");
+		shell.loadCommandsFromFile("/de/akubix/keyminder/shell/defaultCommands");
 
 		this.moduleLoader = new ModuleLoader(this);
 

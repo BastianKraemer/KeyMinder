@@ -28,6 +28,7 @@ import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
@@ -35,6 +36,7 @@ import de.akubix.keyminder.shell.io.ShellOutputWriter;
 import de.akubix.keyminder.util.search.MatchReplace;
 import de.akubix.keyminder.util.search.NodeMatchResult;
 
+@Command("replace")
 @Operands(cnt = 1)
 @Option(name = "--regex", alias = {"-r", "--regex-replace"})
 @Description("Replaces the matching values from an search result with another custom value")

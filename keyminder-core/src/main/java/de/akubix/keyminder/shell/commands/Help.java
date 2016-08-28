@@ -5,10 +5,12 @@ import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.NoArgs;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
+@Command("help")
 @NoArgs
 @Description("Displays a list of all possible commands.")
 public final class Help extends AbstractShellCommand {

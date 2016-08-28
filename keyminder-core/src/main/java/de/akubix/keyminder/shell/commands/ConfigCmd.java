@@ -25,11 +25,13 @@ import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Option;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
+@Command("config")
 @Option(name = "--fileconfig", alias={"-f", "-fc", "-file", "--file"})
 @Option(name = "--reload", alias={"-r", "-R"})
 @Option(name = "--delete", paramCnt = 1, alias = {"-d", "-D"})

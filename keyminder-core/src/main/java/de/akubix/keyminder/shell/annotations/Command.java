@@ -8,9 +8,11 @@ import java.lang.annotation.Target;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 
 /**
- * An {@link AbstractShellCommand} annotated with {@link NoArgs} must be called without any parameters
+ * Any class that should be used as shell command needs to be annotated with @{@link Command} and must implement  {@link AbstractShellCommand}.
+ * It is recommended to extend the {@link AbstractShellCommand} class for most command implementations.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface NoArgs {
+public @interface Command {
+	String value();
 }

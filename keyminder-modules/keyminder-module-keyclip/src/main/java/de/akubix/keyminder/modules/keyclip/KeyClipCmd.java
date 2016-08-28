@@ -2,6 +2,7 @@ package de.akubix.keyminder.modules.keyclip;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.shell.AbstractShellCommand;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
@@ -11,6 +12,7 @@ import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
+@Command("keyclip")
 @RequireOpenedFile
 @Operands(cnt = 1, nodeArgAt = 0, optionalNodeArg = true)
 @Option(name = "--user", paramCnt = 1, alias = "-u")

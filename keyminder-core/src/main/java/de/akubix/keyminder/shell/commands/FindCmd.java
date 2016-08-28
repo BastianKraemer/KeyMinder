@@ -30,6 +30,7 @@ import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
@@ -42,6 +43,7 @@ import de.akubix.keyminder.util.search.matcher.TextMatcher;
 import de.akubix.keyminder.util.search.matcher.TextMatcher.NodeMatcherOption;
 import de.akubix.keyminder.util.search.matcher.TimeMatcher;
 
+@Command("find")
 @Operands(cnt = 2, optionalNodeArg = true, nodeArgAt = 0)
 @Option(name = "--modified", paramCnt = 2, alias = "-m")
 @Option(name = "--created", paramCnt = 2, alias = "-c")

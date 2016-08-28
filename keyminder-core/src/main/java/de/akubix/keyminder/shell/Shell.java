@@ -18,7 +18,9 @@
 */
 package de.akubix.keyminder.shell;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -37,6 +39,7 @@ import java.util.regex.Pattern;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
 import de.akubix.keyminder.shell.annotations.Usage;
@@ -65,6 +68,8 @@ import de.akubix.keyminder.shell.parse.ShellExecOption;
  */
 public class Shell {
 
+	private static final Pattern COMMAND_PATTERN = Pattern.compile("^[a-z0-9-_]+$");
+
 	private final ApplicationInstance instance;
 
 	private final Map<String, Class<? extends ShellCommand>> availableCommands = new HashMap<>();
@@ -84,18 +89,47 @@ public class Shell {
 	 * @param name The name of the command
 	 * @param packageAndClassName the complete package and class name
 	 */
-	public void addCommand(String name, String packageAndClassName){
-		ClassLoader classLoader = this.getClass().getClassLoader();
-		addCommand(name, packageAndClassName, classLoader);
+	@SuppressWarnings("unchecked")
+	public boolean addCommand(String packageAndClassName){
+
+		try {
+			assert !packageAndClassName.equals("") : "Empty class name";
+
+			final Class<?> loadedClass = this.getClass().getClassLoader().loadClass(packageAndClassName);
+			assert loadedClass.isAssignableFrom(ShellCommand.class) : String.format("Command does not implement interface '%s'.", ShellCommand.class.getSimpleName());
+
+			final Command commandAnnotation = loadedClass.getAnnotation(Command.class);
+			assert commandAnnotation != null : String.format("Annotation '%s' is missing.", Command.class.getSimpleName());
+
+			final String cmdName = commandAnnotation.value();
+			assert COMMAND_PATTERN.matcher(cmdName).matches() : String.format("Command name '%s' is not valid.", cmdName);
+			assert !availableCommands.containsKey(cmdName) : String.format("Duplicate entry for command name '%s'.", cmdName);
+
+			availableCommands.put(cmdName, (Class<? extends ShellCommand>) loadedClass);
+			return true;
+
+		} catch (ClassNotFoundException e){
+			instance.println(String.format("Cannot load shell command class '%s': Class not found.", packageAndClassName));
+		}
+		catch(AssertionError e) {
+			instance.println(String.format("Cannot load shell command class '%s': %s", packageAndClassName, e.getMessage()));
+		}
+
+		return false;
 	}
 
 	/**
-	 * Loads a command list from an ini file
-	 * @param resourcePath the path to the ini file
+	 * Loads a command list from a file (listed in a file with one line per class)
+	 * @param resourcePath the path to the file
 	 */
-	public void loadCommandsFromIniFile(String resourcePath){
+	public void loadCommandsFromFile(String resourcePath){
+
 		try {
-			new IniCommandLoader().load(resourcePath, this);
+			try(BufferedReader br = new BufferedReader(new InputStreamReader(getClass().getResourceAsStream(resourcePath)))){
+				br.lines().map((str) -> str.trim())
+						.filter((str) -> !str.equals(""))
+						.forEach((line) -> addCommand(line));
+			}
 		}
 		catch (IOException e) {
 			if(KeyMinder.verbose_mode){
@@ -128,23 +162,6 @@ public class Shell {
 
 	public Set<Entry<String, String>> getAliasSet(){
 		return this.aliasMap.entrySet();
-	}
-
-	@SuppressWarnings("unchecked")
-	protected void addCommand(String name, String classPath, ClassLoader classLoader){
-		name = name.toLowerCase();
-		try {
-			if(!availableCommands.containsKey(name)){
-				Class<?> loadedClass = classLoader.loadClass(classPath);
-				if(ShellCommand.class.isAssignableFrom(loadedClass)){
-					availableCommands.put(name, (Class<? extends ShellCommand>) loadedClass);
-				}
-			}
-		} catch (ClassNotFoundException e){
-			if(KeyMinder.verbose_mode){
-				instance.printf("Cannot load command '%s'. Unable to find class '%s'\n", name, classPath);
-			}
-		}
 	}
 
 	/**
