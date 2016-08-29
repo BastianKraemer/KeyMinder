@@ -98,7 +98,7 @@ public class Shell {
 			assert !packageAndClassName.equals("") : "Empty class name";
 
 			final Class<?> loadedClass = this.getClass().getClassLoader().loadClass(packageAndClassName);
-			assert loadedClass.isAssignableFrom(ShellCommand.class) : String.format("Command does not implement interface '%s'.", ShellCommand.class.getSimpleName());
+			assert ShellCommand.class.isAssignableFrom(loadedClass) : String.format("Command does not implement interface '%s'.", ShellCommand.class.getName());
 
 			final Command commandAnnotation = loadedClass.getAnnotation(Command.class);
 			assert commandAnnotation != null : String.format("Annotation '%s' is missing.", Command.class.getSimpleName());

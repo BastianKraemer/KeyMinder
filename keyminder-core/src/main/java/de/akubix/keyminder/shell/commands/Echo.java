@@ -15,7 +15,7 @@ import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
-@Command("config")
+@Command("echo")
 @Description("Prints out any data.")
 @Usage("echo [text to output]")
 @PipeInfo(in = "* (Any object)", out = "String")

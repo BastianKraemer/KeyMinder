@@ -34,7 +34,7 @@ import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
-@Command("copy")
+@Command("cp")
 @RequireOpenedFile
 @Operands(cnt = 2)
 @Option(name = "--move", alias = "-m")
