@@ -68,6 +68,7 @@ public class FileSettingsDialog {
 	boolean saveSettings = false;
 
 	public FileSettingsDialog(Stage primaryStage, ApplicationInstance instance){
+
 		this.app = instance;
 		this.fxUI = JavaFxUserInterface.getInstance(instance);
 		this.originalFileSettingsReference = app.getCurrentFile().getFileSettings();
@@ -167,10 +168,10 @@ public class FileSettingsDialog {
 
 		final Separator passwordHintSeparator = new Separator(Orientation.HORIZONTAL);
 		final Label passwordHintLabel = new Label(fxUI.getLocaleBundleString("filesettings.security.label_password_hint"));
-		final TextField passwordHintTextField = new TextField(app.getCurrentFile().getFileSettings().getOrDefault("PasswordHint", ""));
+		final TextField passwordHintTextField = new TextField(app.getCurrentFile().getPasswordHint());
 
 		passwordHintTextField.setOnKeyReleased((event) -> {
-				app.getCurrentFile().getFileSettings().put("PasswordHint", passwordHintTextField.getText());
+				app.getCurrentFile().setPasswordHint(passwordHintTextField.getText());
 				app.getTree().setTreeChangedStatus(true);
 			});
 

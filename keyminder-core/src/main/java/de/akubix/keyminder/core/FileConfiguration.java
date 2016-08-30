@@ -1,5 +1,5 @@
 /*	KeyMinder
-	Copyright (C) 2015 Bastian Kraemer
+	Copyright (C) 2015-2016 Bastian Kraemer
 
 	FileConfiguration.java
 
@@ -32,8 +32,9 @@ public class FileConfiguration {
 	private final Map<String, String> fileAttributes;
 	private final Map<String, String> fileSettings;
 
-	public FileConfiguration(File file, String fileVersion, boolean encrypt, String fileTypeIdentifier, EncryptionManager encryptionManager,
-							 Map<String, String> fileAttributes, Map<String, String> fileSettings){
+	public static final String PASSWORD_HINT_ATTRIBUTE_NAME = "keyminder:password-hint";
+
+	public FileConfiguration(File file, String fileVersion, boolean encrypt, String fileTypeIdentifier, EncryptionManager encryptionManager, Map<String, String> fileAttributes, Map<String, String> fileSettings){
 		this.filepath = file;
 		this.version = fileVersion;
 		this.encrypt = encrypt;
@@ -148,5 +149,27 @@ public class FileConfiguration {
 	 */
 	public Map<String, String> getFileSettings() {
 		return this.fileSettings;
+	}
+
+	/**
+	 * Sets a new password hint for this file.
+	 * Use {@code null} or an empty string to reset the password hint
+	 * @param passwordHint the password hint
+	 */
+	public void setPasswordHint(String passwordHint){
+		if(passwordHint == null || passwordHint.equals("")){
+			this.fileAttributes.remove(PASSWORD_HINT_ATTRIBUTE_NAME);
+		}
+		else{
+			this.fileAttributes.put(PASSWORD_HINT_ATTRIBUTE_NAME, passwordHint);
+		}
+	}
+
+	/**
+	 * Returns the current password hint
+	 * @return the password hint
+	 */
+	public String getPasswordHint(){
+		return this.fileAttributes.getOrDefault(PASSWORD_HINT_ATTRIBUTE_NAME, "");
 	}
 }
