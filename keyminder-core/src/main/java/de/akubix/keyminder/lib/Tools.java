@@ -28,6 +28,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javafx.util.Pair;
 
 /**
  * This class is just a collection of some useful methods
@@ -123,5 +127,25 @@ public class Tools {
 		catch(NumberFormatException | DateTimeException ex){
 			return errorText;
 		}
+	}
+
+	/**
+	 *
+	 * @param input The input string
+	 * @param keyRegEx The regular expression for the key (do not use any match groups)
+	 * @param valueRegEx The regular expression for the value (do not use any match groups)
+	 * @param separatorRegEx The separator as regular expression
+	 * @return
+	 * @throws IllegalArgumentException if the input value does not match with the regular expression
+	 */
+	public static Pair<String, String> splitKeyAndValue(String input, String keyRegEx,  String separatorRegEx, String valueRegEx) throws IllegalArgumentException {
+		Pattern p = Pattern.compile(String.format("^(%s) *%s *(%s)$", keyRegEx, separatorRegEx, valueRegEx));
+		Matcher matcher = p.matcher(input);
+
+		if(!matcher.matches()){
+			throw new IllegalArgumentException(String.format("The input value does not match the following pattern: %s%s%s", keyRegEx, separatorRegEx, valueRegEx));
+		}
+
+		return new Pair<>(matcher.group(1), matcher.group(2));
 	}
 }

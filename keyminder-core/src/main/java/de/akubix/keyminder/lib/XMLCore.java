@@ -44,6 +44,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
+import javafx.util.Pair;
+
 /**
  * This class represents a collection of static methods and functions to simply deal with XML files, documents and nodes
  * @see Document
@@ -344,10 +346,12 @@ public class XMLCore{
 		else{
 			org.w3c.dom.Node xmlnode;
 			if(nodename.contains(":")){
-				String[] splitstr = nodename.split(":", 2);
-				xmlnode = parentXMLNode.getOwnerDocument().createElement(splitstr[0]);
+
+				Pair<String, String> p = Tools.splitKeyAndValue(nodename, ".+", ":", ".+");
+
+				xmlnode = parentXMLNode.getOwnerDocument().createElement(p.getKey());
 				org.w3c.dom.Attr attrib = parentXMLNode.getOwnerDocument().createAttribute("name");
-				attrib.setNodeValue(splitstr[1]);
+				attrib.setNodeValue(p.getValue());
 				xmlnode.getAttributes().setNamedItem(attrib);
 			}
 			else{

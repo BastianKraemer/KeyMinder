@@ -19,17 +19,19 @@
 package de.akubix.keyminder.shell.commands;
 
 import de.akubix.keyminder.core.ApplicationInstance;
+import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
-import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
+import javafx.util.Pair;
 
 @Command("export")
 @Operands(cnt = 1)
@@ -59,15 +61,17 @@ public final class Export extends AbstractShellCommand {
 				instance.getShell().setRuntimeVariable(in.getParameters().get("$0")[0], in.getInputData().toString());
 			}
 			else{
-				String[] splitStr = in.getParameters().get("$0")[0].split("=", 2);
-				if(splitStr.length == 2){
-					instance.getShell().setRuntimeVariable(splitStr[0], splitStr[1]);
+
+				try{
+					Pair<String, String> p = Tools.splitKeyAndValue(in.getParameters().get("$0")[0], "[A-Za-z0-9_\\.:-]+", "=", ".+");
+					instance.getShell().setRuntimeVariable(p.getKey(), p.getValue().trim());
 				}
-				else{
+				catch(IllegalArgumentException e){
 					out.setColor(AnsiColor.YELLOW);
-					out.printf("No value for runtime variable '%s'. Usage: '%s=<any value>'\n", in.getParameters().get("$0")[0], in.getParameters().get("$0")[0]);
+					out.printf("Invalid syntax. Usage: '%s=<any value>'\n", in.getParameters().get("$0")[0], in.getParameters().get("$0")[0]);
 					return CommandOutput.error();
 				}
+
 			}
 		}
 		else{

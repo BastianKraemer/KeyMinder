@@ -25,6 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -35,6 +38,7 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.Shell;
@@ -42,6 +46,7 @@ import de.akubix.keyminder.ui.console.ConsoleMode;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import javafx.stage.FileChooser;
+import javafx.util.Pair;
 
 /**
  * The {@link XMLApplicationProfileParser} class is used to generate the command line string for every application you want to start.
@@ -273,17 +278,22 @@ public class XMLApplicationProfileParser
 		}
 	}
 
-	private String parseIfEquals(org.w3c.dom.Node xmlNode, boolean checkNotEquals) throws IllegalArgumentException{
+	private String parseIfEquals(org.w3c.dom.Node xmlNode, boolean checkNotEquals) throws IllegalArgumentException {
 		org.w3c.dom.Node equalsAttrib = xmlNode.getAttributes().getNamedItem(checkNotEquals ? "not_equals" : "equals");
 
-		if(!equalsAttrib.getNodeValue().contains("==")){throw new IllegalArgumentException("Error: Conditions like 'if (not) equals'  always need an '==' operator. <if equals=\"${var} == 'some text'\">...</if>");}
+		if(!equalsAttrib.getNodeValue().contains("==")){throw new IllegalArgumentException("Error: Conditions like 'if (not) equals' always need an '==' operator. <if equals=\"${var} == 'some text'\">...</if>");}
 
-		String splitStr[] = equalsAttrib.getNodeValue().split("==", 2);
+		Pair<String, String> p = Tools.splitKeyAndValue(equalsAttrib.getNodeValue(), ".+", "==", ".+");
 
-		String left = splitStr[0].trim();
-		String right = splitStr[1].trim();
-		if(left.matches("^'.*'$")){left = left.substring(1, left.length() - 1);}
-		if(right.matches("^'.*'$")){right = right.substring(1, right.length() - 1);}
+		final Pattern quotePattern = Pattern.compile("^['\"](.*)['\"]$");
+
+		final Function<String, String> patternMatcher = (input) -> {
+			Matcher m = quotePattern.matcher(input);
+			return m.matches() ? m.group(1) : input;
+		};
+
+		final String left = patternMatcher.apply(p.getKey().trim());
+		final String right = patternMatcher.apply(p.getValue().trim());
 
 		if(replaceVariablesInString(left).equals(replaceVariablesInString(right)) ^ checkNotEquals){
 			return parseChildNodes(xmlNode);

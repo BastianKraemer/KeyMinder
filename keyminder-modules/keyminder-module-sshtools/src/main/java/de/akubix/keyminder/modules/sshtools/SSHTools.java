@@ -42,6 +42,7 @@ import de.akubix.keyminder.core.events.DefaultEventHandler;
 import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
@@ -83,6 +84,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
+import javafx.util.Pair;
 
 public class SSHTools {
 
@@ -475,6 +477,7 @@ public class SSHTools {
 	/* =============================================================================================================================================== */
 
 	private Map<String, String> createVariablePreset(String socksProfileId, TreeNode treeNode){
+
 		Map<String, String> variablePreset = new HashMap<>();
 
 		//Socks profile variables
@@ -487,8 +490,11 @@ public class SSHTools {
 
 			for(String line: app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".customargs").split("\n")){
 				if(!line.matches("^( |\t)*\\#.*")){
-					String[] splitstr = line.split("=", 2);
-					if(splitstr.length == 2){variablePreset.put(splitstr[0].trim(), splitstr[1].trim());}
+					try{
+						Pair<String, String> p = Tools.splitKeyAndValue(line, "[A-Za-z0-9_\\.:-]+", "=", ".+");
+						variablePreset.put(p.getKey(), p.getValue().trim());
+					}
+					catch(IllegalArgumentException e){}
 				}
 			}
 		}
