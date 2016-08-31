@@ -19,6 +19,7 @@
 package de.akubix.keyminder.core;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,7 +30,9 @@ import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import javax.management.modelmbean.XMLParseException;
+import javax.xml.transform.TransformerException;
+
+import org.xml.sax.SAXException;
 
 import de.akubix.keyminder.core.db.StandardTree;
 import de.akubix.keyminder.core.db.Tree;
@@ -76,6 +79,8 @@ public class ApplicationInstance implements ShellOutputWriter {
 	public static final String SETTINGS_KEY_USE_OTHER_WEB_BROWSER = "etc.useotherbrowser";
 	public static final String SETTINGS_KEY_BROWSER_PATH = "etc.browserpath";
 
+	private static final String DEFAULT_SETTINGS_FILE = "keyminder_settings.xml";
+
 	/* Other variables */
 
 	private File settingsFile;
@@ -114,20 +119,24 @@ public class ApplicationInstance implements ShellOutputWriter {
 		tree = new StandardTree(this);
 		storageManager = new StorageManager();
 
-		final String defaultSettingsFile = "keyminder_settings.xml";
+		this.settingsFile = new File(KeyMinder.environment.getOrDefault(KeyMinder.ENVIRONMENT_KEY_SETTINGS_FILE, DEFAULT_SETTINGS_FILE));
 
-		if(KeyMinder.environment.containsKey("cmd.settingsfile")){
-			settingsFile = new File(KeyMinder.environment.get("cmd.settingsfile"));
+		if(KeyMinder.environment.containsKey(KeyMinder.ENVIRONMENT_KEY_SETTINGS_FILE)){
+			settingsFile = new File(KeyMinder.environment.get(KeyMinder.ENVIRONMENT_KEY_SETTINGS_FILE));
 		}
 		else{
-			settingsFile = new File(defaultSettingsFile);
+			settingsFile = new File(DEFAULT_SETTINGS_FILE);
 			if(!settingsFile.exists()){
 				// There is no configuration file next to the jar -> maybe there is a global configuration file, placed in the users home directory?
-				File globalSettingsFile = new File(System.getProperty("user.home") + System.getProperty("file.separator") + defaultSettingsFile);
+				File globalSettingsFile = new File(System.getProperty("user.home") + System.getProperty("file.separator") + DEFAULT_SETTINGS_FILE);
 				if(globalSettingsFile.exists()){
-					settingsFile = globalSettingsFile;
+					this.settingsFile = globalSettingsFile;
 				}
 			}
+		}
+
+		if(settingsFile.canWrite()){
+			// TODO:
 		}
 
 		presetDefaultSettings();
@@ -233,38 +242,24 @@ public class ApplicationInstance implements ShellOutputWriter {
 	 * This is necessary because maybe this must be called by the UI-Main Thread.
 	 */
 	public void loadDefaultFile(){
-		if(KeyMinder.environment.containsKey("cmd.file")){
-			File f = new File(KeyMinder.environment.get("cmd.file"));
 
-			if(f.exists()){
-				if(!KeyMinder.environment.containsKey("cmd.password")){
-					openFile(f);
-				}
-				else{
-					openFile(f, KeyMinder.environment.get("cmd.password"));
-					KeyMinder.environment.remove("cmd.password");
-				}
+		String value = KeyMinder.environment.getOrDefault(KeyMinder.ENVIRONMENT_KEY_COMMANDLINE_FILE, settings.get(SETTINGS_KEY_DEFAULT_FILE));
+		if(value == null || value.equals("")){
+			return;
+		}
+		File file = new File(value);
+
+		if(file.exists()){
+			if(!KeyMinder.environment.containsKey(KeyMinder.ENVIRONMENT_KEY_PASSWORD)){
+				openFile(file);
 			}
 			else{
-				println("Cannot open file \"" + f.getAbsolutePath() + "\". File does not exist.");
+				openFile(file, KeyMinder.environment.get(KeyMinder.ENVIRONMENT_KEY_PASSWORD));
+				KeyMinder.environment.remove(KeyMinder.ENVIRONMENT_KEY_PASSWORD);
 			}
 		}
 		else{
-			if(settings.containsKey(SETTINGS_KEY_DEFAULT_FILE)){
-				File f = new File(settings.get(SETTINGS_KEY_DEFAULT_FILE));
-				if(f.exists()){
-					if(!KeyMinder.environment.containsKey("cmd.password")){
-						openFile(f);
-					}
-					else{
-						openFile(f, KeyMinder.environment.get("cmd.password"));
-						KeyMinder.environment.remove("cmd.password");
-					}
-				}
-				else{
-					println("Cannot open file \"" + f.getAbsolutePath() + "\". File does not exist.");
-				}
-			}
+			printf("Cannot open file '%s'. File does not exist.\n", file.getAbsolutePath());
 		}
 	}
 
@@ -281,21 +276,21 @@ public class ApplicationInstance implements ShellOutputWriter {
 	private void loadSettingsFromXMLFile(){
 		try {
 			if(settingsFile.exists()){
-				XMLCore.xml2Map(settingsFile, settings, true);
+				XMLCore.convertXmlToMap(XMLCore.loadXmlDocument(settingsFile), settings, true);
 				loadDefaultEnvironmentXMLFile();
 			}
-		} catch (XMLParseException e) {
+		} catch (SAXException | IOException e) {
 			println("Cannot load settings from xml file. " + e.getMessage());
 		}
 	}
 
-	private void loadDefaultEnvironmentXMLFile()
-	{
+	private void loadDefaultEnvironmentXMLFile(){
+
 		if(settings.containsKey("startup.default_environment")){
 			try {
 				File environmrntXMLFile = new File(settings.get("startup.default_environment"));
 				if(environmrntXMLFile.exists()){
-					XMLCore.xml2Map(environmrntXMLFile, KeyMinder.environment, false);
+					XMLCore.convertXmlToMap(XMLCore.loadXmlDocument(environmrntXMLFile), KeyMinder.environment, false);
 					if(KeyMinder.environment.containsKey("verbose_mode") && Tools.isYes(KeyMinder.environment.get("verbose_mode"))){
 						KeyMinder.verbose_mode = true;
 					}
@@ -303,7 +298,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 				else{
 					println(String.format("Warning: Cannot find environment file \"%s\"", settings.get("startup.default_environment")));
 				}
-			} catch (XMLParseException e) {
+			} catch (SAXException | IOException e) {
 				println("Cannot load default environment from xml file: " + e.getMessage());
 			}
 		}
@@ -388,8 +383,14 @@ public class ApplicationInstance implements ShellOutputWriter {
 	 * Tell the ApplicationInstance that some settings may have changed an fire the assigned events
 	 */
 	public void saveSettings(){
-		XMLCore.saveMapAsXMLFile(settingsFile, settings, "keyminder_settings");
-		fireEvent(DefaultEvent.OnSettingsChanged);
+
+		try {
+			XMLCore.writeXmlDocumentToFile(settingsFile, XMLCore.convertMapToXmlDocument(settings, "keyminder_settings"));
+			fireEvent(DefaultEvent.OnSettingsChanged);
+
+		} catch (IOException | TransformerException e) {
+			alert("Unable to save KeyMinder settings: " + e.getMessage());
+		}
 	}
 
 	/**

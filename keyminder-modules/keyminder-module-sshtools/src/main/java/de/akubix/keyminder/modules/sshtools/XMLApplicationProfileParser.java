@@ -1,7 +1,7 @@
 /*	KeyMinder
-	Copyright (C) 2015 Bastian Kraemer
+	Copyright (C) 2015-2016 Bastian Kraemer
 
-	Breakout.java
+	XMLApplicationProfileParser.java
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -28,8 +28,6 @@ import java.util.ResourceBundle;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -85,11 +83,14 @@ public class XMLApplicationProfileParser
 	 * @throws IllegalArgumentException if the XML input stream couldn't be parsed
 	 */
 	public static XMLApplicationProfileParser createInstance(ApplicationInstance app, InputStream applicationProfileXMLInputStream, Map<String, String> variables) throws IllegalArgumentException {
-		if(applicationProfileXMLInputStream == null){throw new IllegalArgumentException("Error: input stream of XML application profile is 'null'.");}
+
+		if(applicationProfileXMLInputStream == null){
+			throw new IllegalArgumentException("Error: Input stream of XML application profile is 'null'.");
+		}
 
 		try {
-			return new XMLApplicationProfileParser(app, XMLCore.loadDocumentFromStream(applicationProfileXMLInputStream), variables);
-		} catch (ParserConfigurationException | SAXException | IOException e) {
+			return new XMLApplicationProfileParser(app, XMLCore.loadXmlDocument(applicationProfileXMLInputStream), variables);
+		} catch (SAXException | IOException e) {
 			throw new IllegalArgumentException("Cannot parse XML application profile");
 		}
 	}
@@ -104,8 +105,8 @@ public class XMLApplicationProfileParser
 	 */
 	public static XMLApplicationProfileParser createInstance(ApplicationInstance app, String applicationProfileXMLString, Map<String, String> variables) throws IllegalArgumentException {
 		try {
-			return new XMLApplicationProfileParser(app, XMLCore.loadDocumentFromString(applicationProfileXMLString), variables);
-		} catch (ParserConfigurationException | SAXException | IOException e) {
+			return new XMLApplicationProfileParser(app, XMLCore.loadXmlDocument(applicationProfileXMLString), variables);
+		} catch (SAXException | IOException e) {
 			throw new IllegalArgumentException("Cannot parse XML application profile");
 		}
 	}
@@ -214,7 +215,7 @@ public class XMLApplicationProfileParser
 	}
 
 	private String parseChildNodes(org.w3c.dom.Node parentXMLNode){
-		if(XMLCore.hasChildNodes(parentXMLNode)){
+		if(XMLCore.xmlElementHasChildNodes(parentXMLNode)){
 			StringBuilder returnValue = new StringBuilder();
 			for(int i = 0; i < parentXMLNode.getChildNodes().getLength(); i++){
 				org.w3c.dom.Node childNode = parentXMLNode.getChildNodes().item(i);

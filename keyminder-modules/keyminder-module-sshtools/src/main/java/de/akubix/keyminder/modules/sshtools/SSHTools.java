@@ -1,5 +1,5 @@
 /*	KeyMinder
-	Copyright (C) 2015 Bastian Kraemer
+	Copyright (C) 2015-2016 Bastian Kraemer
 
 	SSHTools.java
 
@@ -34,6 +34,8 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.xml.sax.SAXException;
+
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
@@ -47,6 +49,9 @@ import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
+import de.akubix.keyminder.ui.fx.MenuEntryPosition;
+import de.akubix.keyminder.ui.fx.dialogs.FileSettingsDialog;
+import de.akubix.keyminder.ui.fx.dialogs.SettingsDialog;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
@@ -160,7 +165,7 @@ public class SSHTools {
 
 						File f = new File(cmd[0]);
 						if(f.exists()){
-							de.akubix.keyminder.lib.Tools.runProcess(java.util.Arrays.asList(cmd));
+							Tools.runProcess(java.util.Arrays.asList(cmd));
 						}
 						else{
 							fxUI.alert(String.format("Cannot execute file '%s': File does not exist.", cmd[0]));
@@ -168,9 +173,9 @@ public class SSHTools {
 					}
 					catch(Exception ex){
 						fxUI.alert("Cannot execute etc hosts command: " + ex.getMessage());
-						if(de.akubix.keyminder.core.KeyMinder.verbose_mode){ex.printStackTrace();}
+						if(KeyMinder.verbose_mode){ex.printStackTrace();}
 					}
-				}), de.akubix.keyminder.ui.fx.MenuEntryPosition.TOOLS, false);
+				}), MenuEntryPosition.TOOLS, false);
 			}
 		}
 		else{
@@ -207,7 +212,7 @@ public class SSHTools {
 					try{
 						AppStarter as = new AppStarter(app, this, () -> {
 							try {
-								return XMLCore.loadDocumentFromFile(xmlFile);
+								return XMLCore.loadXmlDocument(xmlFile);
 							} catch (Exception e) {
 								return null;
 							}
@@ -229,7 +234,7 @@ public class SSHTools {
 		try{
 			if(app.getSettingsValueAsBoolean(settings_value, false)){
 				AppStarter as = new AppStarter(app, this, () -> {try {
-						return XMLCore.loadDocumentFromStream(getXMLProfileInputStream(inputStreamSrc));
+						return XMLCore.loadXmlDocument(getXMLProfileInputStream(inputStreamSrc));
 					} catch (Exception e) {
 						throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
 				}});
@@ -250,14 +255,13 @@ public class SSHTools {
 			try{
 				socksAppStarter = new AppStarter(app, this, true, () -> {
 					try {
-						return XMLCore.loadDocumentFromStream(getXMLProfileInputStream(app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION)));
-					} catch (Exception e) {
+						return XMLCore.loadXmlDocument(getXMLProfileInputStream(app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION)));
+					} catch (SAXException | IOException e) {
 						throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
 				}});
 			}
 			catch(IllegalArgumentException e){
-				e.printStackTrace();
-				String message = "Warning: Syntax error in socks application profile.";
+				final String message = "Warning: Syntax error in socks application profile.";
 				if(KeyMinder.verbose_mode){app.alert(message);}else{app.log(message);}
 				socksAppStarter = null;
 			}
@@ -313,6 +317,7 @@ public class SSHTools {
 	}
 
 	private void handleCreation(){
+
 		DefaultEventHandler handler = () -> reloadSocksConfig();
 
 		// If a file has been opened
@@ -335,7 +340,7 @@ public class SSHTools {
 				}
 
 				if(ask4Close){
-					if(app.requestYesNoDialog(de.akubix.keyminder.core.ApplicationInstance.APP_NAME, locale.getString("module.sshtools.terminate_all_connections"))){
+					if(app.requestYesNoDialog(ApplicationInstance.APP_NAME, locale.getString("module.sshtools.terminate_all_connections"))){
 						for(String key: runningSocksProfiles.keySet()){
 							if(runningSocksProfiles.get(key) != null){
 								stopSocksProfile(key);
@@ -351,13 +356,8 @@ public class SSHTools {
 
 		// This will only be executed if the JavaFX user interface is available
 		if(fxUI != null){
-			fxUI.addEventListener(FxSettingsEvent.OnSettingsDialogOpened, (TabPane tabControl, Map<String, String> settings) -> {
-					onSettingsDialogOpened(tabControl, settings);
-			});
-
-			fxUI.addEventListener(FxSettingsEvent.OnFileSettingsDialogOpened, (TabPane tabControl, Map<String, String> settings) -> {
-					onFileSettingsDialogOpened(tabControl, settings);
-			});
+			fxUI.addEventListener(FxSettingsEvent.OnSettingsDialogOpened, (TabPane tabControl, Map<String, String> settings) -> onSettingsDialogOpened(tabControl, settings));
+			fxUI.addEventListener(FxSettingsEvent.OnFileSettingsDialogOpened, (TabPane tabControl, Map<String, String> settings) -> onFileSettingsDialogOpened(tabControl, settings));
 		}
 	}
 
@@ -455,7 +455,7 @@ public class SSHTools {
 							return String.format(locale.getString("module.sshtools.error.exec_not_found"), args.get(0));
 						}
 					}
-					de.akubix.keyminder.lib.Tools.runProcess(args);
+					Tools.runProcess(args);
 					return (fxUI == null ?
 							"Process '" + args.get(0) + "' successfully started." :
 							String.format(locale.getString("module.sshtools.message.process_successfully_started"), args.get(0)));
@@ -534,7 +534,7 @@ public class SSHTools {
 
 				if(confirmCommandlineArguments(cmd, sshpw.equals("") ? null : sshpw)){
 					try{
-						Process p = de.akubix.keyminder.lib.Tools.runProcess(cmd);
+						Process p = Tools.runProcess(cmd);
 						runningSocksProfiles.put(socksProfileId, p);
 
 						if(fxUI != null){
@@ -719,14 +719,14 @@ public class SSHTools {
 
 		VBox pathConfig = new VBox(4);
 		pathConfig.setPadding(new Insets(4, 8, 0, 8));
-		pathConfig.setMaxWidth(de.akubix.keyminder.ui.fx.dialogs.SettingsDialog.size_x);
-		pathConfig.setMinWidth(de.akubix.keyminder.ui.fx.dialogs.SettingsDialog.size_x);
+		pathConfig.setMaxWidth(SettingsDialog.size_x);
+		pathConfig.setMinWidth(SettingsDialog.size_x);
 
 		pathConfig.getChildren().addAll(title,
-				new Label(locale.getString("module.sshtools.settings.puttypath")), createFileInputDialog(generalSettings, "sshtools.puttypath", fxUI),
-				new Label(locale.getString("module.sshtools.settings.plinkpath")), createFileInputDialog(generalSettings, "sshtools.plinkpath", fxUI),
-				new Label(locale.getString("module.sshtools.settings.winscppath")), createFileInputDialog(generalSettings, "sshtools.winscppath", fxUI),
-				new Separator(Orientation.HORIZONTAL));
+			new Label(locale.getString("module.sshtools.settings.puttypath")), createFileInputDialog(generalSettings, "sshtools.puttypath", fxUI),
+			new Label(locale.getString("module.sshtools.settings.plinkpath")), createFileInputDialog(generalSettings, "sshtools.plinkpath", fxUI),
+			new Label(locale.getString("module.sshtools.settings.winscppath")), createFileInputDialog(generalSettings, "sshtools.winscppath", fxUI),
+			new Separator(Orientation.HORIZONTAL));
 
 		// Custom application profile path
 
@@ -735,17 +735,18 @@ public class SSHTools {
 		pathInput.setOnKeyReleased((event) -> generalSettings.put(SETTINGS_KEY_APP_PROFILES_PATH, pathInput.getText()));
 		Button browseButton = new Button(locale.getString("module.sshtools.settings.browse"));
 		browseButton.setOnAction((event) -> {
-				DirectoryChooser dc = new DirectoryChooser();
-				dc.setTitle(locale.getString("module.sshtools.settings.directorychooser.appprofilepath"));
-				File f = new File(pathInput.getText());
-				if(f.exists()){dc.setInitialDirectory(f);}
+			DirectoryChooser dc = new DirectoryChooser();
+			dc.setTitle(locale.getString("module.sshtools.settings.directorychooser.appprofilepath"));
+			File f = new File(pathInput.getText());
+			if(f.exists()){dc.setInitialDirectory(f);}
 
-				File folder = dc.showDialog(tabControl.getParent().getScene().getWindow());
-				if(folder != null){
-					pathInput.setText(folder.getAbsolutePath());
-					pathInput.fireEvent(new KeyEvent(pathInput, null, KeyEvent.KEY_RELEASED, ".", "", KeyCode.ACCEPT, false, false, false, false)); // The text field listes to the "KeyEvent.KEY_RELEASED" event to recognize changes
-				}
+			File folder = dc.showDialog(tabControl.getParent().getScene().getWindow());
+			if(folder != null){
+				pathInput.setText(folder.getAbsolutePath());
+				pathInput.fireEvent(new KeyEvent(pathInput, null, KeyEvent.KEY_RELEASED, ".", "", KeyCode.ACCEPT, false, false, false, false)); // The text field listes to the "KeyEvent.KEY_RELEASED" event to recognize changes
+			}
 		});
+
 		HBox.setHgrow(pathInput, Priority.ALWAYS);
 
 		appProfilesPathContainer.getChildren().addAll(pathInput, browseButton);
@@ -824,127 +825,112 @@ public class SSHTools {
 	 */
 	private void onFileSettingsDialogOpened(TabPane tabControl, Map<String, String> fileSettings) {
 
-			List<String> socksProfileIDs_clone = loadSocksProfileIDsFromString(app.getFileSettingsValue("sshtools.socksprofiles"));
-			Tab mytab = new Tab(locale.getString("module.sshtools.settings.tabtitle"));
-			mytab.setClosable(false);
+		List<String> socksProfileIDs_clone = loadSocksProfileIDsFromString(app.getFileSettingsValue("sshtools.socksprofiles"));
+		Tab mytab = new Tab(locale.getString("module.sshtools.settings.tabtitle"));
+		mytab.setClosable(false);
 
-			VBox vbox = new VBox(4);
-			vbox.setPadding(new Insets(4, 8, 0, 8));
+		VBox vbox = new VBox(4);
+		vbox.setPadding(new Insets(4, 8, 0, 8));
 
-			Label title = new Label(locale.getString("module.sshtools.filesettings.headline"));
-			title.getStyleClass().add("h2");
+		Label title = new Label(locale.getString("module.sshtools.filesettings.headline"));
+		title.getStyleClass().add("h2");
 
-			ScrollPane scrollPane = new ScrollPane(vbox);
-			scrollPane.setHbarPolicy(ScrollBarPolicy.NEVER);
-			scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+		ScrollPane scrollPane = new ScrollPane(vbox);
+		scrollPane.setHbarPolicy(ScrollBarPolicy.NEVER);
+		scrollPane.setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
 
-			vbox.setMaxWidth(de.akubix.keyminder.ui.fx.dialogs.FileSettingsDialog.size_x);
-			vbox.setMinWidth(de.akubix.keyminder.ui.fx.dialogs.FileSettingsDialog.size_x);
+		vbox.setMaxWidth(FileSettingsDialog.size_x);
+		vbox.setMinWidth(FileSettingsDialog.size_x);
 
-			TextField defaultUserInput = new TextField();
-			defaultUserInput.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
-				@Override
-				public void handle(KeyEvent event) {
-					fileSettings.put("sshtools.defaultusername", defaultUserInput.getText());
-				}});
+		TextField defaultUserInput = new TextField();
+		defaultUserInput.addEventFilter(KeyEvent.KEY_RELEASED, (event) -> fileSettings.put("sshtools.defaultusername", defaultUserInput.getText()));
 
-			defaultUserInput.setText(app.getFileSettingsValue("sshtools.defaultusername"));
+		defaultUserInput.setText(app.getFileSettingsValue("sshtools.defaultusername"));
 
-			BorderPane defaultPwInput = FxCommons.createFxPasswordField(new EventHandler<KeyEvent>() {
-				@Override
-				public void handle(KeyEvent event) {
-					fileSettings.put("sshtools.defaultpassword", ((javafx.scene.control.TextInputControl) event.getSource()).getText());
-				}}, app.getFileSettingsValue("sshtools.defaultpassword"), true, fxUI);
+		BorderPane defaultPwInput = FxCommons.createFxPasswordField(
+			(event) -> fileSettings.put("sshtools.defaultpassword",
+			((javafx.scene.control.TextInputControl) event.getSource()).getText()),
+			app.getFileSettingsValue("sshtools.defaultpassword"), true, fxUI);
 
 			HBox hbox = new HBox(4);
 
 			ComboBox<String> profileSelection = new ComboBox<>();
 			profileSelection.setMaxWidth(Double.MAX_VALUE);
 
-			if(socksProfileIDs_clone.size() > 0){
-				for(String profile: socksProfileIDs_clone){
-					profileSelection.getItems().add(profile);
-				}
-			}
+			socksProfileIDs_clone.forEach((profile) -> profileSelection.getItems().add(profile));
 
 			// Add socks profile button
 			Button addProfile = new Button("+");
-			addProfile.setOnAction(new EventHandler<ActionEvent>() {
-				@Override
-				public void handle(ActionEvent event) {
-					try{
-						String input = fxUI.getStringInput(	locale.getString("module.sshtools.addsocksprofile.title"),
-															locale.getString("module.sshtools.addsocksprofile.text"), "");
+			addProfile.setOnAction((event) -> {
+				try{
+					String input = fxUI.getStringInput(	locale.getString("module.sshtools.addsocksprofile.title"),
+														locale.getString("module.sshtools.addsocksprofile.text"), "");
 
-						if(!isEmpty(input)){
-							if(input.matches("[a-zA-Z0-9[_]]*")){
-								if(!socksProfileIDs_clone.contains(input)){
-									socksProfileIDs_clone.add(input);
-									profileSelection.getItems().add(input);
+					if(!isEmpty(input)){
+						if(input.matches("[a-zA-Z0-9_]+")){
+							if(!socksProfileIDs_clone.contains(input)){
+								socksProfileIDs_clone.add(input);
+								profileSelection.getItems().add(input);
 
-									if(profileSelection.getItems().size() == 1){
-										profileSelection.getSelectionModel().select(0);
-									}
-									else{
-										profileSelection.getSelectionModel().select(profileSelection.getItems().size() - 1);
-									}
-									fileSettings.put("sshtools.socksprofiles", socksProfiles2String(socksProfileIDs_clone));
-									fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".name", input);
-									fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".sshport", "22");
-									fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".customargs", "#putty_sessionname=?");
-									profileSelection.getOnAction().handle(null);
-									profileSelection.autosize();
+								if(profileSelection.getItems().size() == 1){
+									profileSelection.getSelectionModel().select(0);
 								}
 								else{
-									app.alert(locale.getString("module.sshtools.addsocksprofile.msg_name_already_in_use"));
+									profileSelection.getSelectionModel().select(profileSelection.getItems().size() - 1);
 								}
+								fileSettings.put("sshtools.socksprofiles", socksProfiles2String(socksProfileIDs_clone));
+								fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".name", input);
+								fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".sshport", "22");
+								fileSettings.put("sshtools.socksprofile:" + profileSelection.getValue() + ".customargs", "#putty_sessionname=?");
+								profileSelection.getOnAction().handle(null);
+								profileSelection.autosize();
 							}
 							else{
-								app.alert(locale.getString("module.sshtools.addsocksprofile.msg_invalid_characters"));
+								app.alert(locale.getString("module.sshtools.addsocksprofile.msg_name_already_in_use"));
 							}
 						}
+						else{
+							app.alert(locale.getString("module.sshtools.addsocksprofile.msg_invalid_characters"));
+						}
 					}
-					catch(UserCanceledOperationException e){}
 				}
+				catch(UserCanceledOperationException e){}
 			});
 
 			Map<String, TextFieldAdapter> socksProfileTextfields = new HashMap<>();
 
 			// Remove socks profile button
 			Button removeProfile = new Button("-");
-			removeProfile.setOnAction(new EventHandler<ActionEvent>() {
-				@Override
-				public void handle(ActionEvent event) {
+			removeProfile.setOnAction((event) -> {
 
-					if(profileSelection.getValue() != null){
-						if(app.requestYesNoDialog(locale.getString("module.sshtools.removesocksprofile.title"),
-																locale.getString("module.sshtools.removesocksprofile.text"))){
-							fileSettings.remove("sshtools.socksprofile:" + profileSelection.getValue() + ".name");
-							fileSettings.remove("sshtools.socksprofile:" + profileSelection.getValue() + ".host");
-							fileSettings.remove("sshtools.socksprofile:" + profileSelection.getValue() + ".sshport");
-							fileSettings.remove("sshtools.socksprofile:" + profileSelection.getValue() + ".user");
-							fileSettings.remove("sshtools.socksprofile:" + profileSelection.getValue() + ".password");
-							fileSettings.remove("sshtools.socksprofile:" + profileSelection.getValue() + ".customargs");
-							profileSelection.getItems().remove("sshtools.socksprofile:" + profileSelection.getSelectionModel().getSelectedIndex());
+				if(profileSelection.getValue() != null){
+					if(app.requestYesNoDialog(locale.getString("module.sshtools.removesocksprofile.title"),	locale.getString("module.sshtools.removesocksprofile.text"))){
+						fileSettings.remove("sshtools.socksprofile:" + profileSelection.getValue() + ".name");
+						fileSettings.remove("sshtools.socksprofile:" + profileSelection.getValue() + ".host");
+						fileSettings.remove("sshtools.socksprofile:" + profileSelection.getValue() + ".sshport");
+						fileSettings.remove("sshtools.socksprofile:" + profileSelection.getValue() + ".user");
+						fileSettings.remove("sshtools.socksprofile:" + profileSelection.getValue() + ".password");
+						fileSettings.remove("sshtools.socksprofile:" + profileSelection.getValue() + ".customargs");
+						profileSelection.getItems().remove("sshtools.socksprofile:" + profileSelection.getSelectionModel().getSelectedIndex());
 
-							for(String key: socksProfileTextfields.keySet()){
-								socksProfileTextfields.get(key).setText("");
-								socksProfileTextfields.get(key).setEditable(false);
-							}
-
-							socksProfileIDs_clone.remove(profileSelection.getValue());
-							fileSettings.put("sshtools.socksprofiles", socksProfiles2String(socksProfileIDs_clone));
-
-							profileSelection.getItems().clear();
-							for(String profile: socksProfileIDs_clone){
-								profileSelection.getItems().add(profile);
-							}
-
-							if(profileSelection.getItems().size() >= 1){profileSelection.getSelectionModel().select(0);}
-							profileSelection.autosize();
+						for(String key: socksProfileTextfields.keySet()){
+							socksProfileTextfields.get(key).setText("");
+							socksProfileTextfields.get(key).setEditable(false);
 						}
+
+						socksProfileIDs_clone.remove(profileSelection.getValue());
+						fileSettings.put("sshtools.socksprofiles", socksProfiles2String(socksProfileIDs_clone));
+
+						profileSelection.getItems().clear();
+						for(String profile: socksProfileIDs_clone){
+							profileSelection.getItems().add(profile);
+						}
+
+						if(profileSelection.getItems().size() >= 1){profileSelection.getSelectionModel().select(0);}
+						profileSelection.autosize();
 					}
-				}});
+				}
+			});
 
 			hbox.getChildren().addAll( profileSelection, addProfile, removeProfile);
 
@@ -987,6 +973,7 @@ public class SSHTools {
 				@Override
 				public String getText() {return textarea.getText();}
 			});
+
 			socksConfigGroupBoxContent.getChildren().addAll(userAndPasswordContainer, new Label(locale.getString("module.sshtools.socksconfig.customsocksargs")), textarea);
 
 			// -----------------------------------
@@ -1007,28 +994,26 @@ public class SSHTools {
 
 			// Combo box event handling
 
-			profileSelection.setOnAction(new EventHandler<ActionEvent>() {
-				@Override
-				public void handle(ActionEvent event) {
-					if(profileSelection.getValue() != null){
-						for(String key: socksProfileTextfields.keySet()){
-							socksProfileTextfields.get(key).setEditable(true);
-							if(fileSettings.containsKey("sshtools.socksprofile:" + profileSelection.getValue() + "." + key)){
-								socksProfileTextfields.get(key).setText(fileSettings.get("sshtools.socksprofile:" + profileSelection.getValue() + "." + key));
-							}
-							else{
-								socksProfileTextfields.get(key).setText("");
-							}
+			profileSelection.setOnAction((event) -> {
+				if(profileSelection.getValue() != null){
+					for(String key: socksProfileTextfields.keySet()){
+						socksProfileTextfields.get(key).setEditable(true);
+						if(fileSettings.containsKey("sshtools.socksprofile:" + profileSelection.getValue() + "." + key)){
+							socksProfileTextfields.get(key).setText(fileSettings.get("sshtools.socksprofile:" + profileSelection.getValue() + "." + key));
 						}
-					}
-					else{
-						for(String key: socksProfileTextfields.keySet()){
+						else{
 							socksProfileTextfields.get(key).setText("");
-							socksProfileTextfields.get(key).setEditable(false);
 						}
 					}
 				}
+				else{
+					for(String key: socksProfileTextfields.keySet()){
+						socksProfileTextfields.get(key).setText("");
+						socksProfileTextfields.get(key).setEditable(false);
+					}
+				}
 			});
+
 			profileSelection.getSelectionModel().select(0);
 			profileSelection.fireEvent(new ActionEvent());
 
@@ -1123,23 +1108,25 @@ public class SSHTools {
 	}
 
 	private class PasswordFieldAdapter implements TextFieldAdapter {
+
 		private TextField t1;
 		private PasswordField t2;
-		public PasswordFieldAdapter(Pane container, EventHandler<KeyEvent> onKeyReleased, boolean createPasswordField)
-		{
-				t1 = new TextField();
-				if(createPasswordField){
-					t2 = new PasswordField();
-					container.getChildren().add(FxCommons.createFxPasswordField(onKeyReleased, t1, t2, true, fxUI));
-				}
-				else{
-					t1.addEventFilter(KeyEvent.KEY_RELEASED, onKeyReleased);
-					container.getChildren().add(t1);
-				}
+		public PasswordFieldAdapter(Pane container, EventHandler<KeyEvent> onKeyReleased, boolean createPasswordField) {
+			t1 = new TextField();
+			if(createPasswordField){
+				t2 = new PasswordField();
+				container.getChildren().add(FxCommons.createFxPasswordField(onKeyReleased, t1, t2, true, fxUI));
+			}
+			else{
+				t1.addEventFilter(KeyEvent.KEY_RELEASED, onKeyReleased);
+				container.getChildren().add(t1);
+			}
 		}
 
 		@Override
-		public String getText(){return t1.getText();}
+		public String getText(){
+			return t1.getText();
+		}
 
 		@Override
 		public void setText(String text){

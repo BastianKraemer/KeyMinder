@@ -1,5 +1,5 @@
 /*	KeyMinder
-	Copyright (C) 2015 Bastian Kraemer
+	Copyright (C) 2015-2016 Bastian Kraemer
 
 	AESCore.java
 
@@ -19,25 +19,29 @@
 package de.akubix.keyminder.lib;
 
 import java.io.UnsupportedEncodingException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.util.Random;
 
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
 
 public class AESCore {
 
-	private static String aesCipherInstanceParameter = "AES/CBC/PKCS5Padding";
-	public static int DEFAULT_HASH_ITERATION_COUNT = 16384;
+	private static final String AES_CIPHER_INSTANCE_PARAMETER = "AES/CBC/PKCS5Padding";
+	public static final int DEFAULT_HASH_ITERATION_COUNT = 16384;
 
 	/**
 	 * Generates a SHA-256 hash
@@ -50,11 +54,7 @@ public class AESCore {
 			MessageDigest sha = MessageDigest.getInstance("SHA-256");
 			return sha.digest(bytekey);
 		}
-		catch (NoSuchAlgorithmException e) {
-			System.err.println("Encoding ERROR (getSHA256Hash()): " + e.getMessage());
-			return null;
-		}
-		catch (UnsupportedEncodingException e) {
+		catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
 			System.err.println("Encoding ERROR (getSHA256Hash()): " + e.getMessage());
 			return null;
 		}
@@ -71,11 +71,7 @@ public class AESCore {
 			MessageDigest md5 = MessageDigest.getInstance("MD5");
 			return md5.digest(bytekey);
 		}
-		catch (NoSuchAlgorithmException e) {
-			System.err.println("Encoding ERROR (getMD5Hash()): " + e.getMessage());
-			return null;
-		}
-		catch (UnsupportedEncodingException e) {
+		catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
 			System.err.println("Encoding ERROR (getMD5Hash()): " + e.getMessage());
 			return null;
 		}
@@ -90,10 +86,7 @@ public class AESCore {
 	public static byte[] getPBKDF2Hash(String key, byte[] salt) {
 		try	{
 			return getPBKDF2Hash(key.toCharArray(), salt, 256, 16384);
-		} catch (NoSuchAlgorithmException e) {
-			System.err.println("Encoding ERROR (getPBKDF2Hash()): " + e.getMessage());
-			return null;
-		} catch (InvalidKeySpecException e) {
+		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
 			System.err.println("Encoding ERROR (getPBKDF2Hash()): " + e.getMessage());
 			return null;
 		}
@@ -146,10 +139,7 @@ public class AESCore {
 	 * @return the generated IV
 	 */
 	public static byte[] generateIV() {
-		Random r = new Random();
-		byte[] iv = new byte[16];
-		r.nextBytes(iv);
-		return iv;
+		return generatePasswordSalt(16); // The 'generatePasswordSalt()' method simply generates a random valued byte array - this can be used for the IV as well
 	}
 
 	/**
@@ -158,7 +148,7 @@ public class AESCore {
 	 * @return the equivalent BASE64-String
 	 */
 	public static String bytesToBase64String(byte[] byteArr) {
-		return javax.xml.bind.DatatypeConverter.printBase64Binary(byteArr);
+		return DatatypeConverter.printBase64Binary(byteArr);
 	}
 
 	/**
@@ -167,7 +157,7 @@ public class AESCore {
 	 * @return the equivalent byte array
 	 */
 	public static byte[] bytesFromBase64String(String b64str) {
-		return javax.xml.bind.DatatypeConverter.parseBase64Binary(b64str);
+		return DatatypeConverter.parseBase64Binary(b64str);
 	}
 
 	/**
@@ -176,7 +166,7 @@ public class AESCore {
 	 * @throws NoSuchAlgorithmException if the system (e.g. java cipher) does not support even AES-128 on this system
 	 */
 	public static boolean isAES256EncryptionAvailable() throws NoSuchAlgorithmException {
-			return (Cipher.getMaxAllowedKeyLength(aesCipherInstanceParameter) == Integer.MAX_VALUE);
+		return (Cipher.getMaxAllowedKeyLength(AES_CIPHER_INSTANCE_PARAMETER) == Integer.MAX_VALUE);
 	}
 
 	/**
@@ -185,7 +175,7 @@ public class AESCore {
 	 */
 	public static boolean isAES256Supported() {
 		try {
-			return (Cipher.getMaxAllowedKeyLength(aesCipherInstanceParameter) == Integer.MAX_VALUE);
+			return (Cipher.getMaxAllowedKeyLength(AES_CIPHER_INSTANCE_PARAMETER) == Integer.MAX_VALUE);
 		} catch (NoSuchAlgorithmException e) {
 			return false;
 		}
@@ -201,22 +191,16 @@ public class AESCore {
 	 */
 	public static String encryptAES(String text, byte[] key, byte[] iv) throws InvalidKeySpecException {
 		try {
-			SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
-
-			// encrypt
-			Cipher cipher = Cipher.getInstance(aesCipherInstanceParameter);
-
-			IvParameterSpec ivSpec = new IvParameterSpec(iv);
-
-			cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivSpec);
+			Cipher cipher = Cipher.getInstance(AES_CIPHER_INSTANCE_PARAMETER);
+			cipher.init(Cipher.ENCRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
 
 			byte[] encrypted = cipher.doFinal(text.getBytes("UTF8"));
 
 			// convert the bytes to a BASE64-String
-			return javax.xml.bind.DatatypeConverter.printBase64Binary(encrypted);
+			return DatatypeConverter.printBase64Binary(encrypted);
 		}
-		catch (Exception ex) {
-			throw new InvalidKeySpecException(ex.getMessage());
+		catch(NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException | InvalidKeyException e){
+			throw new InvalidKeySpecException(e.getMessage(), e);
 		}
 	}
 
@@ -230,22 +214,15 @@ public class AESCore {
 	 */
 	public static String decryptAES(String text, byte[] key, byte[] iv) throws InvalidKeyException {
 		try{
-			 SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
-			// Convert BASE64-String to byte array
-			byte[] crypted = javax.xml.bind.DatatypeConverter.parseBase64Binary(text);
+			Cipher cipher = Cipher.getInstance(AES_CIPHER_INSTANCE_PARAMETER);
+			cipher.init(Cipher.DECRYPT_MODE, new SecretKeySpec(key, "AES"), new IvParameterSpec(iv));
 
-			// Decrypt...
-			Cipher cipher = Cipher.getInstance(aesCipherInstanceParameter);
-
-			IvParameterSpec ivSpec = new IvParameterSpec(iv);
-			cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivSpec);
-
-			byte[] cipherData = cipher.doFinal(crypted);
+			byte[] cipherData = cipher.doFinal(DatatypeConverter.parseBase64Binary(text));
 
 			return new String(cipherData, "UTF8");
 		}
-		catch(Exception ex){
-			throw new InvalidKeyException(ex.getMessage());
+		catch(NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | UnsupportedEncodingException e){
+			throw new InvalidKeyException(e.getMessage(), e);
 		}
 	}
 }

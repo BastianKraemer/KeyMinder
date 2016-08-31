@@ -36,7 +36,7 @@ import javafx.util.Pair;
 /**
  * This class is just a collection of some useful methods
  */
-public class Tools {
+public final class Tools {
 
 	private Tools(){}
 
@@ -56,7 +56,7 @@ public class Tools {
 	 */
 
 	public static <T extends Comparable<? super T>> List<T> asSortedList(Collection<T> c) {
-		  List<T> list = new ArrayList<T>(c);
+		  List<T> list = new ArrayList<>(c);
 		  Collections.sort(list);
 		  return list;
 	}
@@ -79,23 +79,6 @@ public class Tools {
 		 ProcessBuilder pb = new ProcessBuilder(commands);
 		 Process p = pb.start();
 		 return p;
-	}
-
-	public static int arrayIndexOf(String[] arr, String value, boolean useLowerCases){
-		if(useLowerCases){
-			value = value.toLowerCase();
-			for(int i = 0; i < arr.length; i++){
-				if(arr[i].toLowerCase().equals(value)){return i;}
-			}
-		}
-		else
-		{
-			for(int i = 0; i < arr.length; i++){
-				if(arr[i].equals(value)){return i;}
-			}
-		}
-
-		return -1;
 	}
 
 	public static String forceLineBreak(String src, int maxCharacterPerLine){

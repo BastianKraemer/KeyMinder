@@ -23,13 +23,19 @@ import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.lib.AESCore;
 
 public class KeyMinder {
 
-	public static final Map<String, String> environment = new HashMap<String, String>();
+	static final String ENVIRONMENT_KEY_COMMANDLINE_FILE = "cmd.file";
+	static final String ENVIRONMENT_KEY_PASSWORD = "cmd.password";
+	static final String ENVIRONMENT_KEY_SETTINGS_FILE = "cmd.settingsfile";
+
+	public static final Map<String, String> environment = new HashMap<>();
 	public static boolean environment_isLinux = false;
 	public static boolean verbose_mode = false;
 	public static boolean enableColoredOutput = false;
@@ -83,111 +89,104 @@ public class KeyMinder {
 	}
 
 	private static void parseCommandlineArgs(String[] args){
+		Pattern switchPattern = Pattern.compile("^(-|--|\\/)([A-Za-z0-9_-]+)$");
+
 		try	{
 			for(int i = 0; i < args.length; i++){
-				if(args[i].startsWith("-") || args[i].startsWith("--") || args[i].startsWith("/")){
-					String arg;
-					if(args[i].startsWith("--")){arg = args[i].substring(2);}else{arg = args[i].substring(1);}
+				Matcher matcher = switchPattern.matcher(args[i]);
+				if(matcher.matches()){
+					switch(matcher.group(2).toLowerCase()){
+						case "open":
+						case "openfile":
+							environment.put(ENVIRONMENT_KEY_COMMANDLINE_FILE, args[i+1]);
+							i++;
+							break;
 
-					// Es handelt sich um einen Parameter
-						switch(arg.toLowerCase()){
-							case "open":
-							case "openfile":
-								environment.put("cmd.file", args[i+1]);
-								i++;
-								break;
+						case "pw":
+						case "password":
+							environment.put(ENVIRONMENT_KEY_PASSWORD, args[i+1]);
+							i++;
+							break;
 
-							case "pw":
-							case "password":
-								environment.put("cmd.password", args[i+1]);
-								i++;
-								break;
+						case "settingsfile":
+						case "settings":
+							environment.put(ENVIRONMENT_KEY_SETTINGS_FILE, args[i+1]);
+							i++;
+							break;
 
-							case "settingsfile":
-							case "settings":
-								environment.put("cmd.settingsfile", args[i+1]);
-								i++;
-								break;
+						case "console":
+							environment.put("console_mode", "true");
+							break;
 
-							case "console":
-								environment.put("console_mode", "true");
-								break;
+						case "silent":
+							environment.put("silent_mode", "true");
+							break;
 
-							case "silent":
-								environment.put("silent_mode", "true");
-								break;
+						case "verbose":
+						case "log":
+							environment.put("verbose_mode", "true");
+							verbose_mode = true;
+							break;
 
-							case "verbose":
-							case "log":
-								environment.put("verbose_mode", "true");
-								verbose_mode = true;
-								break;
+						case "no-output-redirect":
+						case "no-redirect":
+						case "noredirect":
+							environment.put("disable_output_redirect", "true");
+							break;
 
-							case "dynamic":
-							case "dynamic-module-loading":
-							case "dml":
-								environment.put("dynamic_moduleloading", "true");
-								break;
+						case "color":
+							if(args[i+1].toLowerCase().equals("on")){
+								enableColoredOutput = true;
+							}
+							else if(args[i+1].toLowerCase().equals("off")){
+								enableColoredOutput = false;
+							}
+							i++;
+							break;
 
-							case "no-output-redirect":
-							case "no-redirect":
-							case "noredirect":
-								environment.put("disable_output_redirect", "true");
-								break;
+						case "version":
+							System.out.println(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " Version " + getApplicationVersion());
+							System.exit(0);
+							break;
 
-							case "color":
-								if(args[i+1].toLowerCase().equals("on")){
-									enableColoredOutput = true;
-								}
-								else if(args[i+1].toLowerCase().equals("off")){
-									enableColoredOutput = false;
-								}
-								i++;
-								break;
+						case "m":
+						case "mod":
+						case "module":
+							environment.put("module." + args[i+1].toLowerCase(), args[i+2]);
+							i += 2;
+							break;
 
-							case "version":
-								System.out.println(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " Version " + getApplicationVersion());
-								System.exit(0);
-								break;
+						case "help":
+							System.out.println(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " command line options:\n\n" +
+											   "KeyMinder.jar [-open <file> [-pw <password>]\n" +
+											   "              [-settings <file>]\n" +
+											   "              [-console]\n" +
+											   "              [-verbose]\n" +
+											   "              [-silent]\n" +
+											   "              [-version]\n" +
+											   "              [-help]\n\n" +
+											   "For more information take a look at the README file.");
+							System.exit(0);
+							break;
 
-							case "m":
-							case "mod":
-							case "module":
-								environment.put("module." + args[i+1].toLowerCase(), args[i+2]);
-								i += 2;
-								break;
-
-							case "help":
-								System.out.println(de.akubix.keyminder.core.ApplicationInstance.APP_NAME + " command line options:\n\n" +
-												   "KeyMinder.jar [-open <file> [-pw <password>]\n" +
-												   "              [-settings <file>]\n" +
-												   "              [-console]\n" +
-												   "              [-verbose]\n" +
-												   "              [-silent]\n" +
-												   "              [-version]\n" +
-												   "              [-help]\n\n" +
-												   "For more information take a look at the README file.");
-								System.exit(0);
-								break;
-
-							default:
-								System.out.println("Unknown Parameter: " + args[i]);
-								System.exit(1);
-						}
+						default:
+							System.out.println("Unknown Parameter: " + args[i]);
+							System.exit(1);
+					}
 				}
 				else{
 					if(i + 1 < args.length){
-						if(environment.containsKey("cmd.file")){
-							if(environment.containsKey("cmd.password")){
+						if(environment.containsKey(ENVIRONMENT_KEY_COMMANDLINE_FILE)){
+							if(environment.containsKey(ENVIRONMENT_KEY_PASSWORD)){
 								System.out.println("Error while parsing commandline arguments: '" + args[i] + "' is not a parameter.");
 								System.exit(0);
 							}
 							else{
-								environment.put("cmd.password", args[i+1]);
+								environment.put(ENVIRONMENT_KEY_PASSWORD, args[i+1]);
 							}
 						}
 						else{
-							environment.put("cmd.file", args[i+1]);
+							environment.put(ENVIRONMENT_KEY_COMMANDLINE_FILE, args[i+1]);
 						}
 					}
 				}
