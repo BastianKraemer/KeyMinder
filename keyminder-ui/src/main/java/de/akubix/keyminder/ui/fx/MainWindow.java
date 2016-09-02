@@ -43,6 +43,8 @@ import de.akubix.keyminder.core.io.FileExtension;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.KeyMinderUserInterface;
+import de.akubix.keyminder.ui.fx.components.AbstractEditableTreeCell;
+import de.akubix.keyminder.ui.fx.components.VisibleTreeNodesSkin;
 import de.akubix.keyminder.ui.fx.dialogs.FindAndReplaceDialog;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
 import de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result;
@@ -106,7 +108,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
@@ -165,146 +166,27 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 	private Map<String, HotKeyEvent> hotkeys = new HashMap<>();
 
-	/*
-	 * ======================================================================================================================================================
-	 * TreeCell Factory Class
-	 *
-	 * This class is based on an example mentioned in the official JavaFX documentation
-	 *
-	 * JavaFX/Using JavaFX UI Controls, Release 2.2, Primary Author: Alla Redko
-	 * https://docs.oracle.com/javafx/2/ui_controls/tree-view.htm
-	 * ======================================================================================================================================================
-	 */
-
-	final class TextFieldTreeCellImpl extends TreeCell<TreeNode> {
-
-		private TextField textField;
-		public TextFieldTreeCellImpl() {
-			super();
-		}
-
+	private Callback<TreeView<TreeNode>, TreeCell<TreeNode>> treeCellFactory = new Callback<TreeView<TreeNode>, TreeCell<TreeNode>>(){
 		@Override
-		public void startEdit() {
-			if(treeEditModeActive){
-				super.startEdit();
-
-				if (textField == null) {
-					createTextField();
-				}
-				else{
-					textField.setText(getItem().getText());
-				}
-				setText(null);
-				setGraphic(textField);
-				textField.requestFocus();
-				textField.selectAll();
-			}
-		}
-
-		@Override
-		public void commitEdit(TreeNode newValue){
-			super.commitEdit(newValue);
-			treeEditModeActive = false;
-		};
-
-		@Override
-		public void cancelEdit() {
-			super.cancelEdit();
-
-			setText((String) getItem().getText());
-			setGraphic(getTreeItem().getGraphic());
-			treeEditModeActive = false;
-		}
-
-		@Override
-		public void updateItem(TreeNode item, boolean empty) {
-			super.updateItem(item, empty);
-
-			if (empty) {
-				setText(null);
-				setGraphic(null);
-			} else {
-				if (isEditing()) {
-					if (textField != null) {
-						textField.setText(getString());
-					}
-					setText(null);
-					setGraphic(textField);
-					treeEditModeActive = false;
-				} else {
-					setText(getString());
-
-					this.getStyleClass().removeAll("bold", "italic", "strikeout");
-					if(item.hasAttribute("style")){
-						this.getStyleClass().addAll(item.getAttribute("style").split(";"));
-					}
-
-					if(item.getColor().equals("")){
-						setTextFill(Color.BLACK);
-					}
-					else{
-						setTextFill(Color.web(item.getColor()));
-					}
-
-					setGraphic(getTreeItem().getGraphic());
-				}
-			}
-		}
-
-		private void createTextField() {
-			textField = new TextField(getString());
-			textField.setOnKeyReleased(new EventHandler<KeyEvent>() {
+		public TreeCell<TreeNode> call(TreeView<TreeNode> p) {
+			return new AbstractEditableTreeCell(){
 				@Override
-				public void handle(KeyEvent t) {
-					if (t.getCode() == KeyCode.ENTER) {
-						commitEdit(getSelectedTreeNode().setText(textField.getText()));
-					} else if (t.getCode() == KeyCode.ESCAPE) {
-						cancelEdit();
-					}
+				public boolean isTreeEdited() {
+					return treeEditModeActive;
 				}
-			});
+
+				@Override
+				public void setTreeEditStatus(boolean value) {
+					treeEditModeActive = value;
+				}
+
+				@Override
+				public TreeNode commitTreeNodeEdit(String newNodeText) {
+					return getSelectedTreeNode().setText(newNodeText);
+				}
+			};
 		}
-
-		private String getString() {
-			TreeNode item = getItem();
-			return item == null ? "" : item.getText();
-		}
-	}
-
-	/*
-	 * ======================================================================================================================================================
-	 * A TreeView-Skin to check if a node is visible on screen
-	 * ======================================================================================================================================================
-	 */
-
-	/* The following code was written by StackOverflow (stackoverflow.com) user Ahmed and is licensed under CC BY-SA 3.0
-	 * "Creative Commons Attribution-ShareAlike 3.0 Unported", http://creativecommons.org/licenses/by-sa/3.0/)
-	 *
-	 * Source: http://stackoverflow.com/questions/27059701/javafx-in-treeview-need-only-scroll-to-index-number-when-treeitem-is-out-of-vie
-	 * The code has not been modified.
-	 */
-
-	/**
-	 * Only done as a workaround. If the selected node changes (maybe because of a "cd" command) the tree view might not scroll to it.
-	 *
-	 * WARNING: This method relies on classes, which does not contain to the Java API
-	 */
-	@SuppressWarnings("restriction")
-	final class FolderTreeViewSkin extends com.sun.javafx.scene.control.skin.TreeViewSkin<TreeNode> {
-		public FolderTreeViewSkin(TreeView<TreeNode> treeView){
-			super(treeView);
-		}
-
-		public boolean isIndexVisible(int index){
-			if (flow.getFirstVisibleCell() != null &&
-				flow.getLastVisibleCell() != null &&
-				flow.getFirstVisibleCell().getIndex() <= index &&
-				flow.getLastVisibleCell().getIndex() >= index){
-				return true;
-			}
-			return false;
-		}
-	}
+	};
 
 	/*
 	 * ======================================================================================================================================================
@@ -495,7 +377,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 				fxtree.getSelectionModel().select(getTreeItemOfTreeNode(selectedNode));
 
 				// Take a look at the class "FolderTreeViewSkin" above
-				if (!((FolderTreeViewSkin) fxtree.getSkin()).isIndexVisible(fxtree.getSelectionModel().getSelectedIndex())){
+				if (!((VisibleTreeNodesSkin) fxtree.getSkin()).isIndexVisible(fxtree.getSelectionModel().getSelectedIndex())){
 					fxtree.scrollTo(fxtree.getSelectionModel().getSelectedIndex() - 3);
 				}
 			}
@@ -770,24 +652,15 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		root.setCenter(splitPane);
 
-		fxtree.setCellFactory(new Callback<TreeView<TreeNode>, TreeCell<TreeNode>>(){
-			@Override
-			public TreeCell<TreeNode> call(TreeView<TreeNode> p) {
-				return new TextFieldTreeCellImpl();
+		fxtree.setCellFactory(treeCellFactory);
+
+		fxtree.setOnMouseClicked((MouseEvent event) -> {
+			if(event.getButton() == MouseButton.MIDDLE){
+				editTreeItem(getSelectedTreeItem());
 			}
 		});
 
-		fxtree.setOnMouseClicked(new EventHandler<MouseEvent>() {
-			@Override
-			public void handle(MouseEvent event) {
-				if(event.getButton() == MouseButton.MIDDLE){
-					treeEditModeActive = true;
-					fxtree.edit(getSelectedTreeItem());
-				}
-			}
-		});
-
-		fxtree.setSkin(new FolderTreeViewSkin(fxtree));
+		fxtree.setSkin(new VisibleTreeNodesSkin(fxtree));
 
 		/* The following code is based on answer written by StackOverflow (stackoverflow.com) user José Pereda and is licensed under CC BY-SA 3.0
 		 * "Creative Commons Attribution-ShareAlike 3.0 Unported", http://creativecommons.org/licenses/by-sa/3.0/)
@@ -1376,6 +1249,11 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		TreeNode clone = dataTree.cloneTreeNode(node, true);
 		dataTree.insertNode(clone, node.getParentNode(), node.getIndex() + 1);
 		if(selectNewNodeAfterDuplicate){dataTree.setSelectedNode(clone);}
+	}
+
+	private void editTreeItem(TreeItem<TreeNode> treeitem){
+		treeEditModeActive = true;
+		fxtree.edit(getSelectedTreeItem());
 	}
 
 	/*
