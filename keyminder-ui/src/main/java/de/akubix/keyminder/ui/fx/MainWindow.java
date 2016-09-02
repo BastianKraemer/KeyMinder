@@ -1208,16 +1208,16 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 			}
 		});
 
-		addQuicklinkNodeHotKey(KeyCode.DIGIT1, 0, condition_FileOpened);
-		addQuicklinkNodeHotKey(KeyCode.DIGIT2, 1, condition_FileOpened);
-		addQuicklinkNodeHotKey(KeyCode.DIGIT3, 2, condition_FileOpened);
-		addQuicklinkNodeHotKey(KeyCode.DIGIT4, 3, condition_FileOpened);
-		addQuicklinkNodeHotKey(KeyCode.DIGIT5, 4, condition_FileOpened);
-		addQuicklinkNodeHotKey(KeyCode.DIGIT6, 5, condition_FileOpened);
-		addQuicklinkNodeHotKey(KeyCode.DIGIT7, 6, condition_FileOpened);
-		addQuicklinkNodeHotKey(KeyCode.DIGIT8, 7, condition_FileOpened);
-		addQuicklinkNodeHotKey(KeyCode.DIGIT9, 8, condition_FileOpened);
-		addQuicklinkNodeHotKey(KeyCode.DIGIT0, 9, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT1, 1, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT2, 2, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT3, 3, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT4, 4, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT5, 5, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT6, 6, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT7, 7, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT8, 8, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT9, 9, condition_FileOpened);
+		addQuicklinkNodeHotKey(KeyCode.DIGIT0, 0, condition_FileOpened);
 	}
 
 	private void addQuicklinkNodeHotKey(KeyCode keycode, int index, BooleanSupplier condition_FileOpened){
