@@ -412,13 +412,13 @@ public class ApplicationInstance implements ShellOutputWriter {
 	}
 
 	public boolean openFile(File file, String filepassword){
-		return openFile(file, filepassword, storageManager.getIdentifierByExtension(file.getName(), StorageManager.defaultFileType));
+		return openFile(file, filepassword, storageManager.getIdentifierByExtension(file.getName(), StorageManager.DEFAULT_FILE_TYPE));
 	}
 
 	public synchronized boolean openFile(File file, String filepassword, String fileTypeIdentifier){
 		if(fileTypeIdentifier == null || fileTypeIdentifier.equals("")){
-			println("Warning: Unknown file type - assuming 'KeyMind XML file (" + StorageManager.defaultFileType + ")'.");
-			fileTypeIdentifier = StorageManager.defaultFileType;
+			println("Warning: Unknown file type - assuming 'KeyMind XML file (" + StorageManager.DEFAULT_FILE_TYPE + ")'.");
+			fileTypeIdentifier = StorageManager.DEFAULT_FILE_TYPE;
 		}
 
 		if(!storageManager.hasStorageHandler(fileTypeIdentifier)){
@@ -478,7 +478,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 		} catch (IllegalArgumentException e) {
 			if(requestYesNoDialog(APP_NAME,	String.format(locale.getString("application.invalid_file_type"),
 														  currentFile.getFileTypeIdentifier()))){
-				currentFile.changeFileTypeIdentifier(this, StorageManager.defaultFileType);
+				currentFile.changeFileTypeIdentifier(this, StorageManager.DEFAULT_FILE_TYPE);
 				return saveFile();
 			}
 			else{
@@ -527,7 +527,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 	}
 
 	public boolean createNewFile(File file, boolean encryptFileWithDefaultCipher){
-		return createNewFile(file, StorageManager.defaultFileType, encryptFileWithDefaultCipher);
+		return createNewFile(file, StorageManager.DEFAULT_FILE_TYPE, encryptFileWithDefaultCipher);
 	}
 
 	public synchronized boolean createNewFile(File file, String fileTypeIdentifier, boolean encryptFileWithDefaultCipher) {

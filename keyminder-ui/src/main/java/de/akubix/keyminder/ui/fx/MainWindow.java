@@ -31,23 +31,30 @@ import java.util.function.BooleanSupplier;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
+import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.events.Compliance;
-import de.akubix.keyminder.core.events.DefaultEventHandler;
 import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.events.EventTypes.TreeNodeEvent;
 import de.akubix.keyminder.core.events.TreeNodeEventHandler;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.io.FileExtension;
+import de.akubix.keyminder.core.io.StorageManager;
+import de.akubix.keyminder.lib.AESCore;
+import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.KeyMinderUserInterface;
 import de.akubix.keyminder.ui.fx.components.AbstractEditableTreeCell;
 import de.akubix.keyminder.ui.fx.components.VisibleTreeNodesSkin;
+import de.akubix.keyminder.ui.fx.dialogs.FileSettingsDialog;
 import de.akubix.keyminder.ui.fx.dialogs.FindAndReplaceDialog;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
+import de.akubix.keyminder.ui.fx.dialogs.NodeInfoDialog;
+import de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog;
 import de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result;
+import de.akubix.keyminder.ui.fx.dialogs.SettingsDialog;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.events.HotKeyEvent;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
@@ -122,7 +129,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	private HashMap<TreeNode, TreeItem<TreeNode>> treeNodeTranslator = new HashMap<>();
 
 	private ApplicationInstance app;
-	private de.akubix.keyminder.core.db.Tree dataTree;
+	private Tree dataTree;
 
 	public static void init(String[] args){
 		launch(args);
@@ -166,28 +173,6 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 	private Map<String, HotKeyEvent> hotkeys = new HashMap<>();
 
-	private Callback<TreeView<TreeNode>, TreeCell<TreeNode>> treeCellFactory = new Callback<TreeView<TreeNode>, TreeCell<TreeNode>>(){
-		@Override
-		public TreeCell<TreeNode> call(TreeView<TreeNode> p) {
-			return new AbstractEditableTreeCell(){
-				@Override
-				public boolean isTreeEdited() {
-					return treeEditModeActive;
-				}
-
-				@Override
-				public void setTreeEditStatus(boolean value) {
-					treeEditModeActive = value;
-				}
-
-				@Override
-				public TreeNode commitTreeNodeEdit(String newNodeText) {
-					return getSelectedTreeNode().setText(newNodeText);
-				}
-			};
-		}
-	};
-
 	/*
 	 * ======================================================================================================================================================
 	 * Startup and Build UI
@@ -196,178 +181,146 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	@Override
 	public void start(Stage primaryStage) {
 
-			me = primaryStage;
+		me = primaryStage;
 
-			rootPanel = new BorderPane();
-			Scene scene = new Scene(rootPanel, 680, 420);
+		rootPanel = new BorderPane();
+		Scene scene = new Scene(rootPanel, 680, 420);
 
-			app = new ApplicationInstance(this);
-			dataTree = app.getTree();
+		app = new ApplicationInstance(this);
+		dataTree = app.getTree();
 
-			/* ================================================================================================================
-			 * Language pack
-			 * ================================================================================================================
-			 */
+		/* ================================================================================================================
+		 * Language pack
+		 * ================================================================================================================
+		 */
 
-			localeBundle = LocaleLoader.loadLanguagePack("ui", "fxUI", app.getLocale());
-			LocaleLoader.provideBundle(JavaFxUserInterface.LANGUAGE_BUNDLE_KEY, localeBundle);
+		localeBundle = LocaleLoader.loadLanguagePack("ui", "fxUI", app.getLocale());
+		LocaleLoader.provideBundle(JavaFxUserInterface.LANGUAGE_BUNDLE_KEY, localeBundle);
 
-			/* ================================================================================================================
-			 * Build user interface
-			 * ================================================================================================================
-			 */
+		/* ================================================================================================================
+		 * Build user interface
+		 * ================================================================================================================
+		 */
 
-			// Generate the whole graphical user interface
-			buildUI(rootPanel);
+		// Generate the whole graphical user interface
+		buildUI(rootPanel);
 
-			StylesheetMap.assignStylesheet(scene, StylesheetMap.WindowSelector.MainWindow);
-			me.setScene(scene);
-			me.setMinWidth(640);
-			me.setMinHeight(400);
+		StylesheetMap.assignStylesheet(scene, StylesheetMap.WindowSelector.MainWindow);
+		me.setScene(scene);
+		me.setMinWidth(640);
+		me.setMinHeight(400);
 
-			/* ================================================================================================================
-			 * Event Registration
-			 * ================================================================================================================
-			 */
+		/* ================================================================================================================
+		 * Event Registration
+		 * ================================================================================================================
+		 */
 
-			app.addEventHandler(TreeNodeEvent.OnSelectedItemChanged, (node) -> selectedNodeChanged(node));
+		app.addEventHandler(TreeNodeEvent.OnSelectedItemChanged, (node) -> selectedNodeChanged(node));
 
-			app.addEventHandler(TreeNodeEvent.OnNodeAdded, new TreeNodeEventHandler() {
-				@Override
-				public void eventFired(TreeNode node) {
-					displayNewTreePart(node);
-				}
-			});
+		app.addEventHandler(TreeNodeEvent.OnNodeAdded, (node) -> displayNewTreePart(node));
+		app.addEventHandler(TreeNodeEvent.OnNodeEdited,(node) -> updateTree(getTreeItemOfTreeNode(node)));
+		app.addEventHandler(TreeNodeEvent.OnNodeVerticallyMoved, (node) -> rebuildTreePart(node.getParentNode()));
+		app.addEventHandler(TreeNodeEvent.OnNodeRemoved, (node) -> {
+			TreeItem<TreeNode> treeitem = getTreeItemOfTreeNode(node);
+			treeitem.getParent().getChildren().remove(treeitem);
+			deleteTranslatorHashItems(treeitem, true);
+		});
 
-			app.addEventHandler(TreeNodeEvent.OnNodeEdited, new TreeNodeEventHandler() {
-				@Override
-				public void eventFired(TreeNode node) {
-						updateTree(getTreeItemOfTreeNode(node));
-				}
-			});
+		app.addEventHandler(DefaultEvent.OnFileOpened, () -> {
+			onFileOpenedHandler();
+			updateWindowTitle();
+		});
 
-			app.addEventHandler(TreeNodeEvent.OnNodeVerticallyMoved, new TreeNodeEventHandler() {
-				@Override
-				public void eventFired(TreeNode node) {
-					rebuildTreePart(node.getParentNode());
-				}
-			});
+		app.addEventHandler(DefaultEvent.OnSettingsChanged, () -> updateWindowTitle());
 
-			app.addEventHandler(TreeNodeEvent.OnNodeRemoved, new TreeNodeEventHandler() {
-				@Override
-				public void eventFired(TreeNode node) {
-					TreeItem<TreeNode> treeitem = getTreeItemOfTreeNode(node);
-					treeitem.getParent().getChildren().remove(treeitem);
-					deleteTranslatorHashItems(treeitem, true);
-				}
-			});
+		app.addEventHandler(DefaultEvent.OnFileClosed, () -> {
+			nextSelectedItemChangeEventWasFiredByMe = true;
 
-			final DefaultEventHandler updateWindowTitle = () -> updateWindowTitle();
-
-			app.addEventHandler(DefaultEvent.OnFileOpened, () -> {
-				onFileOpenedHandler();
-				updateWindowTitle.eventFired();
-			});
-
-			app.addEventHandler(DefaultEvent.OnSettingsChanged, () -> updateWindowTitle.eventFired());
-
-			app.addEventHandler(DefaultEvent.OnFileClosed, new DefaultEventHandler() {
-				@Override
-				public void eventFired() {
-					nextSelectedItemChangeEventWasFiredByMe = true;
-
-					//The node will belong to notificationArea or panelStack.
-					if(assignedNotificationsItems.size() > 0){
-						assignedNotificationsItems.forEach((node) -> {notificationArea.getChildren().remove(node); panelStack.getChildren().remove(node);});
-						assignedNotificationsItems.clear();
-					}
-
-					fxtree.getRoot().getChildren().clear();
-					treeNodeTranslator.clear();
-					treeDependentElementsDisableProperty.set(true);
-					clearQuicklinkList(true);
-
-					updateWindowTitle.eventFired();
-				}
-			});
-
-			app.addEventHandler(ComplianceEvent.DiscardChanges, () -> {
-				try {
-					return showSaveChangesDialog() ? Compliance.DONT_AGREE : Compliance.AGREE;
-				} catch (UserCanceledOperationException e) {
-					return Compliance.CANCEL;
-				}
-			});
-
-			app.addEventHandler(DefaultEvent.OnExit, new DefaultEventHandler() {
-				@Override
-				public void eventFired() {
-					me.close();
-				}
-			});
-
-			app.addEventHandler(DefaultEvent.OnQuicklinksUpdated, () -> updateQuicklinkList());
-
-			startupFxUI();
-
-			if(!de.akubix.keyminder.lib.AESCore.isAES256Supported()){
-					// Important security note
-					Button notification = new Button("", ImageMap.getFxImageView(("icon_warning")));
-					notification.setMinWidth(24);
-					notification.setMaxWidth(24);
-					Tooltip tooltip = new Tooltip(localeBundle.getString("security.aes_warning_title"));
-					notification.setTooltip(tooltip);
-					notification.getStyleClass().add("noBorder");
-
-					notification.setOnAction((event) -> {
-						app.alert(localeBundle.getString("security.aes_warning_message"));
-					});
-					addNotificationItem(notification, false);
+			//The node will belong to notificationArea or panelStack.
+			if(assignedNotificationsItems.size() > 0){
+				assignedNotificationsItems.forEach((node) -> {notificationArea.getChildren().remove(node); panelStack.getChildren().remove(node);});
+				assignedNotificationsItems.clear();
 			}
 
-			me.setOnCloseRequest((WindowEvent event) -> {
-					// These following four lines are needed to make sure that the user can select "Cancel"
-					// at the "SaveChangesDialog". The method "ApplicationInstance.closeFile()" provides only true and false as return value,
-					// but for this functionality a third state for "cancel" is required.
-					// Therefore the value of "Tree.treeHasBeenUpdated()" will be reset before calling "closeFile()".
-					if(dataTree.treeHasBeenUpdated()){
-						de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result r = de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.show(this);
-						if(r == Result.Cancel){event.consume(); return;} // Cancel
-						else if(r == Result.SaveChanges){if(!app.saveFile()){event.consume(); me.requestFocus(); return;}}
-						else if(r == Result.DiscardChanges){dataTree.setTreeChangedStatus(false);}
-					}
-					if(!app.closeFile()){
-						event.consume();
-						me.requestFocus();
-					}
-					else{
-						app.terminate();
-					}
-				});
+			fxtree.getRoot().getChildren().clear();
+			treeNodeTranslator.clear();
+			treeDependentElementsDisableProperty.set(true);
+			clearQuicklinkList(true);
 
-			// Show the main window
-			ImageMap.addDefaultIconsToStage(me);
+			updateWindowTitle();
+		});
 
-			me.show();
-
-			// Startup the application core (load the optional modules, ...)
-			app.startup(true);
-
-			runAsFXThread(new Runnable() {
-				@Override
-				public void run() {
-					// Load the default password file
-					app.loadDefaultFile();
-
-					if(fxtree.getRoot().getChildren().size() == 1){
-						if(!fxtree.getRoot().getChildren().get(0).isLeaf()){fxtree.getRoot().getChildren().get(0).setExpanded(true);}
-					}
-				}
-			});
-
-			if(sidebarTabPanel.getTabs().size() > 0){
-				sidebarTabPanel.getSelectionModel().select(0);
+		app.addEventHandler(ComplianceEvent.DiscardChanges, () -> {
+			try {
+				return showSaveChangesDialog() ? Compliance.DONT_AGREE : Compliance.AGREE;
+			} catch (UserCanceledOperationException e) {
+				return Compliance.CANCEL;
 			}
+		});
+
+		app.addEventHandler(DefaultEvent.OnExit, () -> me.close());
+		app.addEventHandler(DefaultEvent.OnQuicklinksUpdated, () -> updateQuicklinkList());
+
+		startupFxUI();
+
+		if(!AESCore.isAES256Supported()){
+			// Important security note
+			Button notification = new Button("", ImageMap.getFxImageView(("icon_warning")));
+			notification.setMinWidth(24);
+			notification.setMaxWidth(24);
+			Tooltip tooltip = new Tooltip(localeBundle.getString("security.aes_warning_title"));
+			notification.setTooltip(tooltip);
+			notification.getStyleClass().add("noBorder");
+
+			notification.setOnAction((event) -> {
+				app.alert(localeBundle.getString("security.aes_warning_message"));
+			});
+			addNotificationItem(notification, false);
+		}
+
+		me.setOnCloseRequest((WindowEvent event) -> {
+			// These following four lines are needed to make sure that the user can select "Cancel"
+			// at the "SaveChangesDialog". The method "ApplicationInstance.closeFile()" provides only true and false as return value,
+			// but for this functionality a third state for "cancel" is required.
+			// Therefore the value of "Tree.treeHasBeenUpdated()" will be reset before calling "closeFile()".
+			if(dataTree.treeHasBeenUpdated()){
+				SaveChangesDialog.Result r = SaveChangesDialog.show(this);
+				if(r == Result.Cancel){event.consume(); return;} // Cancel
+				else if(r == Result.SaveChanges){if(!app.saveFile()){event.consume(); me.requestFocus(); return;}}
+				else if(r == Result.DiscardChanges){dataTree.setTreeChangedStatus(false);}
+			}
+			if(!app.closeFile()){
+				event.consume();
+				me.requestFocus();
+			}
+			else{
+				app.terminate();
+			}
+		});
+
+		// Show the main window
+		ImageMap.addDefaultIconsToStage(me);
+
+		me.show();
+
+		// Startup the application core (load the optional modules, ...)
+		app.startup(true);
+
+		runAsFXThread(new Runnable() {
+			@Override
+			public void run() {
+				// Load the default password file
+				app.loadDefaultFile();
+
+				if(fxtree.getRoot().getChildren().size() == 1){
+					if(!fxtree.getRoot().getChildren().get(0).isLeaf()){fxtree.getRoot().getChildren().get(0).setExpanded(true);}
+				}
+			}
+		});
+
+		if(sidebarTabPanel.getTabs().size() > 0){
+			sidebarTabPanel.getSelectionModel().select(0);
+		}
 	}
 
 	private void selectedNodeChanged(TreeNode selectedNode){
@@ -382,8 +335,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 				}
 			}
 		}
-		else
-		{
+		else {
 			nextSelectedItemChangeEventWasFiredByMe = false;
 		}
 	}
@@ -463,7 +415,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		file_new.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.new.regular_file"), ImageMap.getIcon("icon_newfile"),
 				  (event) -> showCreateNewFileDialog(false), false));
 
-		menu_File.getItems().add(file_new);
+		menu_File.getItems().addAll(file_new);
 
 
 		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.open"),
@@ -477,14 +429,14 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.saveas"), "",
 												(event) -> initalizeSaveFileAs(), true));
 
-		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.close"), "", new EventHandler<ActionEvent>() {
-							@Override public void handle(ActionEvent e){
-								if(app.isAnyFileOpened()){
-									if(app.closeFile()){
-										updateStatus(localeBundle.getString("mainwindow.messages.file_successfully_closed"));
-									}
-								}
-							}}, true));
+		menu_File.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.file.close"), "",
+												(event) -> {
+													if(app.isAnyFileOpened()){
+														if(app.closeFile()){
+															updateStatus(localeBundle.getString("mainwindow.messages.file_successfully_closed"));
+														}
+													}
+												}, true));
 
 		if(app.settingsContainsKey("ui.filelist")){
 			Menu openFileMenu = new Menu(localeBundle.getString("mainwindow.menu.file.recently_used"));
@@ -498,22 +450,15 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 			menu_File.getItems().add(openFileMenu);
 		}
 
-		menu_File.getItems().addAll(new SeparatorMenuItem(), createMenuItem(localeBundle.getString("mainwindow.menu.file.filesettings"), "", new EventHandler<ActionEvent>() {
-			@Override public void handle(ActionEvent e){
-				de.akubix.keyminder.ui.fx.dialogs.FileSettingsDialog fsd = new de.akubix.keyminder.ui.fx.dialogs.FileSettingsDialog(me, app);
-				fsd.show();
-				me.requestFocus();
-			}}, true));
+		menu_File.getItems().addAll(
+			new SeparatorMenuItem(),
+			createMenuItem(localeBundle.getString("mainwindow.menu.file.filesettings"),	"", (event) -> {new FileSettingsDialog(me, app).show(); me.requestFocus();}, true));
 
 		// --- Menu Edit
 		menu_Edit = new Menu(localeBundle.getString("mainwindow.menu.edit"));
 
-		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.settings"), ImageMap.getIcon("icon_settings"), new EventHandler<ActionEvent>() {
-			@Override public void handle(ActionEvent e){
-				de.akubix.keyminder.ui.fx.dialogs.SettingsDialog sd = new de.akubix.keyminder.ui.fx.dialogs.SettingsDialog(me, app);
-				sd.show();
-				me.requestFocus();
-			}}, false));
+		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.settings"), ImageMap.getIcon("icon_settings"),
+												(event) -> {new SettingsDialog(me, app).show();	me.requestFocus();}, false));
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.duplicate_node"), "",
 												(event) -> duplicateNode(getSelectedTreeNode(), true), true));
@@ -549,14 +494,12 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		final CheckMenuItem strikeoutNode = new CheckMenuItem(localeBundle.getString("mainwindow.menu.edit.style.strikeout"));
 		strikeoutNode.setOnAction((event) -> node_toogleStyle(getSelectedTreeItem(), "strikeout"));
 
-		nodeFontSettings.setOnShowing(new EventHandler<Event>() {
-			@Override
-			public void handle(Event event) {
-				TreeItem<TreeNode> n = getSelectedTreeItem();
-				boldNode.setSelected(node_hasStyle(n, "bold"));
-				italicNode.setSelected(node_hasStyle(n, "italic"));
-				strikeoutNode.setSelected(node_hasStyle(n, "strikeout"));
-		}});
+		nodeFontSettings.setOnShowing((event) -> {
+			TreeItem<TreeNode> n = getSelectedTreeItem();
+			boldNode.setSelected(node_hasStyle(n, "bold"));
+			italicNode.setSelected(node_hasStyle(n, "italic"));
+			strikeoutNode.setSelected(node_hasStyle(n, "strikeout"));
+		});
 
 		nodeFontSettings.getItems().addAll(boldNode, italicNode, strikeoutNode);
 		nodeFontSettings.disableProperty().bind(treeDependentElementsDisableProperty);
@@ -601,7 +544,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		menu_Extras.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.extras.nodeinfo"),
 												  ImageMap.getIcon("icon_info"),
 												  (event) -> {
-													  new de.akubix.keyminder.ui.fx.dialogs.NodeInfoDialog(dataTree.getSelectedNode(), app).show(me);
+													  new NodeInfoDialog(dataTree.getSelectedNode(), app).show(me);
 													  me.requestFocus();
 												  }, true));
 
@@ -652,7 +595,27 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		root.setCenter(splitPane);
 
-		fxtree.setCellFactory(treeCellFactory);
+		fxtree.setCellFactory(new Callback<TreeView<TreeNode>, TreeCell<TreeNode>>(){
+			@Override
+			public TreeCell<TreeNode> call(TreeView<TreeNode> p) {
+				return new AbstractEditableTreeCell(){
+					@Override
+					public boolean isTreeEdited() {
+						return treeEditModeActive;
+					}
+
+					@Override
+					public void setTreeEditStatus(boolean value) {
+						treeEditModeActive = value;
+					}
+
+					@Override
+					public TreeNode commitTreeNodeEdit(String newNodeText) {
+						return getSelectedTreeNode().setText(newNodeText);
+					}
+				};
+			}
+		});
 
 		fxtree.setOnMouseClicked((MouseEvent event) -> {
 			if(event.getButton() == MouseButton.MIDDLE){
@@ -716,11 +679,9 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		});
 
 		// HotKey Events
-		fxtree.setOnKeyPressed(new EventHandler<KeyEvent>() {
-			@Override
-			public void handle(KeyEvent event) {
-				if(!treeEditModeActive){validateKeyPress(event);}
-			}});
+		fxtree.setOnKeyPressed((KeyEvent event) -> {
+			if(!treeEditModeActive){validateKeyPress(event);}
+		});
 
 		// Tree - Contextmenu
 		treeContextMenu = new ContextMenu();
@@ -899,14 +860,11 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		return arr;
 	}
 
-	private MenuItem createColorContextMenu(String colorName, String iconKeyWord, String colorHTMLValue)
-	{
-		return createMenuItem(colorName, ImageMap.getIcon(iconKeyWord), new EventHandler<ActionEvent>() {
-			@Override
-			public void handle(ActionEvent e) {
+	private MenuItem createColorContextMenu(String colorName, String iconKeyWord, String colorHTMLValue) {
+		return createMenuItem(colorName, ImageMap.getIcon(iconKeyWord), (event) -> {
 				getSelectedTreeNode().setColor(colorHTMLValue);
 				updateStatus(localeBundle.getString("mainwindow.messages.node_color_changed"));
-			}}, false);
+			}, false);
 	}
 
 	/*
@@ -1303,10 +1261,10 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	private void initalizeSaveFileAs(){
 		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.save_file.title"), app.getCurrentFile().getFilepath().getAbsolutePath(), "", getFileChooserExtensionFilter());
 		if(f != null){
-			String fileTypeIdentifier = app.getStorageManager().getIdentifierByExtension(de.akubix.keyminder.lib.Tools.getFileExtension(f.getName()), "");
+			String fileTypeIdentifier = app.getStorageManager().getIdentifierByExtension(Tools.getFileExtension(f.getName()), "");
 			if(fileTypeIdentifier.equals("")){
-				app.alert(String.format(localeBundle.getString("mainwindow.dialogs.save_file.unsupported_filetype_message"), de.akubix.keyminder.lib.Tools.getFileExtension(f.getAbsolutePath()), de.akubix.keyminder.core.io.StorageManager.defaultFileType));
-				fileTypeIdentifier = de.akubix.keyminder.core.io.StorageManager.defaultFileType;
+				app.alert(String.format(localeBundle.getString("mainwindow.dialogs.save_file.unsupported_filetype_message"), Tools.getFileExtension(f.getAbsolutePath()), StorageManager.DEFAULT_FILE_TYPE));
+				fileTypeIdentifier = StorageManager.DEFAULT_FILE_TYPE;
 			}
 
 			app.getCurrentFile().changeFilepath(f);
@@ -1807,7 +1765,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	 * @throws UserCanceledOperationException if the user has pressed the "Cancel" button
 	 */
 	private boolean showSaveChangesDialog() throws UserCanceledOperationException {
-		de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.Result r = de.akubix.keyminder.ui.fx.dialogs.SaveChangesDialog.show(this);
+		SaveChangesDialog.Result r = SaveChangesDialog.show(this);
 		if(r == Result.Cancel){throw new UserCanceledOperationException("Cancel button was pressed.");}
 		return (r == Result.SaveChanges);
 	}

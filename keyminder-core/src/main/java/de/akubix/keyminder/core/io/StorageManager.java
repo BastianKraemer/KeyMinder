@@ -27,14 +27,12 @@ import java.util.function.Consumer;
 
 public class StorageManager {
 
-	public static final String defaultFileType = "xml/keymindfile";
+	public static final String DEFAULT_FILE_TYPE = "xml/keymindfile";
 
 	public StorageManager(){
 		addStorageHandler(
-			defaultFileType,
-			(String idetifier) -> {
-				return new KeyMindFileHandler(idetifier);
-			},
+			DEFAULT_FILE_TYPE,
+			(String idetifier) -> new KeyMindFileHandler(idetifier),
 			new FileExtension("*.keymind", "KeyMinder XML File (*.keymind)"),
 			new FileExtension("*.xml", "XML-File (*.xml)"));
 	}
@@ -85,7 +83,7 @@ public class StorageManager {
 	 */
 	public StorageHandler getStorageHandlerIfAvailable(String fileTypeIdentifier){
 		fileTypeIdentifier = fileTypeIdentifier.toLowerCase();
-		if(!fileTypes.containsKey(fileTypeIdentifier)){fileTypeIdentifier = defaultFileType;}
+		if(!fileTypes.containsKey(fileTypeIdentifier)){fileTypeIdentifier = DEFAULT_FILE_TYPE;}
 		return fileTypes.get(fileTypeIdentifier).getInstance(fileTypeIdentifier);
 	}
 
