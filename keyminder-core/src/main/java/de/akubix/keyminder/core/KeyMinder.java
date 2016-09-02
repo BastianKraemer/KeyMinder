@@ -89,7 +89,7 @@ public class KeyMinder {
 	}
 
 	private static void parseCommandlineArgs(String[] args){
-		Pattern switchPattern = Pattern.compile("^(-|--|\\/)([A-Za-z0-9_-]+)$");
+		Pattern switchPattern = Pattern.compile("^(--|-|\\/)([A-Za-z0-9_-]+)$");
 
 		try	{
 			for(int i = 0; i < args.length; i++){
