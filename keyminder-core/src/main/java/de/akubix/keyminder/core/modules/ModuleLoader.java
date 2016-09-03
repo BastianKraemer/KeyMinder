@@ -37,7 +37,7 @@ import de.akubix.keyminder.core.exceptions.ModuleStartupException;
  * It loads all available modules by using the Java {@link ServiceLoader} and handles the module configuration (enable/disable modules)
  */
 public class ModuleLoader {
-	private Map<String, ModuleInfo> allModules = new HashMap<String, ModuleInfo>();
+	private Map<String, ModuleInfo> allModules = new HashMap<>();
 	private ApplicationInstance app;
 	public ModuleLoader(ApplicationInstance app){
 		this.app = app;
@@ -80,16 +80,15 @@ public class ModuleLoader {
 
 		//Start all modules, observing their dependencies to other modules
 		for(String moduleName: enabledModules){
-			startModule(moduleName, new ArrayList<String>());
+			startModule(moduleName);
 		}
 	}
 
 	/**
-	 * Starts a module observing the {@link Preload} annotation
+	 * Starts a module
 	 * @param moduleName The name of the module
-	 * @param initiators A list of module names which requested that other should be started at first
 	 */
-	private void startModule(String moduleName, List<String> initiators){
+	private void startModule(String moduleName){
 		if(!allModules.containsKey(moduleName)){return;}
 
 		ModuleInfo m = allModules.get(moduleName);
@@ -98,19 +97,6 @@ public class ModuleLoader {
 				app.log(String.format("Cannot start module '%s': Required user interface '%s' is not available.", moduleName, m.getRequiredUIName()));
 				m.startFailed();
 				return;
-			}
-			Preload preloadModules = m.getClass().getAnnotation(Preload.class);
-			if(preloadModules != null){
-				initiators.add(moduleName);
-				for(String preload: preloadModules.value()){
-					if(!initiators.contains(preload)){
-						startModule(preload, initiators);
-					}
-					else{
-						app.log(String.format("Warning: Cannot resolve cyclic preload list of module '%s'.", initiators.get(0)));
-					}
-				}
-				initiators.remove(moduleName);
 			}
 
 			if(callModuleStartupMethod(moduleName, m)){
