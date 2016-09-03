@@ -26,7 +26,7 @@ import de.akubix.keyminder.shell.io.ShellOutputWriter;
 		"    ${command.name} reset [/path/to/node]\n" +
 		"To run a check for expired nodes:" +
 		"    ${command.name} check\n\n" +
-		"You can use '%' to take this value from the piped input data.")
+		"You can use '" + AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD + "' to take this value from the piped input data.")
 @PipeInfo(in = "TreeNode, String, Long", out = "TreeNode")
 public class DeadlineCmd extends AbstractShellCommand {
 	@Override
@@ -68,7 +68,7 @@ public class DeadlineCmd extends AbstractShellCommand {
 			default:
 				try{
 					long epochMilli = -1;
-					if(value.equals("%")){
+					if(value.equals(AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD)){
 						if(in.getInputData() != null){
 							if(in.getInputData() instanceof String){
 								value = (String) in.getInputData();

@@ -25,6 +25,7 @@ import java.util.Map;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.exceptions.InvalidValueException;
 import de.akubix.keyminder.shell.annotations.AllowCallWithoutArguments;
 import de.akubix.keyminder.shell.annotations.NoArgs;
 import de.akubix.keyminder.shell.annotations.Operands;
@@ -35,6 +36,9 @@ import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 public abstract class AbstractShellCommand implements ShellCommand{
+
+	public static final String REFERENCE_TO_STDIN_KEYWORD = "@-";
+
 	@Override
 	public CommandInput parseArguments(ApplicationInstance instance, List<String> args) throws CommandException {
 
@@ -185,5 +189,26 @@ public abstract class AbstractShellCommand implements ShellCommand{
 		out.setColor(AnsiColor.RED);
 		out.println("ERROR: Referenced input data is not available.");
 		out.setColor(AnsiColor.RESET);
+	}
+
+	protected static TreeNode getNodeFromPathOrStdIn(ApplicationInstance instance, CommandInput in, String nodePathString) throws InvalidValueException {
+
+		if(nodePathString.equals(REFERENCE_TO_STDIN_KEYWORD)){
+			if(in.getInputData() instanceof TreeNode){
+				return (TreeNode) in.getInputData();
+			}
+			else if(in.getInputData() instanceof String){
+				nodePathString = (String) in.getInputData();
+			}
+			else{
+				throw new IllegalArgumentException("Input data object is not a 'TreeNode' nor a 'String'");
+			}
+		}
+
+		TreeNode node = instance.getTree().getNodeByPath(nodePathString);
+		if(node == null){
+			throw new InvalidValueException(String.format("Node '%s' does not exist.\n", nodePathString));
+		}
+		return node;
 	}
 }

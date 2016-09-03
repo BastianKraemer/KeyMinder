@@ -20,14 +20,15 @@ package de.akubix.keyminder.shell.commands;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.exceptions.InvalidValueException;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.AllowCallWithoutArguments;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
-import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
@@ -35,7 +36,6 @@ import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("qlnk")
 @Operands(cnt = 1)
-@Option(name = "--get", alias = "-g")
 @Option(name = "--add", alias = "-a", paramCnt = 1)
 @Option(name = "--remove", alias = {"-r", "--rm"})
 @AllowCallWithoutArguments
@@ -47,7 +47,7 @@ import de.akubix.keyminder.shell.io.ShellOutputWriter;
 		"  ${command.name} [Quicklink name] --add [/path/to/node *]\n" +
 		"Remove a Quicklink:\n" +
 		"  ${command.name} [Quicklink name] --remove\n\n" +
-		"*You can use '%' to reference a tree node in the input data.")
+		"*You can use '@-' to reference a tree node in the input data.")
 public class Quicklinks extends AbstractShellCommand {
 
 	@Override
@@ -61,30 +61,14 @@ public class Quicklinks extends AbstractShellCommand {
 		if(in.getParameters().containsKey("$0")){
 			if(in.getParameters().containsKey("--add")){
 
-				String param = in.getParameters().get("--add")[0];
-
-				TreeNode node;
-				if(param.equals("%")){
-					if(in.getInputData() instanceof TreeNode){
-						node = (TreeNode) in.getInputData();
-					}
-					else{
-						out.setColor(AnsiColor.RED);
-						out.println("Input object is not a 'TreeNode'.");
-						return CommandOutput.error();
-					}
-				}
-				else{
-					node = instance.getTree().getNodeByPath(param);
-				}
-
-				if(node != null){
+				try {
+					TreeNode node = super.getNodeFromPathOrStdIn(instance, in, in.getParameters().get("--add")[0]);
 					instance.addQuicklink(in.getParameters().get("$0")[0], node);
 					return CommandOutput.success(node);
-				}
-				else{
+
+				} catch (InvalidValueException e) {
 					out.setColor(AnsiColor.RED);
-					out.printf("Node '%s' does not exist.\n", in.getParameters().get("--add")[0]);
+					out.println(e.getMessage());
 					return CommandOutput.error();
 				}
 			}
@@ -97,7 +81,7 @@ public class Quicklinks extends AbstractShellCommand {
 			TreeNode quicklinkNode = instance.getQuicklinkNode(in.getParameters().get("$0")[0]);
 
 			if(quicklinkNode != null){
-				if(!in.getParameters().containsKey("--get")){
+				if(in.outputIsPiped()){
 					instance.getTree().setSelectedNode(quicklinkNode);
 				}
 

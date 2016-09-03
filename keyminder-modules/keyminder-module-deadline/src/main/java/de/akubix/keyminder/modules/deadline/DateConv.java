@@ -27,7 +27,7 @@ import de.akubix.keyminder.shell.io.ShellOutputWriter;
 @Description("Converts a number of milliseconds since 1.1.1970 to a real date or a date into the epoch millis.")
 @Usage( "${command.name} --date2epoch (-d2e) <date>\n" +
 		"${command.name} --epoch2date (-e2d) <milliseconds since 1970>\n\n" +
-		"You can use '%' to take this value from the piped input data.\n" +
+		"You can use '" + AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD + "' to take this value from the piped input data.\n" +
 		"If you want to convert a date like '01.06.2016 12:13:14' you can use the '--advanced' ('-a') switch.")
 @PipeInfo(in = "String, Long", out = "String")
 @Alias({"date2epoch = dateconv -d2e", "epoch2date = dateconv -e2d"})
@@ -48,7 +48,7 @@ public class DateConv extends AbstractShellCommand {
 			String value = in.getParameters().get("--epoch2date")[0];
 			long inputVal = -1;
 			try	{
-				if(value.equals("%")){
+				if(value.equals(AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD)){
 					if(in.getInputData() != null){
 						if(in.getInputData() instanceof String){
 							inputVal = Long.parseLong((String) in.getInputData());
@@ -88,7 +88,7 @@ public class DateConv extends AbstractShellCommand {
 		if(in.getParameters().containsKey("--date2epoch")){
 			String value = in.getParameters().get("--date2epoch")[0];
 
-			if(value.equals("%")){
+			if(value.equals(AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD)){
 				if(in.getInputData() != null){
 					if(in.getInputData() instanceof String){
 						value = (String) in.getInputData();

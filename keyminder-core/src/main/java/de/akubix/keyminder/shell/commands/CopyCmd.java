@@ -20,6 +20,7 @@ package de.akubix.keyminder.shell.commands;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.exceptions.InvalidValueException;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.Alias;
@@ -44,7 +45,7 @@ import de.akubix.keyminder.shell.io.ShellOutputWriter;
 		"Options:\n" +
 		"  --move, -m            Move a node instead of copying it\n" +
 		"  --no-child-nodes, -n  Do not include child-nodes\n\n" +
-		"You can use '%' reference a piped tree node.\n\n" +
+		"You can use '" + AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD + "' reference a piped tree node.\n\n" +
 		"Example: ${command.name} % /new/parent/node --move")
 @PipeInfo(in = "TreeNode or String", out = "TreeNode")
 @Alias("mv = cp --move")
@@ -55,59 +56,32 @@ public final class CopyCmd extends AbstractShellCommand {
 		String src = in.getParameters().get("$0")[0];
 		String dest = in.getParameters().get("$1")[0];
 
-		if(src.equals("%") && dest.equals("%")){
+		if(src.equals(AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD) && dest.equals(AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD)){
 			out.setColor(AnsiColor.RED);
 			out.println("You cannot use '%' as source and destination node.");
 			return CommandOutput.error();
 		}
-		try{
-			TreeNode source = getNodeFromArg(src, instance, in);
-			TreeNode destination = getNodeFromArg(dest, instance, in);
+
+		try {
+			TreeNode source = super.getNodeFromPathOrStdIn(instance, in, src);
+			TreeNode destination = super.getNodeFromPathOrStdIn(instance, in, dest);
+
 			boolean moveNode = in.getParameters().containsKey("--move");
-			nodeCopy(	source,
-						destination,
-						moveNode,
-						!in.getParameters().containsKey("--no-child-nodes"));
+			nodeCopy(source, destination, moveNode,	!in.getParameters().containsKey("--no-child-nodes"));
 
 			if(!in.outputIsPiped()){
 				out.printf("Node successfully %s.\n", moveNode ? "moved" : "copied");
 			}
 			return CommandOutput.success(destination);
-		}
-		catch(IllegalArgumentException e){
+
+		} catch (InvalidValueException e) {
 			out.setColor(AnsiColor.YELLOW);
 			out.println(e.getMessage());
 			return CommandOutput.error();
 		}
 	}
 
-	private static TreeNode getNodeFromArg(String path, ApplicationInstance instance, CommandInput in) throws IllegalArgumentException {
-		TreeNode node;
-		if(path.equals("%")){
-			if(in.getInputData() instanceof TreeNode){
-				node = (TreeNode) in.getInputData();
-			}
-			else if(in.getInputData() instanceof String){
-				path = (String) in.getInputData();
-				node = instance.getTree().getNodeByPath(path);
-			}
-			else{
-				throw new IllegalArgumentException("Input data object is not a 'TreeNode' nor a 'String'");
-			}
-		}
-		else{
-			node = instance.getTree().getNodeByPath(path);
-		}
-
-		if(node == null){
-			throw new IllegalArgumentException(String.format("Cannot find node '%s'.", path));
-		}
-
-		return node;
-	}
-
-	private static void nodeCopy(TreeNode src, TreeNode dest, boolean move, boolean includeChildNodes)
-	{
+	private static void nodeCopy(TreeNode src, TreeNode dest, boolean move, boolean includeChildNodes) {
 		//src.getTree() and dest.getTree() will point to the same reference
 		if(move){src.getTree().beginUpdate();}
 		TreeNode clone = src.getTree().cloneTreeNode(src, includeChildNodes);
