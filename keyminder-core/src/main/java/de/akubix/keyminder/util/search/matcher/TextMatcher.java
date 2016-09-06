@@ -11,13 +11,19 @@ import de.akubix.keyminder.util.search.NodeMatchResult;
 public class TextMatcher implements NodeMatcher {
 
 	private Pattern pattern;
+	private Pattern attributeRegExFilter;
 	private NodeMatcherOption option;
 
 	public TextMatcher(String regEx, boolean simpleSearching, boolean ignoreCase) throws PatternSyntaxException {
-		this(regEx, simpleSearching, NodeMatcherOption.ALL, ignoreCase);
+		this(regEx, simpleSearching, NodeMatcherOption.ALL, null, ignoreCase);
 	}
 
 	public TextMatcher(String regEx, boolean simpleSearching, NodeMatcherOption option, boolean ignoreCase) throws PatternSyntaxException {
+
+		this(regEx, simpleSearching, option, null, ignoreCase);
+	}
+
+	public TextMatcher(String regEx, boolean simpleSearching, NodeMatcherOption option, Pattern attributeRegExFilter, boolean ignoreCase) throws PatternSyntaxException {
 
 		if(simpleSearching){
 			regEx = ".*" + regularExpressionSpecialCharacterEscaping(regEx) + ".*";
@@ -27,6 +33,7 @@ public class TextMatcher implements NodeMatcher {
 			regEx = "(?i)" + regEx;
 		}
 
+		this.attributeRegExFilter = attributeRegExFilter;
 		this.pattern = Pattern.compile(regEx);
 		this.option = option;
 	}
@@ -45,12 +52,14 @@ public class TextMatcher implements NodeMatcher {
 			}
 		}
 
-		if(this.option != NodeMatcherOption.TEXT_ONLY){
+		if(this.option != NodeMatcherOption.TEXT_ONLY){;
 			for(Map.Entry<String, String> attrib: node.getAttributeSet()){
-				m = pattern.matcher(attrib.getValue());
-				if(m.matches()){
-					if(result == null){result = new NodeMatchResult(node);}
-					result.addAttributeMatch(attrib.getKey(), m);
+				if(attributeRegExFilter == null || attributeRegExFilter.matcher(attrib.getKey()).matches()){
+					m = pattern.matcher(attrib.getValue());
+					if(m.matches()){
+						if(result == null){result = new NodeMatchResult(node);}
+						result.addAttributeMatch(attrib.getKey(), m);
+					}
 				}
 			}
 		}
@@ -65,5 +74,4 @@ public class TextMatcher implements NodeMatcher {
 	public static enum NodeMatcherOption {
 		ALL, TEXT_ONLY, ATTRIBUTES_ONLY
 	}
-
 }

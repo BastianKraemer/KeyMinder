@@ -22,15 +22,16 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
-import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
@@ -52,18 +53,21 @@ import de.akubix.keyminder.util.search.matcher.TimeMatcher;
 @Option(name = "--case-sensitive", paramCnt = 0, alias = "-s")
 @Option(name = "--text-only", paramCnt = 0, alias = "-t")
 @Option(name = "--attributes-only", paramCnt = 0, alias = "-a")
+@Option(name = "--attribute-filter", paramCnt = 1, alias = "-f")
 @Description("Finds a selects the next node that matches the search pattern")
 @Usage(	"${command.name} [search pattern] [options]\n\n" +
 		"Available options:\n" +
-		"  --modified, -m <before|at|after> <date>\n" +
-		"  --create, -c <before|at|after> <date>\n\n" +
-		"  --next, -n            Selects the next matching node\n" +
-		"  --regex, -r           Allow usage of regular expressions\n" +
-		"  --case-sensitive, -s  Make the search case sensitive (this is automatically active when using '--regex')\n" +
-		"  --text-only, -t       Ignores the node attributes\n" +
-		"  --attributes-only, -a Ignores the node text")
+		"  --modified, -m         <before|at|after> <date>\n" +
+		"  --create, -c           <before|at|after> <date>\n\n" +
+		"  --next, -n             Selects the next matching node\n" +
+		"  --regex, -r            Allow usage of regular expressions\n" +
+		"  --case-sensitive, -s   Make the search case sensitive (this is automatically active when using '--regex')\n" +
+		"  --text-only, -t        Ignores the node attributes\n" +
+		"  --attributes-only, -a  Ignores the node text" +
+		"  --attribute-filter, -f <regular expression> Ignores attribute that does not match the regex pattern")
 @PipeInfo(out = "List of 'NodeMatchResult' or a single 'NodeMatchResult' object when using '--next'")
 public final class FindCmd extends AbstractShellCommand {
+
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in){
 		try{
@@ -88,7 +92,14 @@ public final class FindCmd extends AbstractShellCommand {
 				}
 			}
 
-			conditions.add(new TextMatcher(parameters.get("$1")[0], simpleSearch, option, simpleSearch && !parameters.containsKey("--case-sensitive")));
+			final boolean ignoreCase = simpleSearch && !parameters.containsKey("--case-sensitive");
+
+			if(parameters.containsKey("--attribute-filter")){
+				conditions.add(new TextMatcher(parameters.get("$1")[0], simpleSearch, option, Pattern.compile(parameters.get("--attribute-filter")[0]), ignoreCase));
+			}
+			else{
+				conditions.add(new TextMatcher(parameters.get("$1")[0], simpleSearch, option, ignoreCase));
+			}
 
 			if(parameters.containsKey("--modified")){
 				conditions.add(
