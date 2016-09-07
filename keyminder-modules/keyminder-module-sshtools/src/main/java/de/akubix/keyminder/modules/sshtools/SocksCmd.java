@@ -7,16 +7,14 @@ import de.akubix.keyminder.shell.annotations.AllowCallWithoutArguments;
 import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("socks")
 @AllowCallWithoutArguments
-@Operands(cnt = 2)
 @Description("Starts or stops a socks profile")
-@Usage("${command.name} [start|stop] [socksprofile name]")
+@Operands(cnt = 2, description = "[ 'start' | 'stop' ] SOCKS_PROFILE_NAME")
 public class SocksCmd extends AbstractShellCommand {
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in) {

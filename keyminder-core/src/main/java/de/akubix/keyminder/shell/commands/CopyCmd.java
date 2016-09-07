@@ -26,30 +26,30 @@ import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.Alias;
 import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.Example;
+import de.akubix.keyminder.shell.annotations.Note;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
 import de.akubix.keyminder.shell.annotations.RequireOpenedFile;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("cp")
 @RequireOpenedFile
-@Operands(cnt = 2)
-@Option(name = "--move", alias = "-m")
-@Option(name = "--no-child-nodes", alias = "-n")
 @Description("Copies or moves a node to anther location")
-@Usage(	"${command.name} [source] [dest] <options>\n\n" +
-		"Options:\n" +
-		"  --move, -m            Move a node instead of copying it\n" +
-		"  --no-child-nodes, -n  Do not include child-nodes\n\n" +
-		"You can use '" + AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD + "' reference a piped tree node.\n\n" +
-		"Example: ${command.name} % /new/parent/node --move")
+@Operands(cnt = 2,                               description = "SOURCE DESTINATION")
+@Option(name = CopyCmd.OPTION_MOVE,           alias = "-m", description = "Perform a move action instead of copy")
+@Option(name = CopyCmd.OPTION_NO_CHILD_NODES, alias = "-n", description = "Do not include child-nodes")
+@Example({"cp /path/to/any/node /path/to/any/other/node", "[...] | cp " + AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD + " /        # Copies the node from the input data to '/'"})
+@Note("You can use '" + AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD + "' to reference a piped tree node.")
 @PipeInfo(in = "TreeNode or String", out = "TreeNode")
 @Alias("mv = cp --move")
 public final class CopyCmd extends AbstractShellCommand {
+
+	static final String OPTION_MOVE = "--move";
+	static final String OPTION_NO_CHILD_NODES = "--no-child-node";
 
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in) {
@@ -58,7 +58,7 @@ public final class CopyCmd extends AbstractShellCommand {
 
 		if(src.equals(AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD) && dest.equals(AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD)){
 			out.setColor(AnsiColor.RED);
-			out.println("You cannot use '%' as source and destination node.");
+			out.printf("You cannot use '%s' as source and destination node.\n", AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD);
 			return CommandOutput.error();
 		}
 
@@ -66,11 +66,11 @@ public final class CopyCmd extends AbstractShellCommand {
 			TreeNode source = super.getNodeFromPathOrStdIn(instance, in, src);
 			TreeNode destination = super.getNodeFromPathOrStdIn(instance, in, dest);
 
-			boolean moveNode = in.getParameters().containsKey("--move");
-			nodeCopy(source, destination, moveNode,	!in.getParameters().containsKey("--no-child-nodes"));
+			boolean moveNode = in.getParameters().containsKey(OPTION_MOVE);
+			nodeCopy(source, destination, moveNode,	!in.getParameters().containsKey(OPTION_NO_CHILD_NODES));
 
 			if(!in.outputIsPiped()){
-				out.printf("Node successfully %s.\n", moveNode ? "moved" : "copied");
+				out.printf("Node(s) successfully %s.\n", moveNode ? "moved" : "copied");
 			}
 			return CommandOutput.success(destination);
 

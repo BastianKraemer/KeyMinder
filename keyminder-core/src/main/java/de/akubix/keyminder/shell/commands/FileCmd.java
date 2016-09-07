@@ -30,51 +30,45 @@ import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.AllowCallWithoutArguments;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.Example;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
-import de.akubix.keyminder.shell.annotations.Command;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("file")
 @AllowCallWithoutArguments
-@Operands(cnt = 1)
-@Option(name = "--path", paramCnt = 1, alias={"-p", "--file", "-f"})
-@Option(name = "--pw", paramCnt = 1, alias={"-p", "--password"})
-@Option(name = "--encrypt")
-@Option(name = "--name", paramCnt = 1)
 @Description("KeyMinder file management command")
-@Usage( "${command.name} [command] [options]\n" +
-		"\nSupported commands:\n" +
-		"    'create' (or 'new')\n" +
-		"    'open'\n" +
-		"    'save'\n" +
-		"    'saveas'\n" +
-		"    'close'\n" +
-		"    'info'\n" +
-		"    'types'\n" +
-		"    'set-cipher'\n" +
-		"    'set-password'\n" +
-		"    'reset-password'\n" +
-		"\nSupported options:\n" +
-		"    --path, -f    <filepath>\n" +
-		"    --pw, -p      <password>\n" +
-		"    --encrypt, -E\n" +
-		"    --type, -t    <file type identifier>\n" +
-		"\nExamples:\n" +
-		"  Create a file:\n" +
-		"    ${command.name} create --path \"/tmp/file.keymind\" --encrypt\n" +
-		"\n  Open a file:\n" +
-		"    ${command.name} open --path \"/tmp/file.keymind\" --pw test\n" +
-		"\n  Save a file:\n" +
-		"    ${command.name} save\n" +
-		"    ${command.name} saveas --path \"/path/to/another/file.keymind\"" +
-		"\n  Change the encryption cipher:\n" +
-		"    ${command.name} set-cipher --name <cipher name>")
+@Operands(cnt = 1, description = "COMMAND_NAME ...OPTIONS\n\nSupported commands:\n" +
+								"  'create' (or 'new')\n" +
+								"  'open'\n" +
+								"  'save'\n" +
+								"  'saveas'\n" +
+								"  'close'\n" +
+								"  'info'\n" +
+								"  'types'\n" +
+								"  'set-cipher'\n" +
+								"  'set-password'\n" +
+								"  'reset-password'")
+@Option(name = FileCmd.OPTION_PATH, paramCnt = 1, alias={"-p", "--file", "-f"},   description = "FILE_PATH  Path of the file")
+@Option(name = FileCmd.OPTION_PASSWORD, paramCnt = 1, alias={"-p", "--password"}, description = "PASSWORD  The File password")
+@Option(name = FileCmd.OPTION_ENCRYPT,                                            description = "Encrypt the file (only in combination with 'create')")
+@Option(name = FileCmd.OPTION_CIPHER_NAME, paramCnt = 1,                          description = "Name of the encryption chipher (only in combination with 'set-cipher')")
+@Option(name = FileCmd.OPTION_FILE_TYPE, paramCnt = 1,                            description = "FILE_TYPE  The new file type (only in combination with 'open' or 'saveas')")
+@Example({	"# Create a file:\n   file create --path \"/tmp/file.keymind\" --encrypt",
+			"# Open a file:\n  file open --path \"/tmp/file.keymind\" --pw test",
+			"# Save a file:\n  file save\n  file saveas --path \"/path/to/another/file.keymind\"",
+			"# Change the encryption cipher:\n  file set-cipher --name AES-256/PBKDF2"})
 public final class FileCmd extends AbstractShellCommand {
+
+	static final String OPTION_PATH = "--path";
+	static final String OPTION_PASSWORD = "--pw";
+	static final String OPTION_ENCRYPT = "--encrypt";
+	static final String OPTION_CIPHER_NAME = "--name";
+	static final String OPTION_FILE_TYPE = "--type";
 
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in) {
@@ -86,10 +80,10 @@ public final class FileCmd extends AbstractShellCommand {
 		switch(in.getParameters().get("$0")[0].toLowerCase()){
 			case "create":
 			case "new":
-				if(!requireKeys(out, in.getParameters(), "--path")){return CommandOutput.error();}
-				File newFile = new File(in.getParameters().get("--path")[0]);
+				if(!requireKeys(out, in.getParameters(), OPTION_PATH)){return CommandOutput.error();}
+				File newFile = new File(in.getParameters().get(OPTION_PATH)[0]);
 
-				if(in.getParameters().containsKey("--encrypt")){
+				if(in.getParameters().containsKey(OPTION_ENCRYPT)){
 					result = instance.createNewFile(newFile, true);
 				}
 				else{
@@ -101,12 +95,12 @@ public final class FileCmd extends AbstractShellCommand {
 				break;
 
 			case "open":
-				if(!requireKeys(out, in.getParameters(), "--path")){return CommandOutput.error();}
-				File filePath = new File(in.getParameters().get("--path")[0]);
-				String pw = in.getParameters().containsKey("--pw") ? in.getParameters().get("--pw")[0] : "";
+				if(!requireKeys(out, in.getParameters(), OPTION_PATH)){return CommandOutput.error();}
+				File filePath = new File(in.getParameters().get(OPTION_PATH)[0]);
+				String pw = in.getParameters().containsKey(OPTION_PASSWORD) ? in.getParameters().get(OPTION_PASSWORD)[0] : "";
 
-				if(in.getParameters().containsKey("--type")){
-					result = instance.openFile(filePath, pw, in.getParameters().get("--type")[0]);
+				if(in.getParameters().containsKey(OPTION_FILE_TYPE)){
+					result = instance.openFile(filePath, pw, in.getParameters().get(OPTION_FILE_TYPE)[0]);
 				}
 				else{
 					result = instance.openFile(filePath, pw);
@@ -131,10 +125,10 @@ public final class FileCmd extends AbstractShellCommand {
 			case "save_as":
 			case "save-as":
 				if(instance.isAnyFileOpened()){
-					if(!requireKeys(out, in.getParameters(), "--path")){return CommandOutput.error();}
-					String newFilePath = in.getParameters().get("--path")[0];
-					if(in.getParameters().containsKey("--type")){
-						String newFileType = in.getParameters().get("--type")[0];
+					if(!requireKeys(out, in.getParameters(), OPTION_PATH)){return CommandOutput.error();}
+					String newFilePath = in.getParameters().get(OPTION_PATH)[0];
+					if(in.getParameters().containsKey(OPTION_FILE_TYPE)){
+						String newFileType = in.getParameters().get(OPTION_FILE_TYPE)[0];
 						try{
 							instance.getCurrentFile().changeFileTypeIdentifier(instance, newFileType);
 						}
@@ -203,8 +197,8 @@ public final class FileCmd extends AbstractShellCommand {
 						return CommandOutput.error();
 					}
 
-					if(!requireKeys(out, in.getParameters(), "--name")){return CommandOutput.error();}
-					String cipherName = in.getParameters().get("--name")[0];
+					if(!requireKeys(out, in.getParameters(), OPTION_CIPHER_NAME)){return CommandOutput.error();}
+					String cipherName = in.getParameters().get(OPTION_CIPHER_NAME)[0];
 					try {
 						if(cipherName.toLowerCase().equals("none")){
 							out.println("Please use 'file reset-password' to disable the encryption of your password file.");

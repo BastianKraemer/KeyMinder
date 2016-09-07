@@ -3,21 +3,21 @@ package de.akubix.keyminder.shell.commands;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.shell.AbstractShellCommand;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.Example;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
 import de.akubix.keyminder.shell.annotations.RequireOpenedFile;
-import de.akubix.keyminder.shell.annotations.Command;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("get")
 @RequireOpenedFile
-@Operands(cnt = 2, nodeArgAt = 0, optionalNodeArg = true)
-@Description("Gets the value an attribute from a tree node")
-@Usage("${command.name} [/path/to/node] <attribute_name>")
+@Description("Reads the value of a tree node attribute")
+@Operands(cnt = 2, nodeArgAt = 0, optionalNodeArg = true, description = "{NODE_PATH} ATTRIBUTE_NAME")
+@Example("get /path/to/any/node username  # Returns the 'username' that is stored in '/path/to/any/node'")
 @PipeInfo(in = "TreeNode", out = "String")
 public final class GetAttribute extends AbstractShellCommand {
 	@Override

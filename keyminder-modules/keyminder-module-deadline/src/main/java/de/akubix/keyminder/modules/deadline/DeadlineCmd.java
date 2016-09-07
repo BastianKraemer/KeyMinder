@@ -9,24 +9,23 @@ import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.Example;
+import de.akubix.keyminder.shell.annotations.Note;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
 import de.akubix.keyminder.shell.annotations.RequireOpenedFile;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("deadline")
 @RequireOpenedFile
-@Operands(cnt = 2, nodeArgAt = 1, optionalNodeArg = true)
 @Description("Adds or removes a deadline (e.g an expiration date) to a tree node.")
-@Usage(	"To set a deadline:\n" +
-		"    ${command.name} <date> [/path/to/node] <date>\n" +
-		"    ${command.name} reset [/path/to/node]\n" +
-		"To run a check for expired nodes:" +
-		"    ${command.name} check\n\n" +
-		"You can use '" + AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD + "' to take this value from the piped input data.")
+@Operands(cnt = 2, nodeArgAt = 1, optionalNodeArg = true, description = "[DATE | 'rest' | 'check'] {NODE_PATH}")
+@Example({	"# Set a 'deadline':\n  deadline 31.12.2016 /path/to/any/node",
+			"# Remove a 'deadline':\n  deadline reset /path/to/any/node",
+			"# Check for expired nodes:\n  deadline reset /path/to/any/node"})
+@Note("You can use '" + AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD + "' to take this value from the piped input data.")
 @PipeInfo(in = "TreeNode, String, Long", out = "TreeNode")
 public class DeadlineCmd extends AbstractShellCommand {
 	@Override

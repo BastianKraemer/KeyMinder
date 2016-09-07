@@ -34,4 +34,6 @@ public @interface Option {
 	 * @return The default value for these options
 	 */
 	String[] alias() default {};
+
+	String description() default "";
 }

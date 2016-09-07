@@ -24,10 +24,10 @@ import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.Example;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
@@ -35,23 +35,25 @@ import javafx.util.Pair;
 
 @Command("export")
 @Operands(cnt = 1)
-@Option(name ="-d", alias={"--delete", "-rm", "--rm", "--del", "--unset"})
-@Option(name ="-i", alias={"--stdin", "--in"})
-@Description("Sets a new runtime variable in KeyMinder. A runtime variable only exists until KeyMinder is closed. ")
-@Usage( "${command.name} [-d | -i] <value>\n\n" +
-		"Examples:\n"+
-		"  Set a variable:    export someVar=Hello world\n" +
-		"                     echo \"any value\" | export -i someVar\n" +
-		"  Remove a variable: export -d someVar")
+@Description("Sets a new runtime variable in KeyMinder. A runtime variable only exists until the application is closed.")
+@Option(name = Export.OPTION_DELETE, alias={"-d", "-rm", "--rm", "--del", "--unset"}, description = "VAR_NAME  Removes a variable")
+@Option(name = Export.OPTION_STDIN, alias={"-i", "--in"},                             description = "VAR_NAME  Uses the input data as value")
+@Example({	"# Set a new variable\n  export someVar=Hello world",
+			"# Removes the variable 'someVar'\n  export --delete someVar                 ",
+			"# Set a new variable using the value from the input data\n  echo \"any value\" | export -i someVar  "})
 @PipeInfo(in = "String")
 public final class Export extends AbstractShellCommand {
+
+	static final String OPTION_DELETE = "--delete";
+	static final String OPTION_STDIN = "--stdin";
+
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in) {
 
-		if(!in.getParameters().containsKey("-d")){
+		if(!in.getParameters().containsKey(OPTION_DELETE)){
 			// Add a runtime variable
 
-			if(in.getParameters().containsKey("-i")){
+			if(in.getParameters().containsKey(OPTION_STDIN)){
 				if(in.getInputData() == null){
 					out.setColor(AnsiColor.RED);
 					out.println("Error: No input data available.");

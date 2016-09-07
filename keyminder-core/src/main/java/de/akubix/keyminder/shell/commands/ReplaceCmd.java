@@ -24,12 +24,13 @@ import java.util.List;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.Example;
+import de.akubix.keyminder.shell.annotations.Note;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
-import de.akubix.keyminder.shell.annotations.Command;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
@@ -37,14 +38,16 @@ import de.akubix.keyminder.util.search.MatchReplace;
 import de.akubix.keyminder.util.search.NodeMatchResult;
 
 @Command("replace")
-@Operands(cnt = 1)
-@Option(name = "--regex", alias = {"-r", "--regex-replace"})
-@Description("Replaces the matching values from an search result with another custom value")
-@Usage(	"${command.name} <replacement text> [-r]\n\n" +
-		"The '-r' (or '--regex') switch allows you to use regular expression match groups. Simply mention the group with '$0', '$1', etc.\n\n" +
-		"Note: You have to pipe the result from a 'find' command to replace any values.")
-@PipeInfo(in = "List of 'NodeMatchResult' or a single 'NodeMatchResult' object when using '--next'")
+@Description("Replaces the matching values from a search result with a custom text")
+@Operands(cnt = 1, description = "REPLACMENT_TEXT")
+@Option(name = ReplaceCmd.OPTION_REGEX, alias = {"-r", "--regex-replace"}, description = "Enable using a regular expression including match groups ('$0', '$1', etc.)")
+@Example("find / 'hello(.+)' --regex | replace 'hello, $1' --regex")
+@Note("You have to pipe the result of a 'find' command to replace any values.")
+@PipeInfo(in = "List of 'NodeMatchResult' or a single 'NodeMatchResult' object")
 public final class ReplaceCmd extends AbstractShellCommand {
+
+	static final String OPTION_REGEX = "--regex";
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in){
@@ -70,7 +73,7 @@ public final class ReplaceCmd extends AbstractShellCommand {
 		int replaceCount = 0;
 		try{
 			for(NodeMatchResult match: results){
-				if(MatchReplace.replaceContent(match, in.getParameters().get("$0")[0], in.getParameters().containsKey("--regex"))){
+				if(MatchReplace.replaceContent(match, in.getParameters().get("$0")[0], in.getParameters().containsKey(OPTION_REGEX))){
 					replaceCount++;
 				}
 			}

@@ -12,31 +12,34 @@ import de.akubix.keyminder.shell.annotations.Alias;
 import de.akubix.keyminder.shell.annotations.AllowCallWithoutArguments;
 import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.Example;
+import de.akubix.keyminder.shell.annotations.Note;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("dateconv")
 @AllowCallWithoutArguments
-@Option(name = "--date2epoch", paramCnt = 1, alias = "-d2e")
-@Option(name = "--epoch2date", paramCnt = 1, alias = "-e2d")
-@Option(name = "--advanced", alias = "-a")
 @Description("Converts a number of milliseconds since 1.1.1970 to a real date or a date into the epoch millis.")
-@Usage( "${command.name} --date2epoch (-d2e) <date>\n" +
-		"${command.name} --epoch2date (-e2d) <milliseconds since 1970>\n\n" +
-		"You can use '" + AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD + "' to take this value from the piped input data.\n" +
-		"If you want to convert a date like '01.06.2016 12:13:14' you can use the '--advanced' ('-a') switch.")
+@Option(name = DateConv.OPTION_DATE2EPOCH, paramCnt = 1, alias = "-d2e", description = "DATE  Converts a date to the number of milliseconds since 1970.")
+@Option(name = DateConv.OPTION_EPOCH2DATE, paramCnt = 1, alias = "-e2d", description = "MILLIS  Converts the number of milliseconds since 1970 to a date")
+@Option(name = DateConv.OPTION_ADVANCED, alias = "-a", description = "'Converts dates like '01.06.2016 12:13:14'")
+@Example({"dateconv --date2epoch 07.09.2016"})
+@Note("You can use '" + AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD + "' to take this value from the piped input data.")
 @PipeInfo(in = "String, Long", out = "String")
 @Alias({"date2epoch = dateconv -d2e", "epoch2date = dateconv -e2d"})
 public class DateConv extends AbstractShellCommand {
 
+	static final String OPTION_DATE2EPOCH = "--date2epoch";
+	static final String OPTION_EPOCH2DATE = "--epoch2date";
+	static final String OPTION_ADVANCED = "--advanced";
+
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in) {
 
-		if(in.getParameters().containsKey("--epoch2date") && in.getParameters().containsKey("--date2epoch")){
+		if(in.getParameters().containsKey(OPTION_EPOCH2DATE) && in.getParameters().containsKey(OPTION_DATE2EPOCH)){
 			out.setColor(AnsiColor.YELLOW);
 			out.println("You cannot use 'date2epoch' and '--epoch2date' at the same time.");
 			return CommandOutput.error();
@@ -44,8 +47,8 @@ public class DateConv extends AbstractShellCommand {
 
 		DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
 
-		if(in.getParameters().containsKey("--epoch2date")){
-			String value = in.getParameters().get("--epoch2date")[0];
+		if(in.getParameters().containsKey(OPTION_EPOCH2DATE)){
+			String value = in.getParameters().get(OPTION_EPOCH2DATE)[0];
 			long inputVal = -1;
 			try	{
 				if(value.equals(AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD)){
@@ -85,8 +88,8 @@ public class DateConv extends AbstractShellCommand {
 			}
 		}
 
-		if(in.getParameters().containsKey("--date2epoch")){
-			String value = in.getParameters().get("--date2epoch")[0];
+		if(in.getParameters().containsKey(OPTION_DATE2EPOCH)){
+			String value = in.getParameters().get(OPTION_DATE2EPOCH)[0];
 
 			if(value.equals(AbstractShellCommand.REFERENCE_TO_STDIN_KEYWORD)){
 				if(in.getInputData() != null){
@@ -104,7 +107,7 @@ public class DateConv extends AbstractShellCommand {
 				}
 			}
 
-			final String dateParseFormat = in.getParameters().containsKey("--advanced") ? "dd.MM.yyyy HH:mm:ss" : "dd.MM.yyyy";
+			final String dateParseFormat = in.getParameters().containsKey(OPTION_ADVANCED) ? "dd.MM.yyyy HH:mm:ss" : "dd.MM.yyyy";
 
 			try	{
 				SimpleDateFormat sda = new SimpleDateFormat(dateParseFormat);

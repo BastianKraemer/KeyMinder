@@ -23,37 +23,36 @@ import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Option;
-import de.akubix.keyminder.shell.annotations.Command;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("config")
-@Option(name = "--fileconfig", alias={"-f", "-fc", "-file", "--file"})
-@Option(name = "--reload", alias={"-r", "-R"})
-@Option(name = "--delete", paramCnt = 1, alias = {"-d", "-D"})
-@Option(name = "--set", paramCnt = 2, alias = "-s")
-@Option(name = "--save", alias={"-S"})
-@Option(name = "--print", alias={"-p"})
-@Description("View or mdoify the KeyMinder configuration")
-@Usage( "${command.name} [options]\n\n" +
-		"Available options:\n" +
-		"  --fileconfig, -f: Use the file configuration instead of the global settings.\n" +
-		"  --reload, -r: Reloads the global settings\n" +
-		"  --delete, -d [key]: Delete a settings key\n" +
-		"  --set, -s [key] [value]: Add custom settings" +
-		"  --save, -S: Saves the global settings file\n" +
-		"  --print, -p Prints out the current settings")
+@Description("View or modify the configuration")
+@Option(name = ConfigCmd.OPTION_FILE_CONFIG,          alias={"-f", "-fc", "-file", "--file"}, description = "Use the file configuration instead of the global settings")
+@Option(name = ConfigCmd.OPTION_RELOAD,               alias={"-r", "-R"},                     description = "Reloads the global settings")
+@Option(name = ConfigCmd.OPTION_DELETE, paramCnt = 1, alias = {"-d", "-D"},                   description = "KEY  Delete a settings key")
+@Option(name = ConfigCmd.OPTION_SET,    paramCnt = 2, alias = "-s",                           description = "KEY VALUE   Add custom settings")
+@Option(name = ConfigCmd.OPTION_SAVE,                 alias={"-S"},                           description = "Saves the global settings file")
+@Option(name = ConfigCmd.OPTION_PRINT,                alias={"-p"},                           description = "Prints out the current settings")
 public final class ConfigCmd extends AbstractShellCommand {
+
+	static final String OPTION_FILE_CONFIG = "--fileconfig";
+	static final String OPTION_RELOAD = "--reload";
+	static final String OPTION_DELETE = "--delete";
+	static final String OPTION_SET = "--set";
+	static final String OPTION_SAVE = "--save";
+	static final String OPTION_PRINT = "--print";
+
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in) {
 		boolean updateFileSettings;
 		boolean noneOfTheAbove = true;
 
-		if(in.getParameters().containsKey("--fileconfig")){
+		if(in.getParameters().containsKey(OPTION_FILE_CONFIG)){
 			if(!instance.isAnyFileOpened()){
 				out.setColor(AnsiColor.RED);
 				out.println("No file opened.");
@@ -65,14 +64,14 @@ public final class ConfigCmd extends AbstractShellCommand {
 			updateFileSettings = false;
 		}
 
-		if(in.getParameters().containsKey("--reload")){
+		if(in.getParameters().containsKey(OPTION_RELOAD)){
 			instance.reloadSettings();
 			noneOfTheAbove = false;
 		}
 
-		if(in.getParameters().containsKey("--delete")){
+		if(in.getParameters().containsKey(OPTION_DELETE)){
 			noneOfTheAbove = false;
-			String keyName = in.getParameters().get("--delete")[0];
+			String keyName = in.getParameters().get(OPTION_DELETE)[0];
 			boolean result = updateFileSettings ? instance.removeFileSettingsValue(keyName) : instance.removeSettingsValue(keyName);
 			if(result){
 				instance.fireEvent(updateFileSettings ? DefaultEvent.OnFileSettingsChanged : DefaultEvent.OnSettingsChanged);
@@ -84,10 +83,10 @@ public final class ConfigCmd extends AbstractShellCommand {
 			}
 		}
 
-		if(in.getParameters().containsKey("--set")){
+		if(in.getParameters().containsKey(OPTION_SET)){
 			noneOfTheAbove = false;
-			String name = in.getParameters().get("--set")[0];
-			String value = in.getParameters().get("--set")[1];
+			String name = in.getParameters().get(OPTION_SET)[0];
+			String value = in.getParameters().get(OPTION_SET)[1];
 			try{
 
 				if(updateFileSettings){
@@ -106,12 +105,12 @@ public final class ConfigCmd extends AbstractShellCommand {
 
 		}
 
-		if(in.getParameters().containsKey("--save")){
+		if(in.getParameters().containsKey(OPTION_SAVE)){
 			noneOfTheAbove = false;
 			instance.saveSettings();
 		}
 
-		if(in.getParameters().containsKey("--print") || noneOfTheAbove){
+		if(in.getParameters().containsKey(OPTION_PRINT) || noneOfTheAbove){
 			printSettingsMap(out, instance, updateFileSettings);
 		}
 

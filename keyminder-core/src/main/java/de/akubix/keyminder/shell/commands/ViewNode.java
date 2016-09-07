@@ -10,16 +10,14 @@ import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
 import de.akubix.keyminder.shell.annotations.RequireOpenedFile;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("vi")
 @RequireOpenedFile
-@Operands(cnt = 1, nodeArgAt = 0, optionalNodeArg = true)
 @Description("Displays all attributes of a tree node.")
-@Usage("${command.name} [/path/to/node]")
+@Operands(cnt = 1, nodeArgAt = 0, optionalNodeArg = true, description = "{NODE_PATH}")
 @PipeInfo(in = "TreeNode", out = "TreeNode")
 @Alias("view = vi")
 public final class ViewNode extends AbstractShellCommand {

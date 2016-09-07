@@ -29,10 +29,10 @@ import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.Example;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
@@ -45,28 +45,28 @@ import de.akubix.keyminder.util.search.matcher.TextMatcher.NodeMatcherOption;
 import de.akubix.keyminder.util.search.matcher.TimeMatcher;
 
 @Command("find")
-@Operands(cnt = 2, optionalNodeArg = true, nodeArgAt = 0)
-@Option(name = "--modified", paramCnt = 2, alias = "-m")
-@Option(name = "--created", paramCnt = 2, alias = "-c")
-@Option(name = "--next", paramCnt = 0, alias = "-n")
-@Option(name = "--regex", paramCnt = 0, alias = "-r")
-@Option(name = "--case-sensitive", paramCnt = 0, alias = "-s")
-@Option(name = "--text-only", paramCnt = 0, alias = "-t")
-@Option(name = "--attributes-only", paramCnt = 0, alias = "-a")
-@Option(name = "--attribute-filter", paramCnt = 1, alias = "-f")
-@Description("Finds a selects the next node that matches the search pattern")
-@Usage(	"${command.name} [search pattern] [options]\n\n" +
-		"Available options:\n" +
-		"  --modified, -m         <before|at|after> <date>\n" +
-		"  --create, -c           <before|at|after> <date>\n\n" +
-		"  --next, -n             Selects the next matching node\n" +
-		"  --regex, -r            Allow usage of regular expressions\n" +
-		"  --case-sensitive, -s   Make the search case sensitive (this is automatically active when using '--regex')\n" +
-		"  --text-only, -t        Ignores the node attributes\n" +
-		"  --attributes-only, -a  Ignores the node text" +
-		"  --attribute-filter, -f <regular expression> Ignores attribute that does not match the regex pattern")
+@Description("Finds all nodes that matches the search pattern")
+@Operands(cnt = 2, optionalNodeArg = true, nodeArgAt = 0, description = "{tree node} [search pattern]")
+@Option(name = FindCmd.OPTION_MODIFIED,       paramCnt = 2, alias = "-m", description = "[before|at|after] [date]")
+@Option(name = FindCmd.OPTION_CREATED,        paramCnt = 2, alias = "-c", description = "[before|at|after] [date]")
+@Option(name = FindCmd.OPTION_NEXT,           paramCnt = 0, alias = "-n", description = "Selects the next matching node")
+@Option(name = FindCmd.OPTION_REGEX,          paramCnt = 0, alias = "-r", description = "Allow usage of regular expressions")
+@Option(name = FindCmd.OPTION_CASE_SENSITIVE, paramCnt = 0, alias = "-s", description = "Make the search case sensitive (this is automatically active when using '--regex')")
+@Option(name = FindCmd.OPTION_TEXT_ONLY,      paramCnt = 0, alias = "-t", description = "Ignores the node attributes")
+@Option(name = FindCmd.OPTION_ATTRIBS_ONLY,   paramCnt = 0, alias = "-a", description = "Ignores the node text")
+@Option(name = FindCmd.OPTION_FILTER_ATTRIBS, paramCnt = 1, alias = "-f", description = "[regular expression] Ignores attribute that does not match the regex pattern")
 @PipeInfo(out = "List of 'NodeMatchResult' or a single 'NodeMatchResult' object when using '--next'")
+@Example({"find /some/node \"Hello world\" --next", "find / Hello(.*) --case-sensitive --regex | replace -r \"Hello, $1\""})
 public final class FindCmd extends AbstractShellCommand {
+
+	static final String OPTION_MODIFIED = "--modified";
+	static final String OPTION_CREATED = "--created";
+	static final String OPTION_NEXT = "--next";
+	static final String OPTION_REGEX = "--regex";
+	static final String OPTION_CASE_SENSITIVE= "--case-sensitive";
+	static final String OPTION_TEXT_ONLY= "--text-only";
+	static final String OPTION_ATTRIBS_ONLY = "--attributes-only";
+	static final String OPTION_FILTER_ATTRIBS = "--attribute-filter";
 
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in){
@@ -74,47 +74,47 @@ public final class FindCmd extends AbstractShellCommand {
 			Map<String, String[]> parameters = in.getParameters();
 			ArrayList<NodeMatcher> conditions = new ArrayList<>();
 
-			boolean simpleSearch = !parameters.containsKey("--regex");
+			boolean simpleSearch = !parameters.containsKey(OPTION_REGEX);
 
 			TextMatcher.NodeMatcherOption option = NodeMatcherOption.ALL;
 
-			if(parameters.containsKey("--text-only") && parameters.containsKey("--attributes-only")){
+			if(parameters.containsKey(OPTION_TEXT_ONLY) && parameters.containsKey(OPTION_ATTRIBS_ONLY)){
 				out.setColor(AnsiColor.RED);
-				out.println("You cannot use the parameters '--text-only' and '--attributes-only' at the same time.");
+				out.printf("You cannot use the parameters '%s' and '%s' at the same time.\n", OPTION_TEXT_ONLY, OPTION_ATTRIBS_ONLY);
 				return CommandOutput.error();
 			}
 			else{
-				if(parameters.containsKey("--text-only")){
+				if(parameters.containsKey(OPTION_TEXT_ONLY)){
 					option = NodeMatcherOption.TEXT_ONLY;
 				}
-				else if(parameters.containsKey("--attributes-only")){
+				else if(parameters.containsKey(OPTION_ATTRIBS_ONLY)){
 					option = NodeMatcherOption.ATTRIBUTES_ONLY;
 				}
 			}
 
-			final boolean ignoreCase = simpleSearch && !parameters.containsKey("--case-sensitive");
+			final boolean ignoreCase = simpleSearch && !parameters.containsKey(OPTION_CASE_SENSITIVE);
 
-			if(parameters.containsKey("--attribute-filter")){
-				conditions.add(new TextMatcher(parameters.get("$1")[0], simpleSearch, option, Pattern.compile(parameters.get("--attribute-filter")[0]), ignoreCase));
+			if(parameters.containsKey(OPTION_FILTER_ATTRIBS)){
+				conditions.add(new TextMatcher(parameters.get("$1")[0], simpleSearch, option, Pattern.compile(parameters.get(OPTION_FILTER_ATTRIBS)[0]), ignoreCase));
 			}
 			else{
 				conditions.add(new TextMatcher(parameters.get("$1")[0], simpleSearch, option, ignoreCase));
 			}
 
-			if(parameters.containsKey("--modified")){
+			if(parameters.containsKey(OPTION_MODIFIED)){
 				conditions.add(
 					new TimeMatcher(
 						"modified",
-						TimeMatcher.getCompareTypeFromString(parameters.get("--modified")[0]),
-						parameters.get("--modified")[1]));
+						TimeMatcher.getCompareTypeFromString(parameters.get(OPTION_MODIFIED)[0]),
+						parameters.get(OPTION_MODIFIED)[1]));
 			}
 
-			if(parameters.containsKey("--created")){
+			if(parameters.containsKey(OPTION_CREATED)){
 				conditions.add(
 					new TimeMatcher(
 						"created",
-						TimeMatcher.getCompareTypeFromString(parameters.get("--created")[0]),
-						parameters.get("--created")[1]));
+						TimeMatcher.getCompareTypeFromString(parameters.get(OPTION_CREATED)[0]),
+						parameters.get(OPTION_CREATED)[1]));
 			}
 
 			if(parameters.containsKey("--next")){
@@ -127,6 +127,9 @@ public final class FindCmd extends AbstractShellCommand {
 					out.setColor(AnsiColor.CYAN);
 					out.println(instance.getTree().getNodePath(result.getMatchResult().getNode(), "/"));
 					out.setColor(AnsiColor.RESET);
+
+					instance.getTree().setSelectedNode(result.getMatchResult().getNode());
+
 					return CommandOutput.success(result.getMatchResult());
 				}
 				else{

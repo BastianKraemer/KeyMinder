@@ -26,49 +26,50 @@ import de.akubix.keyminder.core.modules.ModuleInfo;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.AllowCallWithoutArguments;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.Note;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
-import de.akubix.keyminder.shell.annotations.Command;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("modules")
 @AllowCallWithoutArguments
-@Operands(cnt = 1)
-@Option(name = "--info", alias = {"--about", "-i"})
-@Option(name = "--enable", alias = "-e")
-@Option(name = "--disable", alias = "-d")
-@Description("Enables and disables a KeyMinder module or view a list of all modules.")
-@Usage(	"${command.name} [module name] [options]\n\n" +
-		"--info, -i    Prints some module information\n" +
-		"--enable, -e  Enables a module\n" +
-		"--disable, -d Disables a module\n\n" +
-		"Running just '${command.name}' will display a list of all available modules.")
+@Description("Enables/disables a KeyMinder module or shows a list of all modules")
+@Operands(cnt = 1, description = "MODULE_NAME")
+@Option(name = ModuleCmd.OPTION_INFO, alias = {"--about", "-i"}, description = "Prints some module information")
+@Option(name = ModuleCmd.OPTION_ENABLE, alias = "-e",            description = "Enables a module")
+@Option(name = ModuleCmd.OPTION_DISABLE, alias = "-d",           description = "Disables a module")
+@Note("Running just 'modules' will display a list of all available modules.")
 public final class ModuleCmd extends AbstractShellCommand {
+
+	static final String OPTION_INFO = "--info";
+	static final String OPTION_ENABLE = "--enable";
+	static final String OPTION_DISABLE = "--disable";
+
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in){
 
 		if(in.getParameters().containsKey("$0")){
 			String moduleName = in.getParameters().get("$0")[0];
 
-			if(in.getParameters().containsKey("--enable") && in.getParameters().containsKey("--disable")){
+			if(in.getParameters().containsKey(OPTION_ENABLE) && in.getParameters().containsKey(OPTION_DISABLE)){
 				out.setColor(AnsiColor.RED);
 				out.println("You cannot enable and disable a module at the same time.");
 				return CommandOutput.error();
 			}
 
 			try{
-				if(in.getParameters().containsKey("--enable")){
+				if(in.getParameters().containsKey(OPTION_ENABLE)){
 					instance.getModuleLoader().enableModule(moduleName);
 				}
-				else if(in.getParameters().containsKey("--disable")){
+				else if(in.getParameters().containsKey(OPTION_DISABLE)){
 					instance.getModuleLoader().disableModule(moduleName);
 				}
 
-				if(in.getParameters().containsKey("--info")){
+				if(in.getParameters().containsKey(OPTION_INFO)){
 					ModuleInfo m = instance.getModuleLoader().getModuleInfo(moduleName);
 					if(m == null){
 						throw new IllegalArgumentException("Module does not exist.");

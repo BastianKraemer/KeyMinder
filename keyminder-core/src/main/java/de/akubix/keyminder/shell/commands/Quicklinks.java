@@ -26,43 +26,44 @@ import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.AllowCallWithoutArguments;
 import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.Example;
+import de.akubix.keyminder.shell.annotations.Note;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("qlnk")
-@Operands(cnt = 1)
-@Option(name = "--add", alias = "-a", paramCnt = 1)
-@Option(name = "--remove", alias = {"-r", "--rm"})
 @AllowCallWithoutArguments
-@PipeInfo(in = "TreeNode", out = "TreeNode")
 @Description("A Quicklink is a reference to a any tree node, so you can jump to frequently used nodes with just one command.")
-@Usage( "Jump to a Quicklink:\n" +
-		"  ${command.name} [Quicklink name]\n" +
-		"Define a new Quicklink:\n" +
-		"  ${command.name} [Quicklink name] --add [/path/to/node *]\n" +
-		"Remove a Quicklink:\n" +
-		"  ${command.name} [Quicklink name] --remove\n\n" +
-		"*You can use '@-' to reference a tree node in the input data.")
+@Operands(cnt = 1, description = "QUICKLINK_NAME")
+@Option(name = Quicklinks.OPTION_ADD, alias = "-a", paramCnt = 1, description = "NODE_PATH  Adds a new Quicklink")
+@Option(name = Quicklinks.OPTION_REMOVE, alias = {"-r", "--rm"},  description = "Removes a Quicklink")
+@PipeInfo(in = "TreeNode", out = "TreeNode")
+@Example({	"# Jump to a Quicklink:\n  qlnk QUICKLINK_NAME",
+			"# Define a new Quicklink:\n  qlnk QUICKLINK_NAME --add /path/to/node *",
+			"# Remove a Quicklink:\n  qlnk QUICKLINK_NAME --remove"})
+@Note("* You can use '@-' to reference a tree node in the input data.")
 public class Quicklinks extends AbstractShellCommand {
+
+	static final String OPTION_ADD = "--add";
+	static final String OPTION_REMOVE = "--remove";
 
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in){
-		if(in.getParameters().containsKey("--add") && in.getParameters().containsKey("--remove")){
+		if(in.getParameters().containsKey(OPTION_ADD) && in.getParameters().containsKey(OPTION_REMOVE)){
 			out.setColor(AnsiColor.RED);
-			out.println("You cannot use '--add' and '--remove' at the same time.");
+			out.printf("You cannot use '%s' and '%s' at the same time.\n", OPTION_ADD, OPTION_REMOVE);
 			return CommandOutput.error();
 		}
 
 		if(in.getParameters().containsKey("$0")){
-			if(in.getParameters().containsKey("--add")){
+			if(in.getParameters().containsKey(OPTION_ADD)){
 
 				try {
-					TreeNode node = super.getNodeFromPathOrStdIn(instance, in, in.getParameters().get("--add")[0]);
+					TreeNode node = super.getNodeFromPathOrStdIn(instance, in, in.getParameters().get(OPTION_ADD)[0]);
 					instance.addQuicklink(in.getParameters().get("$0")[0], node);
 					return CommandOutput.success(node);
 
@@ -73,7 +74,7 @@ public class Quicklinks extends AbstractShellCommand {
 				}
 			}
 
-			if(in.getParameters().containsKey("--remove")){
+			if(in.getParameters().containsKey(OPTION_REMOVE)){
 				instance.removeQuicklink(in.getParameters().get("$0")[0]);
 				return CommandOutput.success();
 			}

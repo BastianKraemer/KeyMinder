@@ -21,21 +21,19 @@ package de.akubix.keyminder.shell.commands;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.shell.AbstractShellCommand;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
 import de.akubix.keyminder.shell.annotations.RequireOpenedFile;
-import de.akubix.keyminder.shell.annotations.Command;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("add")
 @RequireOpenedFile
-@Operands(cnt = 2, nodeArgAt = 0)
-@Description("Adds a new tree node.")
-@Usage("${command.name} [/path/to/parent/node] node_name")
+@Description("Adds a new tree node")
+@Operands(cnt = 2, nodeArgAt = 0, optionalNodeArg = true, description = "{/path/to/parent/node} NODE_NAME")
 @PipeInfo(in = "TreeNode", out = "TreeNode")
 public final class AddNode extends AbstractShellCommand {
 	@Override

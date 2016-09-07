@@ -42,8 +42,11 @@ import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.shell.annotations.Alias;
 import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
+import de.akubix.keyminder.shell.annotations.Example;
+import de.akubix.keyminder.shell.annotations.Note;
+import de.akubix.keyminder.shell.annotations.Operands;
+import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
@@ -186,46 +189,101 @@ public class Shell {
 	}
 
 	/**
-	 * Returns the description an usage of a command (the values are taken from the annotations {@link Description} and {@link Usage})
+	 * Generates a manual for a command based on the command annotations
 	 * @param cmd The name of the command
-	 * @return String array with the description (index 0) and the usage definition (index 1). Both values can be {@code null} if there was no annotation
+	 * @return String the manual
 	 * @throws CommandException if the command does not exist
 	 */
-	public String[] getManual(String cmd) throws CommandException {
-		if(availableCommands.containsKey(cmd.toLowerCase())){
-			Description desc = availableCommands.get(cmd.toLowerCase()).getAnnotation(Description.class);
-			Usage usage = availableCommands.get(cmd.toLowerCase()).getAnnotation(Usage.class);
+	public String getManual(String cmdName) throws CommandException {
 
-			return new String[]{
-				desc != null ? desc.value() : null,
-				usage != null ? usage.value() : null
-			};
+		if(availableCommands.containsKey(cmdName.toLowerCase())){
+
+			final StringBuilder manualStr = new StringBuilder();
+
+			Class<?> cmdClass = availableCommands.get(cmdName.toLowerCase());
+
+			final Description desc = cmdClass.getAnnotation(Description.class);
+			final Operands operands =  cmdClass.getAnnotation(Operands.class);
+			final Option[] optionList = cmdClass.getAnnotationsByType(Option.class);
+
+			if(desc != null){
+				manualStr.append(desc.value()).append("\n\n");
+			}
+
+			manualStr.append("USAGE: ").append(cmdName).append(" ");
+
+			if(operands != null){
+				boolean skipOptionsText = false;
+				if(!operands.description().equals("")){
+					manualStr.append(operands.description());
+					skipOptionsText = operands.description().contains("\n");
+				}
+				else{
+					for(int i = 0; i < operands.cnt(); i++){
+						if(i == operands.nodeArgAt()){
+							if(operands.optionalNodeArg()){
+								manualStr.append(" {tree node}");
+							}
+							else{
+								manualStr.append(" [tree node]");
+							}
+						}
+						else{
+							manualStr.append(" [argument ").append(i).append("]");
+						}
+					}
+				}
+
+				if(optionList.length > 0 && !skipOptionsText){
+					manualStr.append(" ...OPTIONS");
+				}
+			}
+			else if(optionList.length > 0){
+				manualStr.append("{OPTIONS}");
+			}
+
+			if(optionList.length > 0){
+				for(Option option: optionList){
+					manualStr.append("\n\n ").append(option.name());
+
+					for(String alias: option.alias()){
+						manualStr.append(", ").append(alias);
+					}
+
+					if(!option.description().equals("")){
+						manualStr.append("\n    ").append(option.description());
+					}
+				}
+			}
+
+			final PipeInfo pipeInfo = cmdClass.getAnnotation(PipeInfo.class);
+			if(pipeInfo != null){
+				manualStr.append("\n\n\nINPUT TYPES:\n  ")
+						.append(pipeInfo.in().equals("") ? "-" : pipeInfo.in())
+						.append("\n\nOUTPUT TYPES:\n  ")
+						.append(pipeInfo.out().equals("") ? "-" : pipeInfo.out());
+			}
+
+			final Example examples = cmdClass.getAnnotation(Example.class);
+			if(examples != null){
+				manualStr.append("\n\n\nEXAMPLES:");
+				for(String example: examples.value()){
+					manualStr.append("\n  ").append(example.replace("\n", "\n  ")).append("\n");
+				}
+			}
+
+			final Note note = cmdClass.getAnnotation(Note.class);
+			if(note != null){
+				manualStr.append("\n").append(note.value());
+			}
+
+			return manualStr.toString();
+		}
+		else if(aliasMap.containsKey(cmdName)){
+			return String.format("'%s' is an alias for '%s'", cmdName, aliasMap.get(cmdName));
 		}
 		else{
-			if(aliasMap.containsKey(cmd)){
-				return new String[]{
-					String.format("'%s' is an alias for '%s'", cmd, aliasMap.get(cmd)),
-					null};
-			}
-			throw new CommandException(String.format("Unknown command '%s'", cmd));
-		}
-	}
-
-	/**
-	 * Returns the pipe information stored in the {@link PipeInfo} annotation of each command)
-	 * @param cmd The name of the command
-	 * @return The pipe information
-	 * @throws CommandException if the command does not exist (or is just an alias)
-	 */
-	public PipeInfo getPipeInformation(String cmd) throws CommandException {
-		if(availableCommands.containsKey(cmd.toLowerCase())){
-			return availableCommands.get(cmd.toLowerCase()).getAnnotation(PipeInfo.class);
-		}
-		else{
-			if(aliasMap.containsKey(cmd)){
-				throw new CommandException("Pipe informations are not availabe for alias commands");
-			}
-			throw new CommandException(String.format("Unknown command '%s'", cmd));
+			throw new CommandException(String.format("Unknown command '%s'", cmdName));
 		}
 	}
 

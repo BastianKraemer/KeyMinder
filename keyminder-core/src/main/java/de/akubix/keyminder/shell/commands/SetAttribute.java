@@ -3,21 +3,19 @@ package de.akubix.keyminder.shell.commands;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.shell.AbstractShellCommand;
+import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
 import de.akubix.keyminder.shell.annotations.Operands;
 import de.akubix.keyminder.shell.annotations.PipeInfo;
 import de.akubix.keyminder.shell.annotations.RequireOpenedFile;
-import de.akubix.keyminder.shell.annotations.Command;
-import de.akubix.keyminder.shell.annotations.Usage;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("set")
 @RequireOpenedFile
-@Operands(cnt = 3, nodeArgAt = 0, optionalNodeArg = true)
 @Description("Sets an attribute of a tree node")
-@Usage("${command.name} [/path/to/node] <attribute_name> <attribute_value>")
+@Operands(cnt = 3, nodeArgAt = 0, optionalNodeArg = true, description = "{NODE_PATH} ATTRIBUTE_NAME ATTRIBUTE_VALUE")
 @PipeInfo(in = "TreeNode", out = "TreeNode")
 public final class SetAttribute extends AbstractShellCommand {
 
