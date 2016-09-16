@@ -36,8 +36,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Result;
 import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
@@ -138,19 +138,6 @@ public final class XMLCore{
 	 * ==========================================================================================================================================================================
 	 */
 
-	private static Transformer getDocumentTransformer() throws TransformerConfigurationException{
-
-		TransformerFactory transformerFactory = TransformerFactory.newInstance();
-		Transformer transformer = transformerFactory.newTransformer();
-
-		//transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-		transformer.setOutputProperty(OutputKeys.METHOD, "xml");
-		transformer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
-		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-		transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-		return transformer;
-	}
-
 	/**
 	 * Saves an XML-Document to an file.
 	 * @param xmlfile the file the XML document will be stored in
@@ -164,9 +151,7 @@ public final class XMLCore{
 
 		try {
 			outputStream = new OutputStreamWriter(new FileOutputStream(xmlfile), Charset.forName("UTF-8").newEncoder());
-
-			StreamResult result = new StreamResult(outputStream);
-			getDocumentTransformer().transform(new DOMSource(xmldoc), result);
+			transformDocument(xmldoc, new StreamResult(outputStream));
 		}
 		finally {
 			closeStream(outputStream);
@@ -182,8 +167,24 @@ public final class XMLCore{
 	public static String writeXmlDocumentToString(Document xmldoc) throws TransformerException {
 
 		StringWriter stringWriter =  new StringWriter();
-		getDocumentTransformer().transform(new DOMSource(xmldoc), new StreamResult(stringWriter));
+		transformDocument(xmldoc, new StreamResult(stringWriter));
 		return stringWriter.toString();
+	}
+
+	private static void transformDocument(Document xmldoc, Result result) throws TransformerException {
+
+		TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		Transformer transformer = transformerFactory.newTransformer();
+
+		//transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+		transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+		transformer.setOutputProperty(OutputKeys.ENCODING,"UTF-8");
+		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		transformer.setOutputProperty(OutputKeys.STANDALONE, "yes");
+		transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+		xmldoc.setXmlStandalone(true);
+		transformer.transform(new DOMSource(xmldoc), result);
 	}
 
 	/* Working with XML documents or nodes
