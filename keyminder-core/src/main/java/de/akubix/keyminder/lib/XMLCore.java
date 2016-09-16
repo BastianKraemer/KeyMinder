@@ -181,9 +181,9 @@ public final class XMLCore{
 	 */
 	public static String writeXmlDocumentToString(Document xmldoc) throws TransformerException {
 
-		StreamResult streamResult = new StreamResult(new StringWriter());
-		getDocumentTransformer().transform(new DOMSource(xmldoc), streamResult);
-		return streamResult.toString();
+		StringWriter stringWriter =  new StringWriter();
+		getDocumentTransformer().transform(new DOMSource(xmldoc), new StreamResult(stringWriter));
+		return stringWriter.toString();
 	}
 
 	/* Working with XML documents or nodes
