@@ -5,15 +5,16 @@ import java.io.InputStreamReader;
 import java.util.Properties;
 
 public class ModuleInfo {
-	private Module moduleInstace;
+	private Module moduleFactory;
+	private Object moduleInstance;
 	private final String propertiesFile;
 	private boolean isEnabled;
 	private final boolean requiredUIisAvailable;
 	private final String requiredUIName;
 	private boolean moduleIsStarted;
 
-	protected ModuleInfo(Module moduleInstace, String propertiesFile, boolean requiredUIisAvailable, String requiredUIName, boolean isEnabled){
-		this.moduleInstace = moduleInstace;
+	protected ModuleInfo(Module moduleFactory, String propertiesFile, boolean requiredUIisAvailable, String requiredUIName, boolean isEnabled){
+		this.moduleFactory = moduleFactory;
 		this.propertiesFile = propertiesFile;
 		this.requiredUIisAvailable = requiredUIisAvailable;
 		this.requiredUIName = requiredUIName;
@@ -21,8 +22,12 @@ public class ModuleInfo {
 		this.moduleIsStarted = false;
 	}
 
-	public Module getInstance(){
-		return this.moduleInstace;
+	public Module getFactory(){
+		return this.moduleFactory;
+	}
+
+	public Object getInstance(){
+		return this.moduleInstance;
 	}
 
 	public Properties getProperties() throws NullPointerException, IOException {
@@ -35,13 +40,15 @@ public class ModuleInfo {
 		return moduleIsStarted;
 	}
 
-	public void setStarted(){
+	public void setStarted(Object moduleInstance){
 		this.moduleIsStarted = true;
+		this.moduleInstance = moduleInstance;
+		this.moduleFactory = null;
 	}
 
 	public void startFailed(){
 		this.moduleIsStarted = false;
-		this.moduleInstace = null;
+		this.moduleFactory = null;
 	}
 
 	public boolean isEnabled(){

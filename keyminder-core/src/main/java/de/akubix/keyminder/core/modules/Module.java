@@ -16,5 +16,5 @@ public interface Module {
 	 * @param moduleProperties The properties file of your module (see {@link KeyMinderModule})
 	 * @throws ModuleStartupException Can be thrown if there is any error during the startup
 	 */
-	public void startupModule(ApplicationInstance instance, Properties moduleProperties) throws ModuleStartupException;
+	public Object startupModule(ApplicationInstance instance, Properties moduleProperties) throws ModuleStartupException;
 }

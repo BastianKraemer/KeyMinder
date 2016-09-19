@@ -99,8 +99,9 @@ public class ModuleLoader {
 				return;
 			}
 
-			if(callModuleStartupMethod(moduleName, m)){
-				m.setStarted();
+			Object moduleInstane = callModuleStartupMethod(moduleName, m);
+			if(moduleInstane != null){
+				m.setStarted(moduleInstane);
 			}
 			else{
 				m.startFailed();
@@ -114,18 +115,17 @@ public class ModuleLoader {
 	 * @param moduleInfo
 	 * @return {@code true} if the module has been successfully started, {@code false} if not
 	 */
-	private boolean callModuleStartupMethod(String name, ModuleInfo moduleInfo){
+	private Object callModuleStartupMethod(String name, ModuleInfo moduleInfo) {
 
-		Module moduleInstance = moduleInfo.getInstance();
-		if(moduleInstance == null){return false;}
+		Module moduleFactory = moduleInfo.getFactory();
+		if(moduleFactory == null){return false;}
 
 		try {
 			if(KeyMinder.environment.containsKey("verbose_mode")){
 				app.println(String.format("Starting module \"%s\"... ", name));
 			}
 
-			moduleInstance.startupModule(app, moduleInfo.getProperties());
-			return true;
+			return moduleFactory.startupModule(app, moduleInfo.getProperties());
 		}
 		catch (IOException | NullPointerException e){
 			app.log(String.format("Start of module '%s' failed: Unable to load module property file.", name));
@@ -145,7 +145,7 @@ public class ModuleLoader {
 					break;
 			}
 		}
-		return false;
+		return null;
 	}
 
 	/**

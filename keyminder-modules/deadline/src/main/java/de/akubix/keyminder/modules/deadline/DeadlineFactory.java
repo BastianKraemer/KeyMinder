@@ -10,7 +10,7 @@ import de.akubix.keyminder.core.modules.Module;
 @KeyMinderModule(name = "Deadline", properties = "/de/akubix/keyminder/modules/Deadline.properties")
 public class DeadlineFactory implements Module {
 	@Override
-	public void startupModule(ApplicationInstance instance, Properties moduleProperties) throws ModuleStartupException {
-		new Deadline(instance);
+	public Object startupModule(ApplicationInstance instance, Properties moduleProperties) throws ModuleStartupException {
+		return new Deadline(instance);
 	}
 }

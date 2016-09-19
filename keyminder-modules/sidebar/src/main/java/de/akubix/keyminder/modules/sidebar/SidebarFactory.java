@@ -13,7 +13,7 @@ import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 @RequireUserInterface(JavaFxUserInterface.USER_INTERFACE_ID)
 public class SidebarFactory implements Module {
 	@Override
-	public void startupModule(ApplicationInstance instance, Properties moduleProperties) throws ModuleStartupException {
-		new Sidebar(instance);
+	public Object startupModule(ApplicationInstance instance, Properties moduleProperties) throws ModuleStartupException {
+		return new Sidebar(instance);
 	}
 }

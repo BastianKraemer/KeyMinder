@@ -10,7 +10,7 @@ import de.akubix.keyminder.core.modules.Module;
 @KeyMinderModule(name = "SSHTools", properties = "/de/akubix/keyminder/modules/SSHTools.properties")
 public class SSHToolsFactory implements Module {
 	@Override
-	public void startupModule(ApplicationInstance instance, Properties moduleProperties) throws ModuleStartupException {
-		new SSHTools(instance);
+	public Object startupModule(ApplicationInstance instance, Properties moduleProperties) throws ModuleStartupException {
+		return new SSHTools(instance);
 	}
 }
