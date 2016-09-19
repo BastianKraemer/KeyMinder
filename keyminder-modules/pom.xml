@@ -12,10 +12,10 @@
 	<packaging>pom</packaging>
 
 	<modules>
-		<module>keyminder-module-sshtools</module>
-		<module>keyminder-module-sidebar</module>
-		<module>keyminder-module-deadline</module>
-		<module>keyminder-module-keyclip</module>
+		<module>sshtools</module>
+		<module>sidebar</module>
+		<module>deadline</module>
+		<module>keyclip</module>
 	</modules>
 
 	<properties>
