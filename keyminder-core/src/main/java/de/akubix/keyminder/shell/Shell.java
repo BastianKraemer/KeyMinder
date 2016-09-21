@@ -314,7 +314,11 @@ public class Shell {
 	 * @throws UserCanceledOperationException when the user entered the 'exit' command
 	 */
 	public void runShellCommand(ShellOutputWriter outWriter, String commandLineInput) throws CommandException, UserCanceledOperationException {
-		List<ParsedCommand> cmdList = parseCommandLineString(replaceVariables(commandLineInput.trim(), (var) -> instance.lookup(var, runtimeVariables)));
+
+		List<ParsedCommand> cmdList = parseCommandLineString(
+			replaceVariables(
+				commandLineInput.trim(),
+				(var) -> instance.lookup(var, instance.getTree().getSelectedNode().getId() == 0 ? instance.getTree().getSelectedNode() : null, runtimeVariables)));
 
 		for(int i = 0; i < cmdList.size(); i++){
 			ParsedCommand p = cmdList.get(i);

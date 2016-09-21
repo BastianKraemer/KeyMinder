@@ -569,15 +569,26 @@ public class ApplicationInstance implements ShellOutputWriter {
 	 */
 
 	public String lookup(String varName) throws IllegalArgumentException {
-		return lookup(varName, (tree.getSelectedNode().getId() != 0 ? tree.getSelectedNode() : null), null);
+		try {
+			return lookup(varName, (tree.getSelectedNode().getId() != 0 ? tree.getSelectedNode() : null), null);
+		}
+		catch(IllegalArgumentException e){
+			return "";
+		}
 	}
 
-	public String lookup(String varName, Map<String, String> additionalVarMap) throws IllegalArgumentException {
-		return lookup(varName, (tree.getSelectedNode().getId() != 0 ? tree.getSelectedNode() : null), additionalVarMap);
+	public boolean variableIsDefined(String varName){
+		return variableIsDefined(varName, (tree.getSelectedNode().getId() != 0 ? tree.getSelectedNode() : null), null);
 	}
 
-	public String lookup(String varName, TreeNode treeNode) throws IllegalArgumentException {
-		return lookup(varName, treeNode, null);
+	public boolean variableIsDefined(String varName, TreeNode treeNode, Map<String, String> additionalVarMap){
+		try {
+			lookup(varName, treeNode, additionalVarMap);
+			return true;
+		}
+		catch(IllegalArgumentException e){
+			return false;
+		}
 	}
 
 	/**
@@ -585,7 +596,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 	 * @param varName The name of the variable (without ${...})
 	 * @return The value of the variable OR "" if there is no value for this variable
 	 */
-	public String lookup(String varName, TreeNode treeNode, Map<String, String> additionalVarMap){
+	public String lookup(String varName, TreeNode treeNode, Map<String, String> additionalVarMap) throws IllegalArgumentException {
 
 		// There are multiple sources for the values of the variables: The variables of this document stored in 'variables' or as part of the node attributes or ...
 		// Hint: Take a look at the order - you can "overwrite" node attributes because they will be first looked up in 'variables'
@@ -613,7 +624,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 				return treeNode.getText();
 		}
 
-		return "";
+		throw new IllegalArgumentException(String.format("Undefined variable: '%s'", varName));
 	}
 
 	/*
