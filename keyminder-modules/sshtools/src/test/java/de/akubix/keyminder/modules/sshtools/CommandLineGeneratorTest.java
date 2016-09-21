@@ -3,49 +3,59 @@ package de.akubix.keyminder.modules.sshtools;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.KeyMinderInstanceBuilder;
 import de.akubix.keyminder.core.db.StandardTree;
+import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
 
 public class CommandLineGeneratorTest {
 
-	@Test
-	public void test() throws IOException, URISyntaxException {
+	private static final String DEFAULT_PROFILE = "default";
+	private static final String USING_SOCKS_PROFILE = "using_socks";
 
-		String txt = new String(Files.readAllBytes(Paths.get(getClass().getResource("/de/akubix/keyminder/modules/sshtools/putty.xml").toURI())));
+	private static Supplier<InputStream> puttyCmdDescriptor = () -> CommandLineGeneratorTest.class.getResourceAsStream("/de/akubix/keyminder/modules/sshtools/putty.xml");
+	private static Supplier<InputStream>  winscpCmdDescriptor = () -> CommandLineGeneratorTest.class.getResourceAsStream("/de/akubix/keyminder/modules/sshtools/winscp.xml");
 
-		ApplicationInstance app = KeyMinderInstanceBuilder.getNewInstance();
-		StandardTree tree = new StandardTree(app);
+	private ApplicationInstance app;
+	private Tree tree;
+
+	@Before
+	public void prepare(){
 		KeyMinder.setVerboseMode(false);
-		TreeNode node = tree.createNode("Test");
+		app = KeyMinderInstanceBuilder.getNewInstance();
+		tree = new StandardTree(app);
+	}
+
+	@Test
+	public void testPuttyProfile() {
+
 		Map<String, String> var = new HashMap<>();
+		TreeNode node = tree.createNode("Test");
 		node.setAttribute("ssh_host", "localhost");
 
-		// Not enough data, should lead to a IllegalArgumentException.
-
+		// Not enough data, should lead to an IllegalArgumentException.
 		try{
-			runParser(app, txt, var, node);
-			fail("Breakout doesn't throw an exception, although it has not enugh data");
+			runParser(var, node, puttyCmdDescriptor, DEFAULT_PROFILE);
+			fail("Expected IllegalArgumentException did not occur.");
 		}
 		catch(IllegalArgumentException e){	}
 
 		app.setSettingsValue("sshtools.puttypath", "/var/tools/putty");
 
 		try{
-			runParser(app, txt, var, node);
-			fail("Breakout doesn't throw an exception, although it has not enugh data");
+			runParser(var, node, puttyCmdDescriptor, DEFAULT_PROFILE);
+			fail("Expected IllegalArgumentException did not occur.");
 		}
 		catch(IllegalArgumentException e){	}
 
@@ -55,29 +65,53 @@ public class CommandLineGeneratorTest {
 		node.setAttribute("ssh_user", "root");
 		node.setAttribute("ssh_password", "mypassword");
 
-		assertEquals("", "[/var/tools/putty, -ssh, -l, root, localhost, -P, 22, -pw, mypassword]", runParser(app, txt, var, node).toString());
+		assertEquals("[/var/tools/putty, -ssh, -l, root, localhost, -P, 22, -pw, mypassword]", runParser(var, node, puttyCmdDescriptor, DEFAULT_PROFILE).toString());
 
 		node.removeAttribute("ssh_password");
-		assertEquals("", "[/var/tools/putty, -ssh, -l, root, localhost, -P, 22]", runParser(app, txt, var, node).toString());
+		assertEquals("[/var/tools/putty, -ssh, -l, root, localhost, -P, 22]", runParser(var, node, puttyCmdDescriptor, DEFAULT_PROFILE).toString());
 
 		var.put("sshtools.defaultpassword", "defaultpassword");
-		assertEquals("", "[/var/tools/putty, -ssh, -l, root, localhost, -P, 22, -pw, defaultpassword]", runParser(app, txt, var, node).toString());
+		assertEquals("[/var/tools/putty, -ssh, -l, root, localhost, -P, 22, -pw, defaultpassword]", runParser(var, node, puttyCmdDescriptor, DEFAULT_PROFILE).toString());
 
 		node.removeAttribute("ssh_user");
-		assertEquals("", "[/var/tools/putty, -ssh, -l, defaultuser, localhost, -P, 22, -pw, defaultpassword]", runParser(app, txt, var, node).toString());
+		assertEquals("[/var/tools/putty, -ssh, -l, defaultuser, localhost, -P, 22, -pw, defaultpassword]", runParser(var, node, puttyCmdDescriptor, DEFAULT_PROFILE).toString());
 
 		node.setAttribute("putty_sessionname", "my_socks_profile");
-		assertEquals("", "[/var/tools/putty, -ssh, -load, my_socks_profile, -l, defaultuser, localhost, -P, 22, -pw, defaultpassword]", runParser(app, txt, var, node).toString());
+		assertEquals("[/var/tools/putty, -ssh, -load, my_socks_profile, -l, defaultuser, localhost, -P, 22, -pw, defaultpassword]", runParser(var, node, puttyCmdDescriptor, USING_SOCKS_PROFILE).toString());
 
 		node.setAttribute("ssh_user", "root");
 		node.setAttribute("ssh_password", "mypassword");
 
 		node.setAttribute("ssh_portforwarding", "param1\nb=param2\nparam3");
-		assertEquals("", "[/var/tools/putty, -ssh, -load, my_socks_profile, -l, root, localhost, -P, 22, -L, param1, -L, b=param2, -L, param3, -pw, mypassword]", runParser(app, txt, var, node).toString());
+		assertEquals("[/var/tools/putty, -ssh, -load, my_socks_profile, -l, root, localhost, -P, 22, -L, param1, -L, b=param2, -L, param3, -pw, mypassword]", runParser(var, node, puttyCmdDescriptor, USING_SOCKS_PROFILE).toString());
 	}
 
-	private List<String> runParser(ApplicationInstance app, String txt, Map<String, String> var, TreeNode node) throws IllegalArgumentException{
-		CommandLineGenerator xapp = CommandLineGenerator.createInstance(app, txt, var);
-		return xapp.generateCommandLineParameters("using_socks", node);
+	@Test
+	public void testWinScpProfile(){
+
+		app.setSettingsValue("sshtools.winscppath", "C:\\Tools\\WinSCP.exe");
+
+		Map<String, String> var = new HashMap<>();
+		TreeNode node = tree.createNode("Test");
+		node.setAttribute("ssh_host", "localhost");
+
+		assertEquals("[C:\\Tools\\WinSCP.exe, sftp://localhost]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
+
+		node.setAttribute("ssh_port", "22");
+
+		assertEquals("[C:\\Tools\\WinSCP.exe, sftp://localhost:22]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
+
+		node.setAttribute("ssh_user", "root");
+
+		assertEquals("[C:\\Tools\\WinSCP.exe, sftp://root@localhost:22]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
+
+		node.setAttribute("ssh_password", "mypassword");
+
+		assertEquals("[C:\\Tools\\WinSCP.exe, sftp://root:mypassword@localhost:22]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
+	}
+
+	private List<String> runParser(Map<String, String> var, TreeNode treeNode, Supplier<InputStream> cmdDescriptor, String profileName) throws IllegalArgumentException{
+		CommandLineGenerator xapp = CommandLineGenerator.createInstance(app, cmdDescriptor.get(), var);
+		return xapp.generateCommandLineParameters(profileName, treeNode);
 	}
 }
