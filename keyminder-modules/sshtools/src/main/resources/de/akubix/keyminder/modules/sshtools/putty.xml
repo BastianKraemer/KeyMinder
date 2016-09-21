@@ -1,84 +1,14 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
-<ApplicationProfile name="PuTTY" socks="using_socks" icon="icon_bash" version="2.0">
+<CommandLineDescriptor name="PuTTY" icon="icon_bash" version="0.1">
 
-	<Configuration id="default" execute="${sshtools.puttypath}" require="${ssh_host}; ${ssh_port}" >
-		<!-- Do not enter this section if ${ssh_user} == "." -->
-		<if not_equals="${ssh_user} == '.'">
-			<var name="myuser">
-				<if exists="${ssh_user}" else="${sshtools.defaultuser}">${ssh_user}</if>
-			</var>
-		</if>
+	<script src="/de/akubix/keyminder/modules/sshtools/sshtools.js" />
+	<script src="/de/akubix/keyminder/modules/sshtools/putty.js" />
 
-		<!-- Do not enter this section if ${ssh_password} == "." -->
-		<if not_equals="${ssh_password} == '.'">
-			<if exists="${myuser}">
-				<var name="mypw">
-					<if exists="${ssh_password}" else="${sshtools.defaultpassword}">${ssh_password}</if>
-				</var>
-			</if>
-		</if>
+	<profile id="default" execute="${sshtools.puttypath}" require="${ssh_host}; ${ssh_port}">
+		runPutty(profile, false);
+	</profile>
 
-		<!-- Every option tag will append a new parameter to the whole command line -->
-		<option>-ssh</option>
-
-		<!-- This parameter will be added if the variable "${ssh_x11}" exists -->
-		<option if="${ssh_x11}">-X</option>
-		<option if="${myuser}">-l</option>
-		<option if="${myuser}">${myuser}</option>
-		<option>${ssh_host}</option>
-		<option>-P</option>
-		<option>${ssh_port}</option>
-		<if exists="${ssh_portforwarding}">
-			<!-- The split tag is similar to a "for each". All tags inside a split tag will be repeated with each split string
-				 The content of ${single_forward} will contain the next part and changes every loop.
-
-				  Example:
-					${ssh_portforwarding} = "80:example.com:80\n443:example.com:443
-					The result of this will be -L 80:example.com:80 -L 443:example.com:443
-			-->
-			<split src="${ssh_portforwarding}" delimiter="\n" var="single_forward">
-				<if not_equals="${single_forward} == ''">
-					<option>-L</option>
-					<option>${single_forward}</option>
-				</if>
-			</split>
-		</if>
-
-		<if exists="${mypw}">
-			<option>-pw</option>
-			<option>${mypw}</option>
-		</if>
-	</Configuration>
-	
-	<Configuration id="using_socks" execute="${sshtools.puttypath}" require="${ssh_host}; ${ssh_port}; ${putty_sessionname}" >
-		<if not_equals="${ssh_user} == '.'">
-			<var name="myuser">
-				<if exists="${ssh_user}" else="${sshtools.defaultuser}">${ssh_user}</if>
-			</var>
-		</if>
-		<if not_equals="${ssh_password} == '.'">
-			<var name="mypw">
-				<if exists="${ssh_password}" else="${sshtools.defaultpassword}">${ssh_password}</if>
-			</var>
-		</if>
-		<option>-ssh</option>
-		<option if="${ssh_x11}">-X</option>
-		<option>-load</option>
-		<option>${putty_sessionname}</option>
-		<option if="${myuser}">-l</option>
-		<option if="${myuser}">${myuser}</option>
-		<option>${ssh_host}</option>
-		<option>-P</option>
-		<option>${ssh_port}</option>
-		<if exists="${ssh_portforwarding}">
-			<split src="${ssh_portforwarding}" delimiter="\n" var="single_forward">
-				<option>-L</option>
-				<option>${single_forward}</option>
-			</split>
-		</if>
-		<if exists="${mypw}">
-			<option>-pw</option>
-			<option>${mypw}</option>
-		</if>
-	</Configuration>
-</ApplicationProfile>
+	<profile id="using_socks" execute="${sshtools.puttypath}" require="${ssh_host}; ${ssh_port}">
+		runPutty(profile, true);
+	</profile>
+</CommandLineDescriptor>

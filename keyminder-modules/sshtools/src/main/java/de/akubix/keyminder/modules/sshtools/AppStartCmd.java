@@ -13,7 +13,7 @@ import de.akubix.keyminder.shell.io.ShellOutputWriter;
 
 @Command("run")
 @Description(	"(Module SSH-Tools) Starts an application by using the values stored in a tree node.\n" +
-				"The command line mapping needs to be defined in an 'XML Application Profile' (Take a look at the KeyMinder manual).")
+				"The command line mapping needs to be defined in a 'command line descriptor' file (Take a look at the KeyMinder manual).")
 @Operands(cnt = 2, nodeArgAt = 1, optionalNodeArg = true, description = "PROFILE_NAME {NODE_PATH}")
 @Option(name = AppStartCmd.OPTION_NO_PPRT_FORWARDING, alias = {"--no-pf", "--no-forward"}, description = "Disable port forwarding")
 @Option(name = AppStartCmd.OPTION_USE_SOCKS, paramCnt = 1, alias = "-s",                   description = "SOCKS_PROFILE_NAME  Start the applikation using a socks profile*")

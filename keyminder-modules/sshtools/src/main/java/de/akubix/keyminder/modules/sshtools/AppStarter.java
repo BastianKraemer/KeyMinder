@@ -27,9 +27,9 @@ import org.w3c.dom.Node;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.MenuEntryPosition;
-import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.scene.control.Menu;
@@ -108,8 +108,8 @@ public class AppStarter {
 
 	public List<String> getCommandLineArgs(Map<String, String> predefinedVariables, String id, TreeNode treeNode) throws IllegalArgumentException{
 		if(id == null){id = "default";}
-		XMLApplicationProfileParser xapp = new XMLApplicationProfileParser(app, xmldocument.get(), predefinedVariables);
-		return xapp.generateCommandLineParameters(id, treeNode);
+		CommandLineGenerator cmdGen = new CommandLineGenerator(app, xmldocument.get(), predefinedVariables);
+		return cmdGen.generateCommandLineParameters(id, treeNode);
 	}
 
 	public void createUsingSocksItem(String socksProfileId, String socksProfileName, JavaFxUserInterfaceApi fxUI){
