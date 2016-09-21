@@ -23,6 +23,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -210,13 +212,28 @@ public class SSHTools {
 			if(files != null){
 				for(File xmlFile : files){
 					try{
-						AppStarter as = new AppStarter(app, this, () -> {
-							try {
-								return XMLCore.loadXmlDocument(xmlFile);
-							} catch (Exception e) {
-								return null;
+						AppStarter as = new AppStarter(app, this,
+							() -> {
+								try {
+									return XMLCore.loadXmlDocument(xmlFile);
+								} catch (Exception e) {
+									return null;
+								}
+							},
+							(resourcePath) -> {
+								try {
+									if(resourcePath.matches("^([A-Za-z]:|\\/).*$")){
+										return new String(Files.readAllBytes(Paths.get(resourcePath)));
+									}
+									else{
+										return new String(Files.readAllBytes(Paths.get(xmlFile.getParent() + "/" + resourcePath)));
+									}
+								} catch (IOException e) {
+									throw new IllegalArgumentException(String.format("Unable to load file '%s': %s", resourcePath, e.getMessage()));
+								}
 							}
-						});
+						);
+
 						if(KeyMinder.verbose_mode){
 							app.printf(" - Loading command line descriptor from file '%s'...\n", xmlFile);
 						}
@@ -237,7 +254,7 @@ public class SSHTools {
 						return XMLCore.loadXmlDocument(getXMLProfileInputStream(inputStreamSrc));
 					} catch (Exception e) {
 						throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
-				}});
+				}}, CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
 				appStarter.put(as.getName(), as);
 			}
 		}
@@ -254,11 +271,12 @@ public class SSHTools {
 		if(app.settingsContainsKey(SETTINGS_KEY_SOCKS_ACTION)){
 			try{
 				socksAppStarter = new AppStarter(app, this, true, () -> {
-					try {
-						return XMLCore.loadXmlDocument(getXMLProfileInputStream(app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION)));
-					} catch (SAXException | IOException e) {
-						throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
-				}});
+						try {
+							return XMLCore.loadXmlDocument(getXMLProfileInputStream(app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION)));
+						} catch (SAXException | IOException e) {
+							throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
+					}},
+					CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
 			}
 			catch(IllegalArgumentException e){
 				final String message = "Warning: Syntax error in socks command line descriptor.";

@@ -3,6 +3,7 @@ package de.akubix.keyminder.modules.sshtools;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.function.Supplier;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.xml.sax.SAXException;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
@@ -18,6 +20,7 @@ import de.akubix.keyminder.core.KeyMinderInstanceBuilder;
 import de.akubix.keyminder.core.db.StandardTree;
 import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.lib.XMLCore;
 
 public class CommandLineGeneratorTest {
 
@@ -110,8 +113,15 @@ public class CommandLineGeneratorTest {
 		assertEquals("[C:\\Tools\\WinSCP.exe, sftp://root:mypassword@localhost:22]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
 	}
 
-	private List<String> runParser(Map<String, String> var, TreeNode treeNode, Supplier<InputStream> cmdDescriptor, String profileName) throws IllegalArgumentException{
-		CommandLineGenerator xapp = CommandLineGenerator.createInstance(app, cmdDescriptor.get(), var);
-		return xapp.generateCommandLineParameters(profileName, treeNode);
+	private List<String> runParser(Map<String, String> var, TreeNode treeNode, Supplier<InputStream> cmdDescriptor, String profileName) throws IllegalArgumentException {
+		CommandLineGenerator xapp;
+		try {
+			xapp = new CommandLineGenerator(app, XMLCore.loadXmlDocument(cmdDescriptor.get()), var, CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
+			return xapp.generateCommandLineParameters(profileName, treeNode);
+		} catch (SAXException | IOException e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+			return null;
+		}
 	}
 }

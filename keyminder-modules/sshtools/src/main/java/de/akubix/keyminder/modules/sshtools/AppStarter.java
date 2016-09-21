@@ -21,6 +21,7 @@ package de.akubix.keyminder.modules.sshtools;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.w3c.dom.Node;
@@ -37,7 +38,8 @@ import javafx.scene.control.MenuItem;
 
 public class AppStarter {
 	private ApplicationInstance app;
-	private Supplier<org.w3c.dom.Document> xmldocument;
+	private Supplier<org.w3c.dom.Document> xmlDocumentSupplier;
+	private final Function<String, String> documentResourceContentLoader;
 	private Menu contextMenuItemUsingSocks;
 	private final boolean socksSupport;
 	private final String name;
@@ -46,24 +48,25 @@ public class AppStarter {
 
 	private Map<String, MenuItem> socksItems = null;
 
-	public AppStarter(ApplicationInstance app, SSHTools sshtools, Supplier<org.w3c.dom.Document> xmlDocumentSupplier) throws IllegalArgumentException{
-		this(app, sshtools, false, xmlDocumentSupplier);
+	public AppStarter(ApplicationInstance app, SSHTools sshtools, Supplier<org.w3c.dom.Document> xmlDocumentSupplier, Function<String, String> documentResourceContentLoader) throws IllegalArgumentException{
+		this(app, sshtools, false, xmlDocumentSupplier, documentResourceContentLoader);
 	}
 
-	public AppStarter(ApplicationInstance app, SSHTools sshtools, boolean noItemsAndCommands, Supplier<org.w3c.dom.Document> xmlDocumentSupplier) throws IllegalArgumentException{
+	public AppStarter(ApplicationInstance app, SSHTools sshtools, boolean noItemsAndCommands, Supplier<org.w3c.dom.Document> xmlDocumentSupplier, Function<String, String> documentResourceContentLoader) throws IllegalArgumentException{
 		this.app = app;
-		this.xmldocument = xmlDocumentSupplier;
+		this.xmlDocumentSupplier = xmlDocumentSupplier;
+		this.documentResourceContentLoader = documentResourceContentLoader;
 		this.sshtools = sshtools;
 		this.enableMenuItems = !noItemsAndCommands;
 
-		Node attrib = xmldocument.get().getDocumentElement().getAttributes().getNamedItem("name");
+		Node attrib = xmlDocumentSupplier.get().getDocumentElement().getAttributes().getNamedItem("name");
 		if(attrib != null){
 			name = attrib.getNodeValue().toLowerCase();
 			String icon = "";
-			Node iconAttrib = xmldocument.get().getDocumentElement().getAttributes().getNamedItem("icon");
+			Node iconAttrib = xmlDocumentSupplier.get().getDocumentElement().getAttributes().getNamedItem("icon");
 			if(iconAttrib != null){icon = iconAttrib.getNodeValue();}
 
-			Node canBeUsedWithSocks = xmldocument.get().getDocumentElement().getAttributes().getNamedItem("socks");
+			Node canBeUsedWithSocks = xmlDocumentSupplier.get().getDocumentElement().getAttributes().getNamedItem("socks");
 			if(canBeUsedWithSocks != null){
 				socksSupport = true;
 				socksItems = new HashMap<>();
@@ -108,8 +111,8 @@ public class AppStarter {
 
 	public List<String> getCommandLineArgs(Map<String, String> predefinedVariables, String id, TreeNode treeNode) throws IllegalArgumentException{
 		if(id == null){id = "default";}
-		CommandLineGenerator cmdGen = new CommandLineGenerator(app, xmldocument.get(), predefinedVariables);
-		return cmdGen.generateCommandLineParameters(id, treeNode);
+		CommandLineGenerator xapp = new CommandLineGenerator(app, xmlDocumentSupplier.get(), predefinedVariables, documentResourceContentLoader);
+		return xapp.generateCommandLineParameters(id, treeNode);
 	}
 
 	public void createUsingSocksItem(String socksProfileId, String socksProfileName, JavaFxUserInterfaceApi fxUI){

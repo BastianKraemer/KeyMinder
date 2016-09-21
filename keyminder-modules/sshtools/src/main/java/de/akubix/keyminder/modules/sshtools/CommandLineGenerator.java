@@ -19,24 +19,21 @@
 package de.akubix.keyminder.modules.sshtools;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import javax.script.ScriptException;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.script.AbstractScriptEnvironment;
 import de.akubix.keyminder.script.ScriptFramework;
 import de.akubix.keyminder.shell.Shell;
@@ -47,57 +44,26 @@ import de.akubix.keyminder.shell.Shell;
  * It's also possible to append some data of your tree to the command line. Just add a variable to the XML file and it will be replaced
  * with some information out of your file, for example ${username} will be replaced by the user name which is stored in currently selected tree node.
  */
-public class CommandLineGenerator
-{
-	private ApplicationInstance app;
-	private Document xmldoc;
-	private Map<String, String> variables;
+public class CommandLineGenerator {
 
-	public CommandLineGenerator(ApplicationInstance app, Document xmldoc){
-		this(app, xmldoc, new HashMap<>());
-	}
+	static final Function<String, String> _DEFAULT_RESOURCE_CONTENT_LOADER = (resourcePath) -> {
+		try {
+			return new String(Files.readAllBytes(Paths.get(CommandLineGenerator.class.getResource(resourcePath).toURI())));
+		} catch (IOException | URISyntaxException e) {
+			throw new IllegalArgumentException(String.format("Unable to load file '%s': %s", resourcePath, e.getMessage()));
+		}
+	};
 
-	public CommandLineGenerator(ApplicationInstance app, Document xmldoc, Map<String, String> variables){
+	private final ApplicationInstance app;
+	private final Document xmldoc;
+	private final Map<String, String> variables;
+	private final Function<String, String> resourceContentLoader;
+
+	public CommandLineGenerator(ApplicationInstance app, Document xmldoc, Map<String, String> variables, Function<String, String> resourceContentLoader){
 		this.app = app;
 		this.xmldoc = xmldoc;
 		this.variables = variables;
-	}
-
-	/**
-	 * Create a {@link CommandLineGenerator} object by using an {@link InputStream} which will be parsed as XML {@link Document}
-	 * @param app current instance of the application (maybe some settings are referenced by a variable)
-	 * @param cmdDesciptorXmlInputStream the input stream that contains the XML document
-	 * @param variables a preset of custom variables
-	 * @return An instance of the {@link CommandLineGenerator}
-	 * @throws IllegalArgumentException if the XML input stream couldn't be parsed
-	 */
-	public static CommandLineGenerator createInstance(ApplicationInstance app, InputStream cmdDesciptorXmlInputStream, Map<String, String> variables) throws IllegalArgumentException {
-
-		if(cmdDesciptorXmlInputStream == null){
-			throw new IllegalArgumentException("Error: Input stream of command line descriptor is 'null'.");
-		}
-
-		try {
-			return new CommandLineGenerator(app, XMLCore.loadXmlDocument(cmdDesciptorXmlInputStream), variables);
-		} catch (SAXException | IOException e) {
-			throw new IllegalArgumentException("Cannot parse command line descriptor");
-		}
-	}
-
-	/**
-	 * Create a {@link CommandLineGenerator} object by using a string that will be parsed as XML {@link Document}
-	 * @param app current instance of the application (maybe some settings are referenced by a variable)
-	 * @param cmdDescriptorXmlString the string that contains the command line descriptor
-	 * @param variables a preset of custom variables
-	 * @return An instance of the {@link CommandLineGenerator}
-	 * @throws IllegalArgumentException if the XML string couldn't be parsed
-	 */
-	public static CommandLineGenerator createInstance(ApplicationInstance app, String cmdDescriptorXmlString, Map<String, String> variables) throws IllegalArgumentException {
-		try {
-			return new CommandLineGenerator(app, XMLCore.loadXmlDocument(cmdDescriptorXmlString), variables);
-		} catch (SAXException | IOException e) {
-			throw new IllegalArgumentException("Cannot parse command line descriptor: " + e.getMessage(), e);
-		}
+		this.resourceContentLoader = resourceContentLoader;
 	}
 
 	/**
@@ -234,11 +200,7 @@ public class CommandLineGenerator
 			return val;
 		}
 		else{
-			return loadScriptFromFile(xmlNode.getAttributes().getNamedItem("src").getNodeValue());
+			return resourceContentLoader.apply(xmlNode.getAttributes().getNamedItem("src").getNodeValue());
 		}
-	}
-
-	private String loadScriptFromFile(String resourcePath) throws IOException, URISyntaxException{
-		return new String(Files.readAllBytes(Paths.get(getClass().getResource(resourcePath).toURI())));
 	}
 }
