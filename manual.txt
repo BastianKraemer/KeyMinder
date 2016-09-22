@@ -86,10 +86,6 @@ All options can be used with "--", "-" or "/".
     *****************************************
         -no-output-redirect
 
-    Enable dynamic module loading (load all classes in package "modules")
-    *********************************************************************
-        -dynamic-module-loading		(experimental feature)
-
     Print the current application version
     *************************************
         -version
@@ -112,15 +108,16 @@ bar contains a tab page called "SSH".
     KeyMinder XML application profiles
     **********************************
 
-KeyMinder allows you to start applications using their command line and the
-data (e.g. your login credentials) you have stored in your password file.
+KeyMinder allows you to start applications using their command line interface
+and the data you have stored in your password file. This allows you to pass
+any required login credentials directly to another application.
 The way these command line arguments are generated is defined in an XML file.
-This file is called "XML application profile". Currently KeyMinder includes
-four application profiles. Two of them are for the handling of socks
-connections, another one allows you to run "PuTTY" using the context menu
-and the last one does the same with "WinSCP".
+This file is called "command line descriptor". Currently KeyMinder includes
+'command line descriptor' files for the applications "PuTTY" and "WinSCP".
+These built-in descriptors allows you to handle socks connections as well as
+launching "PuTTY" or "WinSCP" using the context menu.
 
-All built-in application profiles are disabled by default.
+All built-in descriptors are disabled by default.
 
 	You can enable them using the settings dialog:
 		Edit -> Preferences -> SSH-Tools -> Features
@@ -140,6 +137,8 @@ Note: Don't forget to define the path to PuTTY and WinSCP. You can do this...
 		'config -s sshtools.puttypath "<path>"'
 		'config -s sshtools.plinkpath "<path>"'
 		'config -s sshtools.winscppath "<path>"'
+
+		(don't forget to save the new configuration using 'config --save')
 
 
     SSH port forwarding
@@ -168,7 +167,7 @@ You can handle several SSH socks connection using KeyMinder, but you have to
 know that this program just starts other applications for this goal.
 Currently you can establish socks connections using the SSH applications
 "PuTTY" and "Plink". Both applications will exactly do the same, but "Plink"
-won't show window on your desktop.
+won't show a window on your desktop.
 
 	* Download page for "PuTTY" and "Plink"
 	* http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html
@@ -203,8 +202,8 @@ via command line, but there is a workaround:
 Now you can start SSH connections using your socks profile.
 
 
-    Create own application profiles
-    *******************************
+    Create own command line descriptors
+    ***********************************
 
 There are at least a hundred other applications with a command line interface
 that could be launched using KeyMinder.
@@ -223,5 +222,4 @@ default this path is "./sshtools".
  
 You can define this path in the 'path configuration' of the SSH-Tools module,
 (take a look at: Edit -> Preferences -> SSH-Tools -> Path configuration) or
-even with the command 'config -s sshtools.app_profile_path [path]'
- 
+even with the command 'config -s sshtools.cmdlinedescriptors.path [path]'
