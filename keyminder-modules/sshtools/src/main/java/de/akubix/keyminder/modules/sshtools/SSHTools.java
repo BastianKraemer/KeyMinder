@@ -23,6 +23,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -107,8 +109,8 @@ public class SSHTools {
 	private AppStarter socksAppStarter = null;
 	private final ResourceBundle locale;
 
-	private static final String SETTINGS_KEY_SOCKS_ACTION = "sshtools.actionprofile_socks"; //Contains the path to the XML application profile for "Socks"
-	private static final String SETTINGS_KEY_APP_PROFILES_PATH = "sshtools.app_profile_path";
+	private static final String SETTINGS_KEY_SOCKS_ACTION = "sshtools.actionprofile_socks"; //Contains the path to the command line descriptor for "Socks"
+	private static final String SETTINGS_KEY_CMDLINE_DESCRIPTOR_PATH = "sshtools.cmdlinedescriptors.path";
 
 	public SSHTools(ApplicationInstance instance) {
 
@@ -120,7 +122,7 @@ public class SSHTools {
 		}
 
 		if(!checkProfileSettings(SETTINGS_KEY_SOCKS_ACTION)){app.setSettingsValue(SETTINGS_KEY_SOCKS_ACTION, "default:putty_socks");}
-		if(!checkProfileSettings(SETTINGS_KEY_APP_PROFILES_PATH)){app.setSettingsValue(SETTINGS_KEY_APP_PROFILES_PATH, "./sshtools");}
+		if(!checkProfileSettings(SETTINGS_KEY_CMDLINE_DESCRIPTOR_PATH)){app.setSettingsValue(SETTINGS_KEY_CMDLINE_DESCRIPTOR_PATH, "./sshtools");}
 
 		app.getShell().addCommand(SocksCmd.class.getName());
 		app.getShell().addCommand(AppStartCmd.class.getName());
@@ -198,7 +200,7 @@ public class SSHTools {
 		loadDefaultApplicationStarter("sshtools.enable_putty", "default:putty");
 		loadDefaultApplicationStarter("sshtools.enable_winscp", "default:winscp");
 
-		File dir = new File(app.getSettingsValue(SETTINGS_KEY_APP_PROFILES_PATH));
+		File dir = new File(app.getSettingsValue(SETTINGS_KEY_CMDLINE_DESCRIPTOR_PATH));
 		if(dir.exists()){
 			File[] files = dir.listFiles(new java.io.FilenameFilter() {
 				@Override
@@ -210,15 +212,30 @@ public class SSHTools {
 			if(files != null){
 				for(File xmlFile : files){
 					try{
-						AppStarter as = new AppStarter(app, this, () -> {
-							try {
-								return XMLCore.loadXmlDocument(xmlFile);
-							} catch (Exception e) {
-								return null;
+						AppStarter as = new AppStarter(app, this,
+							() -> {
+								try {
+									return XMLCore.loadXmlDocument(xmlFile);
+								} catch (Exception e) {
+									return null;
+								}
+							},
+							(resourcePath) -> {
+								try {
+									if(resourcePath.matches("^([A-Za-z]:|\\/).*$")){
+										return new String(Files.readAllBytes(Paths.get(resourcePath)));
+									}
+									else{
+										return new String(Files.readAllBytes(Paths.get(xmlFile.getParent() + "/" + resourcePath)));
+									}
+								} catch (IOException e) {
+									throw new IllegalArgumentException(String.format("Unable to load file '%s': %s", resourcePath, e.getMessage()));
+								}
 							}
-						});
+						);
+
 						if(KeyMinder.verbose_mode){
-							app.printf(" - Loading application profile from file '%s'...\n", xmlFile);
+							app.printf(" - Loading command line descriptor from file '%s'...\n", xmlFile);
 						}
 						appStarter.put(as.getName(), as);
 					}
@@ -237,14 +254,14 @@ public class SSHTools {
 						return XMLCore.loadXmlDocument(getXMLProfileInputStream(inputStreamSrc));
 					} catch (Exception e) {
 						throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
-				}});
+				}}, CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
 				appStarter.put(as.getName(), as);
 			}
 		}
 		catch(IllegalArgumentException e){
 			e.printStackTrace();
 			// This will occur if a built-in profile has a syntax error
-			String message = String.format("Warning: Syntax error in application profile '%s.", inputStreamSrc);
+			String message = String.format("Warning: Syntax error in command line descriptor '%s.", inputStreamSrc);
 			if(KeyMinder.verbose_mode){app.alert(message);}else{app.log(message);}
 		}
 	}
@@ -254,14 +271,15 @@ public class SSHTools {
 		if(app.settingsContainsKey(SETTINGS_KEY_SOCKS_ACTION)){
 			try{
 				socksAppStarter = new AppStarter(app, this, true, () -> {
-					try {
-						return XMLCore.loadXmlDocument(getXMLProfileInputStream(app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION)));
-					} catch (SAXException | IOException e) {
-						throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
-				}});
+						try {
+							return XMLCore.loadXmlDocument(getXMLProfileInputStream(app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION)));
+						} catch (SAXException | IOException e) {
+							throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
+					}},
+					CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
 			}
 			catch(IllegalArgumentException e){
-				final String message = "Warning: Syntax error in socks application profile.";
+				final String message = "Warning: Syntax error in socks command line descriptor.";
 				if(KeyMinder.verbose_mode){app.alert(message);}else{app.log(message);}
 				socksAppStarter = null;
 			}
@@ -280,7 +298,7 @@ public class SSHTools {
 		InputStream in;
 		switch(path){
 			case "":
-				throw new FileNotFoundException("Path for XML application profile is not defined.");
+				throw new FileNotFoundException("The path of the command line descriptor is not defined.");
 
 			case "default:putty":
 				in = this.getClass().getResourceAsStream("putty.xml");
@@ -520,7 +538,7 @@ public class SSHTools {
 	}
 
 	/**
-	 * Start a socks profile using the selected "XML application profile"
+	 * Start a socks profile using the selected "command line descriptor"
 	 * @param socksProfileId the socks profile id
 	 * @return {@code true} if the operation was successful, {@code false} if not
 	 */
@@ -728,15 +746,15 @@ public class SSHTools {
 			new Label(locale.getString("module.sshtools.settings.winscppath")), createFileInputDialog(generalSettings, "sshtools.winscppath", fxUI),
 			new Separator(Orientation.HORIZONTAL));
 
-		// Custom application profile path
+		// Custom command line descriptor path
 
 		HBox appProfilesPathContainer = new HBox(4);
-		TextField pathInput = new TextField(generalSettings.get(SETTINGS_KEY_APP_PROFILES_PATH));
-		pathInput.setOnKeyReleased((event) -> generalSettings.put(SETTINGS_KEY_APP_PROFILES_PATH, pathInput.getText()));
+		TextField pathInput = new TextField(generalSettings.get(SETTINGS_KEY_CMDLINE_DESCRIPTOR_PATH));
+		pathInput.setOnKeyReleased((event) -> generalSettings.put(SETTINGS_KEY_CMDLINE_DESCRIPTOR_PATH, pathInput.getText()));
 		Button browseButton = new Button(locale.getString("module.sshtools.settings.browse"));
 		browseButton.setOnAction((event) -> {
 			DirectoryChooser dc = new DirectoryChooser();
-			dc.setTitle(locale.getString("module.sshtools.settings.directorychooser.appprofilepath"));
+			dc.setTitle(locale.getString("module.sshtools.settings.directorychooser.cmd_descriptors"));
 			File f = new File(pathInput.getText());
 			if(f.exists()){dc.setInitialDirectory(f);}
 
@@ -750,7 +768,7 @@ public class SSHTools {
 		HBox.setHgrow(pathInput, Priority.ALWAYS);
 
 		appProfilesPathContainer.getChildren().addAll(pathInput, browseButton);
-		pathConfig.getChildren().addAll(new Label(locale.getString("module.sshtools.settings.applicationprofilepath")), appProfilesPathContainer);
+		pathConfig.getChildren().addAll(new Label(locale.getString("module.sshtools.settings.custom_cmd_descriptor_path")), appProfilesPathContainer);
 
 		final TitledPane pathConfiguration = new TitledPane(locale.getString("module.sshtools.settings.part_pathconfig"), pathConfig);
 

@@ -1,34 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<ApplicationProfile name="WinSCP" version="2.0">
-	<Configuration id="default" execute="${sshtools.winscppath}" require="${ssh_host}">
+<CommandLineDescriptor name="WinSCP" version="0.1">
 
-		<!-- Do not enter this section if ${ssh_user} == "." -->
-		<if not_equals="${ssh_user} == '.'">
-			<var name="myuser">
-				<if exists="${ssh_user}" else="${sshtools.defaultuser}">${ssh_user}</if>
-			</var>
-		</if>
+	<script src="/de/akubix/keyminder/modules/sshtools/sshtools.js" />
+	<script src="/de/akubix/keyminder/modules/sshtools/winscp.js" />
 
-		<!-- Do not enter this section if ${ssh_password} == "." -->
-		<if not_equals="${ssh_password} == '.'">
-			<if exists="${myuser}">
-				<var name="mypw">
-					<!-- ${mypw} will be "${ssh_password}" if the variable "${ssh_password}" exists, otherwise it will get "${sshtools.defaultpassword}" as value -->
-					<if exists="${ssh_password}" else="${sshtools.defaultpassword}">${ssh_password}</if>
-				</var>
-			</if>
-		</if>
-		
-		<option>
-			<!-- The append tag simply appends text
-				The result of this structure will be "sftp://[${myuser}[:${mypw}]@]${ssh_host}[:${ssh_port}]"
-				Note: The brackets "[...]" should describe "if the variable exists" -->
-			<append>sftp://</append>
-			<if exists="${myuser}">
-				<if exists="${mypw}" else="${myuser}@"><append>${myuser}:${mypw}@</append></if> <!-- in this case an append tag is not necessary, but if you want to, you can use it anyway -->
-			</if>
-			<append>${ssh_host}</append>
-			<if exists="${ssh_port}">:${ssh_port}</if>
-		</option>
-	</Configuration>
-</ApplicationProfile>
+	<profile id="default" execute="${sshtools.winscppath}" require="${ssh_host}">
+		runWinSCP(profile);
+	</profile>
+</CommandLineDescriptor>
