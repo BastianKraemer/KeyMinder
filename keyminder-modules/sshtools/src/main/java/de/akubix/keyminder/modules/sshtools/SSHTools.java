@@ -110,7 +110,7 @@ public class SSHTools {
 	private final ResourceBundle locale;
 
 	private static final String SETTINGS_KEY_SOCKS_ACTION = "sshtools.actionprofile_socks"; //Contains the path to the command line descriptor for "Socks"
-	private static final String SETTINGS_KEY_APP_PROFILES_PATH = "sshtools.app_profile_path";
+	private static final String SETTINGS_KEY_CMDLINE_DESCRIPTOR_PATH = "sshtools.cmdlinedescriptors.path";
 
 	public SSHTools(ApplicationInstance instance) {
 
@@ -122,7 +122,7 @@ public class SSHTools {
 		}
 
 		if(!checkProfileSettings(SETTINGS_KEY_SOCKS_ACTION)){app.setSettingsValue(SETTINGS_KEY_SOCKS_ACTION, "default:putty_socks");}
-		if(!checkProfileSettings(SETTINGS_KEY_APP_PROFILES_PATH)){app.setSettingsValue(SETTINGS_KEY_APP_PROFILES_PATH, "./sshtools");}
+		if(!checkProfileSettings(SETTINGS_KEY_CMDLINE_DESCRIPTOR_PATH)){app.setSettingsValue(SETTINGS_KEY_CMDLINE_DESCRIPTOR_PATH, "./sshtools");}
 
 		app.getShell().addCommand(SocksCmd.class.getName());
 		app.getShell().addCommand(AppStartCmd.class.getName());
@@ -200,7 +200,7 @@ public class SSHTools {
 		loadDefaultApplicationStarter("sshtools.enable_putty", "default:putty");
 		loadDefaultApplicationStarter("sshtools.enable_winscp", "default:winscp");
 
-		File dir = new File(app.getSettingsValue(SETTINGS_KEY_APP_PROFILES_PATH));
+		File dir = new File(app.getSettingsValue(SETTINGS_KEY_CMDLINE_DESCRIPTOR_PATH));
 		if(dir.exists()){
 			File[] files = dir.listFiles(new java.io.FilenameFilter() {
 				@Override
@@ -749,8 +749,8 @@ public class SSHTools {
 		// Custom command line descriptor path
 
 		HBox appProfilesPathContainer = new HBox(4);
-		TextField pathInput = new TextField(generalSettings.get(SETTINGS_KEY_APP_PROFILES_PATH));
-		pathInput.setOnKeyReleased((event) -> generalSettings.put(SETTINGS_KEY_APP_PROFILES_PATH, pathInput.getText()));
+		TextField pathInput = new TextField(generalSettings.get(SETTINGS_KEY_CMDLINE_DESCRIPTOR_PATH));
+		pathInput.setOnKeyReleased((event) -> generalSettings.put(SETTINGS_KEY_CMDLINE_DESCRIPTOR_PATH, pathInput.getText()));
 		Button browseButton = new Button(locale.getString("module.sshtools.settings.browse"));
 		browseButton.setOnAction((event) -> {
 			DirectoryChooser dc = new DirectoryChooser();
