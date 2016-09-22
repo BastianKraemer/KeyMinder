@@ -14,10 +14,10 @@ public class ImageMap {
 	private static Properties imageMap = null;
 	private static final String IMAGE_LIST_PROPERTIES_FILE = "/de/akubix/keyminder/images/images.properties";
 
-	private static void loadProperties(){
+	private static synchronized void loadProperties(){
 		if(imageMap == null){
+			imageMap = new Properties();
 			try {
-				imageMap = new Properties();
 				imageMap.load(ImageMap.class.getResourceAsStream(IMAGE_LIST_PROPERTIES_FILE));
 			} catch (IOException e){
 				System.err.println("Properties file '" + IMAGE_LIST_PROPERTIES_FILE +"' not found inside jar file.");

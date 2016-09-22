@@ -135,10 +135,6 @@ public class ApplicationInstance implements ShellOutputWriter {
 			}
 		}
 
-		if(settingsFile.canWrite()){
-			// TODO:
-		}
-
 		presetDefaultSettings();
 		loadSettingsFromXMLFile();
 

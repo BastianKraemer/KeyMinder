@@ -198,7 +198,7 @@ public class KeyMindFileHandler implements StorageHandler {
 										String txt = LocaleLoader.getBundle("core").getString("encryption.input_password_label");
 										pw = app.requestPasswordInput(ApplicationInstance.APP_NAME, txt, fileAttributes.getOrDefault(FileConfiguration.PASSWORD_HINT_ATTRIBUTE_NAME, ""));
 
-										if(pw.equals("")){throw new UserCanceledOperationException("The user canceled the operation.");}
+										if(pw.length == 0){throw new UserCanceledOperationException("The user canceled the operation.");}
 									}
 									else{
 										pw = filepassword.toCharArray();

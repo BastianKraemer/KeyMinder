@@ -70,7 +70,7 @@ public final class Export extends AbstractShellCommand {
 				}
 				catch(IllegalArgumentException e){
 					out.setColor(AnsiColor.YELLOW);
-					out.printf("Invalid syntax. Usage: '%s=<any value>'\n", in.getParameters().get("$0")[0], in.getParameters().get("$0")[0]);
+					out.printf("Invalid syntax. Usage: '%s=<any value>'\n", in.getParameters().get("$0")[0]);
 					return CommandOutput.error();
 				}
 

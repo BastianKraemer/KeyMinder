@@ -120,7 +120,7 @@ public class CommandLineGenerator {
 								throw e;
 							}
 							else{
-								throw new ScriptException(String.format("Error in script '%s':\n%s", childNode.getAttributes().getNamedItem("src").getNodeValue(), e.getMessage(), e));
+								throw new ScriptException(String.format("Error in script '%s':\n%s", childNode.getAttributes().getNamedItem("src").getNodeValue(), e.getMessage()));
 							}
 						}
 					}
