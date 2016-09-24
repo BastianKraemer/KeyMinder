@@ -52,13 +52,13 @@ import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.io.StorageManager;
 import de.akubix.keyminder.core.io.XML;
 import de.akubix.keyminder.core.modules.ModuleLoader;
-import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.Shell;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
 import de.akubix.keyminder.ui.KeyMinderUserInterface;
 import de.akubix.keyminder.ui.UserInterface;
+import de.akubix.keyminder.util.Utilities;
 
 /**
  * This class is the core of this application, it provides all functions and methods for the whole event handling, manages the loading of all modules
@@ -287,7 +287,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 				File environmrntXMLFile = new File(settings.get("startup.default_environment"));
 				if(environmrntXMLFile.exists()){
 					XML.convertXmlToMap(XML.loadXmlDocument(environmrntXMLFile), KeyMinder.environment, false);
-					if(KeyMinder.environment.containsKey("verbose_mode") && Tools.isYes(KeyMinder.environment.get("verbose_mode"))){
+					if(KeyMinder.environment.containsKey("verbose_mode") && Utilities.isYes(KeyMinder.environment.get("verbose_mode"))){
 						KeyMinder.verbose_mode = true;
 					}
 				}

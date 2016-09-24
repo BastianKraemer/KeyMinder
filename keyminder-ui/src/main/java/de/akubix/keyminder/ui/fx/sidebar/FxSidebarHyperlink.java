@@ -11,6 +11,7 @@ import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
+import de.akubix.keyminder.util.Utilities;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Hyperlink;
@@ -90,7 +91,7 @@ abstract class FxSidebarHyperlink implements FxSidebarElement {
 							java.util.List<String> l = new java.util.ArrayList<>();
 							l.add(instance.getSettingsValue(ApplicationInstance.SETTINGS_KEY_BROWSER_PATH));
 							l.add(url);
-							de.akubix.keyminder.lib.Tools.runProcess(l);
+							Utilities.runProcess(l);
 						}
 						catch(IOException ioex){
 							fxUI.alert(String.format(fxUI.getLocaleBundleString("mainwindow.sidebar.hyperlink.ioexception_occured"), ioex.getMessage()));

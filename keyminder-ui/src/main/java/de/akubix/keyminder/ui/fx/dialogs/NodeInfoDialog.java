@@ -19,12 +19,13 @@
 package de.akubix.keyminder.ui.fx.dialogs;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
+import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.MainWindow;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
+import de.akubix.keyminder.util.Utilities;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -259,7 +260,7 @@ public class NodeInfoDialog {
 
 	private String getTimeFromAttribte(TreeNode node, String attribName){
 		if(node.hasAttribute(attribName)){
-			return de.akubix.keyminder.lib.Tools.getTimeFromEpochMilli(node.getAttribute(attribName), false, "-");
+			return Utilities.getTimeFromEpochMilli(node.getAttribute(attribName), false, "-");
 		}
 		else{
 			return "-";

@@ -2,7 +2,6 @@ package de.akubix.keyminder.shell.commands;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.annotations.Alias;
 import de.akubix.keyminder.shell.annotations.Command;
@@ -13,6 +12,7 @@ import de.akubix.keyminder.shell.annotations.RequireOpenedFile;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
+import de.akubix.keyminder.util.Utilities;
 
 @Command("vi")
 @RequireOpenedFile
@@ -44,7 +44,7 @@ public final class ViewNode extends AbstractShellCommand {
 		int i = 0;
 		out.println("#" + i++ +"\tName:\tid\n\tValue:\t" + node.getId() + "\n");
 
-		for(String key: Tools.asSortedList(node.listAttributes())){
+		for(String key: Utilities.asSortedList(node.listAttributes())){
 			out.println("#" + i++ +"\tName:\t" + key + "\n\tValue:\t" + node.getAttribute(key) + "\n");
 		}
 

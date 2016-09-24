@@ -19,7 +19,6 @@
 package de.akubix.keyminder.shell.commands;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.Command;
@@ -31,6 +30,7 @@ import de.akubix.keyminder.shell.annotations.PipeInfo;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
+import de.akubix.keyminder.util.Utilities;
 import javafx.util.Pair;
 
 @Command("export")
@@ -65,7 +65,7 @@ public final class Export extends AbstractShellCommand {
 			else{
 
 				try{
-					Pair<String, String> p = Tools.splitKeyAndValue(in.getParameters().get("$0")[0], "[A-Za-z0-9_\\.:-]+", "=", ".+");
+					Pair<String, String> p = Utilities.splitKeyAndValue(in.getParameters().get("$0")[0], "[A-Za-z0-9_\\.:-]+", "=", ".+");
 					instance.getShell().setRuntimeVariable(p.getKey(), p.getValue().trim());
 				}
 				catch(IllegalArgumentException e){

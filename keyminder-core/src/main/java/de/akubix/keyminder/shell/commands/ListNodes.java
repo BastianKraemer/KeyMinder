@@ -29,6 +29,7 @@ import de.akubix.keyminder.shell.annotations.RequireOpenedFile;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
+import de.akubix.keyminder.util.Utilities;
 
 @Command("ls")
 @RequireOpenedFile
@@ -60,8 +61,8 @@ public final class ListNodes extends AbstractShellCommand {
 
 		int i = 0;
 		for(TreeNode n: node.getChildNodes()){
-			String creationDate = de.akubix.keyminder.lib.Tools.getTimeFromEpochMilli(n.getAttribute(de.akubix.keyminder.core.ApplicationInstance.NODE_ATTRIBUTE_CREATION_DATE), true, "-\t");
-			String modificationDate = de.akubix.keyminder.lib.Tools.getTimeFromEpochMilli(n.getAttribute(de.akubix.keyminder.core.ApplicationInstance.NODE_ATTRIBUTE_MODIFICATION_DATE), true, "-\t");
+			String creationDate = Utilities.getTimeFromEpochMilli(n.getAttribute(de.akubix.keyminder.core.ApplicationInstance.NODE_ATTRIBUTE_CREATION_DATE), true, "-\t");
+			String modificationDate = Utilities.getTimeFromEpochMilli(n.getAttribute(de.akubix.keyminder.core.ApplicationInstance.NODE_ATTRIBUTE_MODIFICATION_DATE), true, "-\t");
 
 			out.println(i++ + "\t" + creationDate + "\t" + modificationDate + "\t\t" + n.getText());
 		}

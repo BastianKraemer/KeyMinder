@@ -31,6 +31,7 @@ import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
+import de.akubix.keyminder.util.Utilities;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -74,7 +75,7 @@ public class FileSettingsDialog {
 		this.originalFileSettingsReference = app.getCurrentFile().getFileSettings();
 		this.fileSettingsCopy = new HashMap<>();
 
-		de.akubix.keyminder.lib.Tools.hashCopy(app.getCurrentFile().getFileSettings(), fileSettingsCopy);
+		Utilities.hashCopy(app.getCurrentFile().getFileSettings(), fileSettingsCopy);
 
 		me = new Stage();
 		me.setTitle(ApplicationInstance.APP_NAME + " - " + fxUI.getLocaleBundleString("filesettings.title"));
@@ -105,7 +106,7 @@ public class FileSettingsDialog {
 			@Override
 			public void handle(ActionEvent event) {
 
-				de.akubix.keyminder.lib.Tools.hashCopy(fileSettingsCopy, originalFileSettingsReference);
+				Utilities.hashCopy(fileSettingsCopy, originalFileSettingsReference);
 
 				app.fileSettingsHasBeenUpdated();
 

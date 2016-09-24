@@ -47,7 +47,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
-import de.akubix.keyminder.lib.Tools;
+import de.akubix.keyminder.util.Utilities;
 import javafx.util.Pair;
 
 /**
@@ -290,7 +290,7 @@ public final class XML{
 			org.w3c.dom.Node xmlnode;
 			if(nodeName.contains(":")){
 
-				Pair<String, String> p = Tools.splitKeyAndValue(nodeName, ".+", ":", ".+");
+				Pair<String, String> p = Utilities.splitKeyAndValue(nodeName, ".+", ":", ".+");
 
 				xmlnode = parentXmlNode.getOwnerDocument().createElement(p.getKey());
 				org.w3c.dom.Attr attrib = parentXmlNode.getOwnerDocument().createAttribute("name");

@@ -47,7 +47,6 @@ import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.io.XML;
-import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
@@ -57,6 +56,7 @@ import de.akubix.keyminder.ui.fx.dialogs.SettingsDialog;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
+import de.akubix.keyminder.util.Utilities;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -167,7 +167,7 @@ public class SSHTools {
 
 						File f = new File(cmd[0]);
 						if(f.exists()){
-							Tools.runProcess(java.util.Arrays.asList(cmd));
+							Utilities.runProcess(java.util.Arrays.asList(cmd));
 						}
 						else{
 							fxUI.alert(String.format("Cannot execute file '%s': File does not exist.", cmd[0]));
@@ -473,7 +473,7 @@ public class SSHTools {
 							return String.format(locale.getString("module.sshtools.error.exec_not_found"), args.get(0));
 						}
 					}
-					Tools.runProcess(args);
+					Utilities.runProcess(args);
 					return (fxUI == null ?
 							"Process '" + args.get(0) + "' successfully started." :
 							String.format(locale.getString("module.sshtools.message.process_successfully_started"), args.get(0)));
@@ -509,7 +509,7 @@ public class SSHTools {
 			for(String line: app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".customargs").split("\n")){
 				if(!line.matches("^( |\t)*\\#.*")){
 					try{
-						Pair<String, String> p = Tools.splitKeyAndValue(line, "[A-Za-z0-9_\\.:-]+", "=", ".+");
+						Pair<String, String> p = Utilities.splitKeyAndValue(line, "[A-Za-z0-9_\\.:-]+", "=", ".+");
 						variablePreset.put(p.getKey(), p.getValue().trim());
 					}
 					catch(IllegalArgumentException e){}
@@ -552,7 +552,7 @@ public class SSHTools {
 
 				if(confirmCommandlineArguments(cmd, sshpw.equals("") ? null : sshpw)){
 					try{
-						Process p = Tools.runProcess(cmd);
+						Process p = Utilities.runProcess(cmd);
 						runningSocksProfiles.put(socksProfileId, p);
 
 						if(fxUI != null){

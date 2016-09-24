@@ -42,7 +42,6 @@ import de.akubix.keyminder.core.events.TreeNodeEventHandler;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.io.FileExtension;
 import de.akubix.keyminder.core.io.StorageManager;
-import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.KeyMinderUserInterface;
@@ -60,6 +59,7 @@ import de.akubix.keyminder.ui.fx.events.HotKeyEvent;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
+import de.akubix.keyminder.util.Utilities;
 import de.akubix.keyminder.util.search.NodeWalker;
 import de.akubix.keyminder.util.search.NodeWalker.SearchResult;
 import de.akubix.keyminder.util.search.NodeWalker.SearchState;
@@ -1261,9 +1261,9 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	private void initalizeSaveFileAs(){
 		File f = showSaveFileDialog(localeBundle.getString("mainwindow.dialogs.save_file.title"), app.getCurrentFile().getFilepath().getAbsolutePath(), "", getFileChooserExtensionFilter());
 		if(f != null){
-			String fileTypeIdentifier = app.getStorageManager().getIdentifierByExtension(Tools.getFileExtension(f.getName()), "");
+			String fileTypeIdentifier = app.getStorageManager().getIdentifierByExtension(Utilities.getFileExtension(f.getName()), "");
 			if(fileTypeIdentifier.equals("")){
-				app.alert(String.format(localeBundle.getString("mainwindow.dialogs.save_file.unsupported_filetype_message"), Tools.getFileExtension(f.getAbsolutePath()), StorageManager.DEFAULT_FILE_TYPE));
+				app.alert(String.format(localeBundle.getString("mainwindow.dialogs.save_file.unsupported_filetype_message"), Utilities.getFileExtension(f.getAbsolutePath()), StorageManager.DEFAULT_FILE_TYPE));
 				fileTypeIdentifier = StorageManager.DEFAULT_FILE_TYPE;
 			}
 

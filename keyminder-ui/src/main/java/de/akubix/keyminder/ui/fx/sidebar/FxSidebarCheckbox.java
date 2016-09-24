@@ -2,6 +2,7 @@ package de.akubix.keyminder.ui.fx.sidebar;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.util.Utilities;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -27,7 +28,7 @@ abstract class FxSidebarCheckbox implements FxSidebarElement {
 	@Override
 	public void setUIValue(String value) {
 		if(value != null){
-			checkbox.setSelected(de.akubix.keyminder.lib.Tools.isYes(value));
+			checkbox.setSelected(Utilities.isYes(value));
 		}
 	}
 

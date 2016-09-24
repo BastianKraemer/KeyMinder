@@ -26,7 +26,6 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.FileConfiguration;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.AllowCallWithoutArguments;
@@ -38,6 +37,7 @@ import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
+import de.akubix.keyminder.util.Utilities;
 
 @Command("file")
 @AllowCallWithoutArguments
@@ -141,7 +141,7 @@ public final class FileCmd extends AbstractShellCommand {
 						instance.getCurrentFile().changeFileTypeIdentifier(
 							instance,
 							instance.getStorageManager().getIdentifierByExtension(
-								Tools.getFileExtension(newFilePath),
+								Utilities.getFileExtension(newFilePath),
 								instance.getCurrentFile().getFileTypeIdentifier()));
 					}
 

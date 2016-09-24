@@ -1,22 +1,22 @@
-/*	KeyMinder
-	Copyright (C) 2015 Bastian Kraemer
-
-	Tools.java
-
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-package de.akubix.keyminder.lib;
+/* KeyMinder
+ * Copyright (C) 2015-2016 Bastian Kraemer
+ *
+ * Utilities.java
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package de.akubix.keyminder.util;
 
 import java.io.IOException;
 import java.time.DateTimeException;
@@ -36,14 +36,13 @@ import javafx.util.Pair;
 /**
  * This class is just a collection of some useful methods
  */
-public final class Tools {
+public final class Utilities {
 
-	private Tools(){}
+	private Utilities(){}
 
 	public static <T1, T2> void hashCopy(Map<T1, T2> source, Map<T1, T2> target){
 		target.clear();
-		for(T1 key: source.keySet())
-		{
+		for(T1 key: source.keySet()){
 			target.put(key, source.get(key));
 		}
 	}
@@ -69,31 +68,19 @@ public final class Tools {
 		if(absoluteFileName.contains(".")){
 			return absoluteFileName.substring(absoluteFileName.lastIndexOf("."));
 		}
-		else
-		{
+		else{
 			return "";
 		}
 	}
 
-	public static Process runProcess(List<String> commands) throws IOException{
+	public static Process runProcess(List<String> commands) throws IOException {
 		 ProcessBuilder pb = new ProcessBuilder(commands);
 		 Process p = pb.start();
 		 return p;
 	}
 
-	public static String forceLineBreak(String src, int maxCharacterPerLine){
-		// Code from: http://stackoverflow.com/questions/1033563/java-inserting-a-new-line-at-the-next-space-after-30-characters
-		StringBuilder sb = new StringBuilder(src);
-		int i = 0;
-		while ((i = sb.indexOf(" ", i + maxCharacterPerLine)) != -1) {
-		    sb.replace(i, i + 1, "\n");
-		}
-		return sb.toString();
-	}
-
 	public static boolean isYes(String s){
-		s = s.toLowerCase();
-		return (s.equals("true") || s.equals("yes") || s.equals("ja") || s.equals("y") ||  s.equals("1"));
+		return s.matches("(?i)^ *(true|yes|ja|j|y|1) *$");
 	}
 
 	/**
@@ -113,7 +100,7 @@ public final class Tools {
 	}
 
 	/**
-	 *
+	 * This method splits a string like {@code 'key=value'}  into a {@link Pair}.
 	 * @param input The input string
 	 * @param keyRegEx The regular expression for the key (do not use any match groups)
 	 * @param valueRegEx The regular expression for the value (do not use any match groups)

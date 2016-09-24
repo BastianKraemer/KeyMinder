@@ -27,13 +27,13 @@ import java.util.function.BiConsumer;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.modules.ModuleInfo;
 import de.akubix.keyminder.core.modules.ModuleLoader;
-import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
+import de.akubix.keyminder.util.Utilities;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -74,7 +74,7 @@ public class SettingsDialog {
 		this.app = instance;
 		this.fxUI = JavaFxUserInterface.getInstance(instance);
 		this.settingscopy = new HashMap<>();
-		de.akubix.keyminder.lib.Tools.hashCopy(app.getSettingsMap(), settingscopy);
+		Utilities.hashCopy(app.getSettingsMap(), settingscopy);
 
 		me = new Stage();
 		me.setTitle(ApplicationInstance.APP_NAME + " - " + fxUI.getLocaleBundleString("settings.title"));
@@ -103,7 +103,7 @@ public class SettingsDialog {
 			@Override
 			public void handle(ActionEvent event) {
 
-				de.akubix.keyminder.lib.Tools.hashCopy(settingscopy, app.getSettingsMap());
+				Utilities.hashCopy(settingscopy, app.getSettingsMap());
 
 				//Check if the user enabled or disabled some modules
 				ModuleLoader moduleLoader =  app.getModuleLoader();
@@ -293,7 +293,7 @@ public class SettingsDialog {
 		VBox list = new VBox(6);
 		list.setPadding(new Insets(4));
 		ModuleLoader moduleLoader = app.getModuleLoader();
-		for(String moduleName: de.akubix.keyminder.lib.Tools.asSortedList(moduleLoader.getModules())){
+		for(String moduleName: Utilities.asSortedList(moduleLoader.getModules())){
 			ModuleInfo moduleInfo = moduleLoader.getModuleInfo(moduleName);
 			final CheckBox cb = new CheckBox(moduleName);
 			try{
@@ -305,9 +305,7 @@ public class SettingsDialog {
 								fxUI.getLocaleBundleString("settings.modules.moduleinfo_version") + ": %s\n\n%s",
 								properties.getOrDefault("author", "-"),
 								properties.getOrDefault("version", "-"),
-								Tools.forceLineBreak(
-									properties.getOrDefault("description_" + app.getLocale().getLanguage(),	properties.getOrDefault("description", "-")).toString(),
-									80)
+								forceLineBreak(properties.getOrDefault("description_" + app.getLocale().getLanguage(),	properties.getOrDefault("description", "-")).toString(), 80)
 				)));
 			}
 			catch(IOException | NullPointerException ex){
@@ -338,5 +336,15 @@ public class SettingsDialog {
 		settings_modules.setContent(pane);
 
 		return settings_modules;
+	}
+
+	private static String forceLineBreak(String src, int maxCharacterPerLine){
+		// Code from: http://stackoverflow.com/questions/1033563/java-inserting-a-new-line-at-the-next-space-after-30-characters
+		StringBuilder sb = new StringBuilder(src);
+		int i = 0;
+		while ((i = sb.indexOf(" ", i + maxCharacterPerLine)) != -1) {
+		    sb.replace(i, i + 1, "\n");
+		}
+		return sb.toString();
 	}
 }

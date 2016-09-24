@@ -20,7 +20,6 @@ package de.akubix.keyminder.shell.commands;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
-import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.Command;
@@ -29,6 +28,7 @@ import de.akubix.keyminder.shell.annotations.Option;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
+import de.akubix.keyminder.util.Utilities;
 
 @Command("config")
 @Description("View or modify the configuration")
@@ -118,7 +118,7 @@ public final class ConfigCmd extends AbstractShellCommand {
 	}
 
 	private static void printSettingsMap(ShellOutputWriter out, ApplicationInstance instance, boolean useFileSettings){
-		Tools.asSortedList(useFileSettings ? instance.getFileSettingsKeySet(): instance.getSettingsKeySet()).forEach((String key) -> {
+		Utilities.asSortedList(useFileSettings ? instance.getFileSettingsKeySet(): instance.getSettingsKeySet()).forEach((String key) -> {
 			String value = useFileSettings ? instance.getFileSettingsValue(key) : instance.getSettingsValue(key);
 			if(value.contains("\n")){
 				out.print(String.format("%s = ", key));

@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 
 import de.akubix.keyminder.core.events.EventTypes;
 import de.akubix.keyminder.core.events.EventTypes.TreeNodeEvent;
+import de.akubix.keyminder.util.Utilities;
 
 /**
  * This class is the core of the whole database. All data stored in this applications will be assigned to the HashMap treeNodeDB in this class
@@ -376,7 +377,7 @@ public class StandardTree implements Tree {
 	private synchronized TreeNode cloneDefaultNode(StandardNode node2clone, boolean includeChildNodes){
 		StandardNode clonedNode = createDefaultNode(node2clone.getText());
 		clonedNode.setColor(node2clone.getColor());
-		de.akubix.keyminder.lib.Tools.hashCopy(node2clone.getUnrestrictedAccess().attributes, clonedNode.getUnrestrictedAccess().attributes);
+		Utilities.hashCopy(node2clone.getUnrestrictedAccess().attributes, clonedNode.getUnrestrictedAccess().attributes);
 
 		if(includeChildNodes){
 			for(int i = 0; i < node2clone.countChildNodes(); i++){
@@ -528,7 +529,7 @@ public class StandardTree implements Tree {
 				inverseList.put(key, node);
 			});
 
-			List<String> sortedList = de.akubix.keyminder.lib.Tools.asSortedList(inverseList.keySet());
+			List<String> sortedList = Utilities.asSortedList(inverseList.keySet());
 
 			StandardNode parentDefaultNode = parentNode.getUnrestrictedAccess();
 			parentDefaultNode.childNodes.clear();
