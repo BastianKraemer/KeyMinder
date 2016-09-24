@@ -395,6 +395,7 @@ public class Shell {
 	 */
 	protected static List<ParsedCommand> parseCommandLineString(String input){
 		if(input.equals("")){return new ArrayList<>(0);}
+
 		CommandBuilder cb = new CommandBuilder();
 
 		/* The following code is based on an example written by StackOverflow (stackoverflow.com) user Jan Goyvaerts and is licensed
@@ -404,8 +405,7 @@ public class Shell {
 		 * The code has been modified.
 		 */
 		Pattern regex = Pattern.compile("[^\\s\"';&\\|]+|\"([^\"]*)\"|'([^']*)'|(;)|(\\&\\&)|(\\|)");
-		//Pattern regex = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'");
-		Matcher regexMatcher = regex.matcher(escape(input));
+		Matcher regexMatcher = regex.matcher(escape(input.replace("\\$", "$")));
 		search:
 		while (regexMatcher.find()) {
 			for(int i = 1; i <= regexMatcher.groupCount(); i++){
@@ -440,7 +440,7 @@ public class Shell {
 		// Regular expression to allow only A-Z, a-z and 0-9 for variable names
 		// 	-> \\$\\{[a-zA-Z0-9]*\\}
 
-		for(MatchResult match : allMatches(Pattern.compile("\\$\\{[^\\$]+\\}"), source)){
+		for(MatchResult match : allMatches(Pattern.compile("[^\\\\]\\$\\{[^\\$]+\\}"), source)){
 			source = source.replace(match.group(), lookupFunction.apply(match.group().substring(2, match.group().length() - 1)));
 		}
 		return source;
