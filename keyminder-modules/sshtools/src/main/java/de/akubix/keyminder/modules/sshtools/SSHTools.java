@@ -46,8 +46,8 @@ import de.akubix.keyminder.core.events.DefaultEventHandler;
 import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.core.io.XML;
 import de.akubix.keyminder.lib.Tools;
-import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
@@ -215,7 +215,7 @@ public class SSHTools {
 						AppStarter as = new AppStarter(app, this,
 							() -> {
 								try {
-									return XMLCore.loadXmlDocument(xmlFile);
+									return XML.loadXmlDocument(xmlFile);
 								} catch (Exception e) {
 									return null;
 								}
@@ -251,7 +251,7 @@ public class SSHTools {
 		try{
 			if(app.getSettingsValueAsBoolean(settings_value, false)){
 				AppStarter as = new AppStarter(app, this, () -> {try {
-						return XMLCore.loadXmlDocument(getXMLProfileInputStream(inputStreamSrc));
+						return XML.loadXmlDocument(getXMLProfileInputStream(inputStreamSrc));
 					} catch (Exception e) {
 						throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
 				}}, CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
@@ -272,7 +272,7 @@ public class SSHTools {
 			try{
 				socksAppStarter = new AppStarter(app, this, true, () -> {
 						try {
-							return XMLCore.loadXmlDocument(getXMLProfileInputStream(app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION)));
+							return XML.loadXmlDocument(getXMLProfileInputStream(app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION)));
 						} catch (SAXException | IOException e) {
 							throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
 					}},

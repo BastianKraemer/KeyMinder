@@ -1,4 +1,4 @@
-package de.akubix.keyminder.core;
+package de.akubix.keyminder.core.io;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -12,9 +12,7 @@ import org.junit.Test;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import de.akubix.keyminder.lib.XMLCore;
-
-public class XMLCoreTest {
+public class XML_Test {
 
 	@Test
 	public void testLoadWriteXml() throws SAXException, IOException, TransformerException {
@@ -25,7 +23,7 @@ public class XMLCoreTest {
 							"\t<test2>Hello, again</test2>\n" +
 							"</root>\n";
 
-		Assert.assertEquals(withoutNewlines(xml), withoutNewlines(XMLCore.writeXmlDocumentToString(XMLCore.loadXmlDocument(xml))));
+		Assert.assertEquals(withoutNewlines(xml), withoutNewlines(XML.writeXmlDocumentToString(XML.loadXmlDocument(xml))));
 	}
 
 	@Test
@@ -43,15 +41,15 @@ public class XMLCoreTest {
 		map2.put("abc123:456", "abc");
 		map2.put("any.name:with_a_colon", "Hello world!");
 
-		Document xmlDoc = XMLCore.createXmlDocument("test");
+		Document xmlDoc = XML.createXmlDocument("test");
 
-		XMLCore.convertMapToFlatXml(map, xmlDoc.getDocumentElement());
+		XML.convertMapToFlatXml(map, xmlDoc.getDocumentElement());
 		Map<String, String> result = new HashMap<>();
-		XMLCore.convertXmlToMap(xmlDoc.getDocumentElement(), result, false);
+		XML.convertXmlToMap(xmlDoc.getDocumentElement(), result, false);
 		compareMaps(map, result);
 
 		result.clear();
-		XMLCore.convertXmlToMap(XMLCore.convertMapToXmlDocument(map2, "test"), result, false);
+		XML.convertXmlToMap(XML.convertMapToXmlDocument(map2, "test"), result, false);
 		compareMaps(map2, result);
 	}
 

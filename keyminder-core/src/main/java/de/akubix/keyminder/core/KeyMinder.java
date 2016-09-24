@@ -26,8 +26,8 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import de.akubix.keyminder.core.encryption.AES;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
-import de.akubix.keyminder.lib.AESCore;
 
 public class KeyMinder {
 
@@ -67,7 +67,7 @@ public class KeyMinder {
 
 		// Test available encryption methods - and print a warning if there is only AES-128 available
 		try {
-			if(!AESCore.isAES256EncryptionAvailable()){
+			if(!AES.isAES256EncryptionAvailable()){
 				if(!environment.containsKey("silent_mode")){
 					System.out.println("Important security warning: AES-256 Encryption is NOT supported on this system.\nUsing fallback to AES-128, which provides less security.\n\n"
 									 + "Please upgrade your Java installation using the \"Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files\" "

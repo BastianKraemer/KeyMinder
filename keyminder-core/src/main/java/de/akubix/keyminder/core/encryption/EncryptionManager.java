@@ -27,7 +27,6 @@ import java.util.Set;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.lib.AESCore;
 
 /**
  * This class is used to handle the encryption of a password file
@@ -125,7 +124,7 @@ public class EncryptionManager {
 			return "";
 		}
 		else{
-			return AESCore.bytesToBase64String(salt);
+			return AES.bytesToBase64String(salt);
 		}
 	}
 
@@ -142,7 +141,7 @@ public class EncryptionManager {
 	 * @return The IV that has been used last time as BASE64-String
 	 */
 	public String getIVasBase64(){
-		return AESCore.bytesToBase64String(iv);
+		return AES.bytesToBase64String(iv);
 	}
 
 	/**
@@ -164,10 +163,10 @@ public class EncryptionManager {
 	 * @throws InvalidKeySpecException if the key can't be used for encryption
 	 */
 	public String encrypt(String source, boolean generateNewSalt, boolean generateNewIV) throws InvalidKeySpecException{
-		if(generateNewIV){iv = AESCore.generateIV();}
+		if(generateNewIV){iv = AES.generateIV();}
 
 		if(cipher.areSaltedHashesSupported()){
-			if(generateNewSalt){salt = AESCore.generatePasswordSalt(defaultSaltLengthInByte);}
+			if(generateNewSalt){salt = AES.generatePasswordSalt(defaultSaltLengthInByte);}
 			return cipher.encrypt(source, password, iv, salt);
 		}
 		else
@@ -303,7 +302,7 @@ public class EncryptionManager {
 	 * This method must be called during the startup to provide some default cipher algorithms
 	 */
 	public static void loadDefaultCiphers(){
-		if(AESCore.isAES256Supported()){
+		if(AES.isAES256Supported()){
 			defaultCipher = "AES-256/PBKDF2";
 			addCipherAlgorithm(new EncryptionCipher() {
 				@Override
@@ -314,8 +313,8 @@ public class EncryptionManager {
 				@Override
 				public String encrypt(String source, char[] password, byte[] iv, byte[] salt) throws InvalidKeySpecException {
 					try {
-						byte[] key = AESCore.getPBKDF2Hash(password, salt, 256);
-						String enc = AESCore.encryptAES(source, key, iv);
+						byte[] key = AES.getPBKDF2Hash(password, salt, 256);
+						String enc = AES.encryptAES(source, key, iv);
 						clearArray(key);
 						return enc;
 					} catch (NoSuchAlgorithmException e) {
@@ -330,8 +329,8 @@ public class EncryptionManager {
 				@Override
 				public String decrypt(String enc, char[] password, byte[] iv, byte[] salt) throws InvalidKeyException {
 					try {
-						byte[] key = AESCore.getPBKDF2Hash(password, salt, 256);
-						String src = AESCore.decryptAES(enc, key, iv);
+						byte[] key = AES.getPBKDF2Hash(password, salt, 256);
+						String src = AES.decryptAES(enc, key, iv);
 						clearArray(key);
 						return src;
 					} catch (NoSuchAlgorithmException e) {
@@ -358,16 +357,16 @@ public class EncryptionManager {
 
 				@Override
 				public String encrypt(String source, char[] password, byte[] iv, byte[] salt) throws InvalidKeySpecException {
-					byte[] key = AESCore.getSHA256Hash(new String(password));
-					String enc = AESCore.encryptAES(source, key, iv);
+					byte[] key = AES.getSHA256Hash(new String(password));
+					String enc = AES.encryptAES(source, key, iv);
 					clearArray(key);
 					return enc;
 				}
 
 				@Override
 				public String decrypt(String enc, char[] password, byte[] iv, byte[] salt) throws InvalidKeyException {
-					byte[] key = AESCore.getSHA256Hash(new String(password));
-					String src = AESCore.decryptAES(enc, key, iv);
+					byte[] key = AES.getSHA256Hash(new String(password));
+					String src = AES.decryptAES(enc, key, iv);
 					clearArray(key);
 					return src;
 				}
@@ -391,16 +390,16 @@ public class EncryptionManager {
 
 			@Override
 			public String encrypt(String source, char[] password, byte[] iv, byte[] salt) throws InvalidKeySpecException {
-				byte[] key = AESCore.getMD5Hash(new String(password));
-				String enc = AESCore.encryptAES(source, key, iv);
+				byte[] key = AES.getMD5Hash(new String(password));
+				String enc = AES.encryptAES(source, key, iv);
 				clearArray(key);
 				return enc;
 			}
 
 			@Override
 			public String decrypt(String enc, char[] password, byte[] iv, byte[] salt) throws InvalidKeyException {
-				byte[] key = AESCore.getMD5Hash(new String(password));
-				String src = AESCore.decryptAES(enc, key, iv);
+				byte[] key = AES.getMD5Hash(new String(password));
+				String src = AES.decryptAES(enc, key, iv);
 				clearArray(key);
 				return src;
 			}

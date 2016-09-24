@@ -20,7 +20,7 @@ import de.akubix.keyminder.core.KeyMinderInstanceBuilder;
 import de.akubix.keyminder.core.db.StandardTree;
 import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
-import de.akubix.keyminder.lib.XMLCore;
+import de.akubix.keyminder.core.io.XML;
 
 public class CommandLineGeneratorTest {
 
@@ -116,7 +116,7 @@ public class CommandLineGeneratorTest {
 	private List<String> runParser(Map<String, String> var, TreeNode treeNode, Supplier<InputStream> cmdDescriptor, String profileName) throws IllegalArgumentException {
 		CommandLineGenerator xapp;
 		try {
-			xapp = new CommandLineGenerator(app, XMLCore.loadXmlDocument(cmdDescriptor.get()), var, CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
+			xapp = new CommandLineGenerator(app, XML.loadXmlDocument(cmdDescriptor.get()), var, CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
 			return xapp.generateCommandLineParameters(profileName, treeNode);
 		} catch (SAXException | IOException e) {
 			e.printStackTrace();

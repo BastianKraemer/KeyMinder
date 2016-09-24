@@ -1,22 +1,22 @@
 /*	KeyMinder
-	Copyright (C) 2015-2016 Bastian Kraemer
-
-	XMLCore.java
-
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-package de.akubix.keyminder.lib;
+ * Copyright (C) 2015-2016 Bastian Kraemer
+ *
+ * XML.java
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package de.akubix.keyminder.core.io;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -47,6 +47,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
+import de.akubix.keyminder.lib.Tools;
 import javafx.util.Pair;
 
 /**
@@ -54,8 +55,8 @@ import javafx.util.Pair;
  * @see Document
  * @see Node
  */
-public final class XMLCore{
-	private XMLCore(){}
+public final class XML{
+	private XML(){}
 
 	/**
 	 * Creates a new, empty XML Document

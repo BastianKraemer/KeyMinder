@@ -40,12 +40,11 @@ import de.akubix.keyminder.core.FileConfiguration;
 import de.akubix.keyminder.core.db.StandardNode;
 import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.encryption.AES;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.StorageExceptionType;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
-import de.akubix.keyminder.lib.AESCore;
-import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.locale.LocaleLoader;
 
 public class KeyMindFileHandler implements StorageHandler {
@@ -72,7 +71,7 @@ public class KeyMindFileHandler implements StorageHandler {
 	@Override
 	public void save(FileConfiguration file, Tree tree, ApplicationInstance instance) throws StorageException {
 		try {
-			XMLCore.writeXmlDocumentToFile(file.getFilepath(), createXMLFrame(tree.getRootNode(), file));
+			XML.writeXmlDocumentToFile(file.getFilepath(), createXMLFrame(tree.getRootNode(), file));
 			file.setFileFormatVersion(latestFileFormatVersion);
 		} catch (InvalidKeyException e) {
 			throw new StorageException(StorageExceptionType.UnknownException, e.getMessage());
@@ -98,10 +97,10 @@ public class KeyMindFileHandler implements StorageHandler {
 		Map<String, String> fileSettings = new HashMap<>();
 
 		try {
-			Document document = XMLCore.loadXmlDocument(xmlFile);
+			Document document = XML.loadXmlDocument(xmlFile);
 
 			// Read the version from the XML root node
-			Map<String, String> rootAttribs = XMLCore.getXmlAttributesAsMap(document.getDocumentElement());
+			Map<String, String> rootAttribs = XML.getXmlAttributesAsMap(document.getDocumentElement());
 			if(rootAttribs.containsKey("version")){
 				if(!rootAttribs.get("version").matches("1.[0-1]($|.(.*))")){throw new StorageException(StorageExceptionType.UnsupportedVersion, "Document Version not supported.");}
 			}
@@ -132,7 +131,7 @@ public class KeyMindFileHandler implements StorageHandler {
 				//if((headNode.getNodeName().toLowerCase().equals("head") || headNode.getNodeName().toLowerCase().equals("configuration")) && (dataNodeName.equals("keystore") || dataNodeName.equals("data")))
 				if(headNode.getNodeName().toLowerCase().equals("configuration") && dataNode.getNodeName().toLowerCase().equals("data")){
 					// Read file attributes
-					 XMLCore.convertXmlToMap(headNode, fileAttributes, true);
+					 XML.convertXmlToMap(headNode, fileAttributes, true);
 
 					// Load the node data from the XML file
 					int dateNodeChildCount = dataNode.getChildNodes().getLength();
@@ -153,7 +152,7 @@ public class KeyMindFileHandler implements StorageHandler {
 							for(int i = 0; i < dataNode.getChildNodes().getLength(); i++){
 								switch(dataNode.getChildNodes().item(i).getNodeName()){
 									case "settings":
-										XMLCore.convertXmlToMap(dataNode.getChildNodes().item(i), fileSettings, true);
+										XML.convertXmlToMap(dataNode.getChildNodes().item(i), fileSettings, true);
 										break;
 
 									case "tree":
@@ -171,7 +170,7 @@ public class KeyMindFileHandler implements StorageHandler {
 
 							Node ivAttribute = dataNode.getAttributes().getNamedItem("iv");
 							if(ivAttribute == null){throw new XMLParseException("IV of encrypted file is not available.");}
-							byte[] aesIV = AESCore.bytesFromBase64String(ivAttribute.getNodeValue());
+							byte[] aesIV = AES.bytesFromBase64String(ivAttribute.getNodeValue());
 
 							String cipherName = "";
 
@@ -207,16 +206,16 @@ public class KeyMindFileHandler implements StorageHandler {
 
 									byte[] salt = new byte[0];
 									Node saltAttribute = dataNode.getAttributes().getNamedItem("salt");
-									if(saltAttribute != null){salt = AESCore.bytesFromBase64String(saltAttribute.getNodeValue());}
+									if(saltAttribute != null){salt = AES.bytesFromBase64String(saltAttribute.getNodeValue());}
 
 									EncryptionManager em = new EncryptionManager(cipherName, pw, aesIV, salt);
 
-									Document xmldoc = XMLCore.loadXmlDocument(em.decrypt(dataNode.getTextContent()));
+									Document xmldoc = XML.loadXmlDocument(em.decrypt(dataNode.getTextContent()));
 
 									for(int i = 0; i < xmldoc.getDocumentElement().getChildNodes().getLength(); i++){
 										switch(xmldoc.getDocumentElement().getChildNodes().item(i).getNodeName()){
 											case "settings":
-												XMLCore.convertXmlToMap(xmldoc.getDocumentElement().getChildNodes().item(i), fileSettings, true);
+												XML.convertXmlToMap(xmldoc.getDocumentElement().getChildNodes().item(i), fileSettings, true);
 												break;
 
 											case "tree":
@@ -325,7 +324,7 @@ public class KeyMindFileHandler implements StorageHandler {
 
 	private static Document createXMLFrame(TreeNode rootNode, FileConfiguration fileConfig) throws XMLParseException, InvalidKeyException{
 		try {
-			Document xmldoc = XMLCore.createXmlDocument("KeyMind");
+			Document xmldoc = XML.createXmlDocument("KeyMind");
 
 			org.w3c.dom.Attr versionAttrib = xmldoc.createAttribute("version");
 			versionAttrib.setNodeValue(latestFileFormatVersion);
@@ -334,25 +333,25 @@ public class KeyMindFileHandler implements StorageHandler {
 			org.w3c.dom.Node configNode = xmldoc.createElement("configuration");
 			org.w3c.dom.Node dataNode = xmldoc.createElement("data");
 
-			XMLCore.convertMapToFlatXml(fileConfig.getFileAttributes(), configNode);
+			XML.convertMapToFlatXml(fileConfig.getFileAttributes(), configNode);
 
 			xmldoc.getDocumentElement().appendChild(configNode);
 			xmldoc.getDocumentElement().appendChild(dataNode);
 
 			if(fileConfig.isEncrypted()){
-				Document subxmldoc = XMLCore.createXmlDocument("root");
+				Document subxmldoc = XML.createXmlDocument("root");
 
 				org.w3c.dom.Node settingsNode = subxmldoc.createElement("settings");
 				org.w3c.dom.Node treeNode = subxmldoc.createElement("tree");
 
-				XMLCore.convertMapToXmlNodes(fileConfig.getFileSettings(), settingsNode);
+				XML.convertMapToXmlNodes(fileConfig.getFileSettings(), settingsNode);
 				appendChildNodesToXMLFile(subxmldoc, treeNode, rootNode);
 
 				subxmldoc.getDocumentElement().appendChild(settingsNode);
 				subxmldoc.getDocumentElement().appendChild(treeNode);
 
 				try{
-					dataNode.setTextContent(fileConfig.getEncryptionManager().encrypt(XMLCore.writeXmlDocumentToString(subxmldoc)));
+					dataNode.setTextContent(fileConfig.getEncryptionManager().encrypt(XML.writeXmlDocumentToString(subxmldoc)));
 
 					org.w3c.dom.Attr ivAttrib = xmldoc.createAttribute("iv");
 					org.w3c.dom.Attr cipherName = xmldoc.createAttribute("encryption");
@@ -378,7 +377,7 @@ public class KeyMindFileHandler implements StorageHandler {
 				org.w3c.dom.Node settingsNode = xmldoc.createElement("settings");
 				org.w3c.dom.Node treeNode = xmldoc.createElement("tree");
 
-				XMLCore.convertMapToXmlNodes(fileConfig.getFileSettings(), settingsNode);
+				XML.convertMapToXmlNodes(fileConfig.getFileSettings(), settingsNode);
 				appendChildNodesToXMLFile(xmldoc, treeNode, rootNode);
 
 				dataNode.appendChild(settingsNode);

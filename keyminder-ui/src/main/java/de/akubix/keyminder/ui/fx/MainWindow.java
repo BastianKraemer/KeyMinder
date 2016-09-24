@@ -33,6 +33,7 @@ import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.encryption.AES;
 import de.akubix.keyminder.core.events.Compliance;
 import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
@@ -41,7 +42,6 @@ import de.akubix.keyminder.core.events.TreeNodeEventHandler;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.io.FileExtension;
 import de.akubix.keyminder.core.io.StorageManager;
-import de.akubix.keyminder.lib.AESCore;
 import de.akubix.keyminder.lib.Tools;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
@@ -263,7 +263,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		startupFxUI();
 
-		if(!AESCore.isAES256Supported()){
+		if(!AES.isAES256Supported()){
 			// Important security note
 			Button notification = new Button("", ImageMap.getFxImageView(("icon_warning")));
 			notification.setMinWidth(24);

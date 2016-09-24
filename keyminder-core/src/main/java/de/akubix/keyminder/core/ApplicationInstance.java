@@ -50,9 +50,9 @@ import de.akubix.keyminder.core.exceptions.IllegalCallException;
 import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.io.StorageManager;
+import de.akubix.keyminder.core.io.XML;
 import de.akubix.keyminder.core.modules.ModuleLoader;
 import de.akubix.keyminder.lib.Tools;
-import de.akubix.keyminder.lib.XMLCore;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.Shell;
@@ -272,7 +272,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 	private void loadSettingsFromXMLFile(){
 		try {
 			if(settingsFile.exists()){
-				XMLCore.convertXmlToMap(XMLCore.loadXmlDocument(settingsFile), settings, true);
+				XML.convertXmlToMap(XML.loadXmlDocument(settingsFile), settings, true);
 				loadDefaultEnvironmentXMLFile();
 			}
 		} catch (SAXException | IOException e) {
@@ -286,7 +286,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 			try {
 				File environmrntXMLFile = new File(settings.get("startup.default_environment"));
 				if(environmrntXMLFile.exists()){
-					XMLCore.convertXmlToMap(XMLCore.loadXmlDocument(environmrntXMLFile), KeyMinder.environment, false);
+					XML.convertXmlToMap(XML.loadXmlDocument(environmrntXMLFile), KeyMinder.environment, false);
 					if(KeyMinder.environment.containsKey("verbose_mode") && Tools.isYes(KeyMinder.environment.get("verbose_mode"))){
 						KeyMinder.verbose_mode = true;
 					}
@@ -381,7 +381,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 	public void saveSettings(){
 
 		try {
-			XMLCore.writeXmlDocumentToFile(settingsFile, XMLCore.convertMapToXmlDocument(settings, "keyminder_settings"));
+			XML.writeXmlDocumentToFile(settingsFile, XML.convertMapToXmlDocument(settings, "keyminder_settings"));
 			fireEvent(DefaultEvent.OnSettingsChanged);
 
 		} catch (IOException | TransformerException e) {
