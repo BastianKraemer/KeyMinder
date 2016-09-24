@@ -38,6 +38,7 @@ import java.util.regex.Pattern;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
+import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.shell.annotations.Alias;
 import de.akubix.keyminder.shell.annotations.Command;
@@ -315,10 +316,12 @@ public class Shell {
 	 */
 	public void runShellCommand(ShellOutputWriter outWriter, String commandLineInput) throws CommandException, UserCanceledOperationException {
 
+		final TreeNode selectedNode = instance.getTree().getSelectedNode();
+
 		List<ParsedCommand> cmdList = parseCommandLineString(
 			replaceVariables(
 				commandLineInput.trim(),
-				(var) -> instance.lookup(var, instance.getTree().getSelectedNode().getId() == 0 ? instance.getTree().getSelectedNode() : null, runtimeVariables)));
+				(var) -> instance.lookup(var, selectedNode.getId() != 0 ? selectedNode : null, runtimeVariables)));
 
 		for(int i = 0; i < cmdList.size(); i++){
 			ParsedCommand p = cmdList.get(i);
@@ -440,8 +443,16 @@ public class Shell {
 		// Regular expression to allow only A-Z, a-z and 0-9 for variable names
 		// 	-> \\$\\{[a-zA-Z0-9]*\\}
 
-		for(MatchResult match : allMatches(Pattern.compile("[^\\\\]\\$\\{[^\\$]+\\}"), source)){
-			source = source.replace(match.group(), lookupFunction.apply(match.group().substring(2, match.group().length() - 1)));
+		for(MatchResult match : allMatches(Pattern.compile("[^\\\\](\\$\\{([^\\$]+)\\})"), source)){
+			String replacement;
+			try{
+				replacement = lookupFunction.apply(match.group(2));
+			}
+			catch(IllegalArgumentException e){
+				replacement = "";
+			}
+
+			source = source.replace(match.group(1), replacement);
 		}
 		return source;
 	}
