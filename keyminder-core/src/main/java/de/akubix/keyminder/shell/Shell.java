@@ -443,7 +443,7 @@ public class Shell {
 		// Regular expression to allow only A-Z, a-z and 0-9 for variable names
 		// 	-> \\$\\{[a-zA-Z0-9]*\\}
 
-		for(MatchResult match : allMatches(Pattern.compile("[^\\\\](\\$\\{([^\\$]+)\\})"), source)){
+		for(MatchResult match : allMatches(Pattern.compile("[^\\\\]?(\\$\\{([^\\$]+)\\})"), source)){
 			String replacement;
 			try{
 				replacement = lookupFunction.apply(match.group(2));
