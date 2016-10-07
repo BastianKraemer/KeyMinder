@@ -413,7 +413,6 @@ public class Shell {
 		while (regexMatcher.find()) {
 			for(int i = 1; i <= regexMatcher.groupCount(); i++){
 				if(regexMatcher.group(i) != null) {
-					// Add double-quoted string without the quotes
 					cb.addCommandPart(unescape(regexMatcher.group(i)));
 					continue search;
 				}
@@ -443,16 +442,16 @@ public class Shell {
 		// Regular expression to allow only A-Z, a-z and 0-9 for variable names
 		// 	-> \\$\\{[a-zA-Z0-9]*\\}
 
-		for(MatchResult match : allMatches(Pattern.compile("[^\\\\]?(\\$\\{([^\\$]+)\\})"), source)){
+		for(MatchResult match : allMatches(Pattern.compile("(^|[^\\\\])(\\$\\{([^\\$\\}]+)\\})"), source)){
 			String replacement;
 			try{
-				replacement = lookupFunction.apply(match.group(2));
+				replacement = lookupFunction.apply(match.group(3));
 			}
 			catch(IllegalArgumentException e){
 				replacement = "";
 			}
 
-			source = source.replace(match.group(1), replacement);
+			source = source.replace(match.group(2), replacement);
 		}
 		return source;
 	}
