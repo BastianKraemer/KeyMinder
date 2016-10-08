@@ -33,6 +33,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.util.Pair;
 
 public class FxSidebar {
 
@@ -41,7 +42,7 @@ public class FxSidebar {
 	private final JavaFxUserInterfaceApi javaFxUserInterfaceApi;
 	private final VBox sidebarContainer;
 	private boolean firstLabel = true;
-	private Supplier<String[]> usefulValuesSupplier = null;
+	private Supplier<Pair<String, String>> usefulValuesSupplier = null;
 
 	public FxSidebar(ApplicationInstance app, JavaFxUserInterfaceApi javaFxUserInterfaceApi) throws IllegalStateException {
 
@@ -212,7 +213,7 @@ public class FxSidebar {
 		};
 	}
 
-	public void setUsernameAndPasswordSupplier(Supplier<String[]> usefulValuesSupplier){
+	public void setUsernameAndPasswordSupplier(Supplier<Pair<String, String>> usefulValuesSupplier){
 		this.usefulValuesSupplier = usefulValuesSupplier;
 	}
 
@@ -226,7 +227,7 @@ public class FxSidebar {
 	 * @return The supplier
 	 * @see FxSidebar#hasUsernameAndPasswordSupplier()
 	 */
-	public Supplier<String[]> getUserNameAndPasswordSupplier(){
+	public Supplier<Pair<String, String>> getUserNameAndPasswordSupplier(){
 		return usefulValuesSupplier;
 	}
 }

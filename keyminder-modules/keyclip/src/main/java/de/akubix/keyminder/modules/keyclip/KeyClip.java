@@ -21,10 +21,14 @@ package de.akubix.keyminder.modules.keyclip;
 import java.awt.AWTException;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.events.DefaultEventHandler;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
+import de.akubix.keyminder.shell.Shell;
 import de.akubix.keyminder.ui.fx.IdentifiableElement;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.MainWindow;
@@ -33,11 +37,14 @@ import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.TabPane;
+import javafx.util.Pair;
 
 /**
  * Module KeyClip: Provides a functionality which allows the user to transfer a certain user name and password to another application using the clip board.
  */
 public class KeyClip {
+
+	private static final String KEYCLIP_SETTINGS_KEY_EXTERNAL_APPLICATION = "keyclip.command";
 
 	private final JavaFxUserInterfaceApi fxUI;
 	private final ApplicationInstance app;
@@ -51,13 +58,9 @@ public class KeyClip {
 		// Provide the KeyClip feature as command
 		instance.getShell().addCommand(KeyClipCmd.class.getName());
 
-		Button keyClipSidebarButton = MainWindow.createSmallButton("KeyClip", "icon_arrow-rotate-box", 24, (event) -> {
-			String[] data = fxUI.getCurrentSidebar().getUserNameAndPasswordSupplier().get();
-
-			if(data.length >= 2){
-				copyUserAndPassword(data[0], data[1]);
-			}
-		});
+		Button keyClipSidebarButton = MainWindow.createSmallButton(
+				"KeyClip", "icon_arrow-rotate-box", 24,
+				(event) -> exportUserAndPassword(fxUI.getCurrentSidebar().getUserNameAndPasswordSupplier().get()));
 
 		DefaultEventHandler updateButtonEnableState = () -> {
 			if(app.isAnyFileOpened()){
@@ -79,18 +82,49 @@ public class KeyClip {
 		fxUI.addCustomElement(keyClipSidebarButton, IdentifiableElement.SIDEBAR_HEADER);
 	}
 
-	public void copyUserAndPassword(String username, String password){
-		if(!trayItemCreated){
-			if(!username.equals("")){
-				fxUI.setClipboardText(username);
+	void exportUserAndPassword(Pair<String, String> data){
+		String username = data.getKey();
+		String password = data.getValue();
 
-				if(!password.equals("")){
-					this.pw = password;
-					createSystemTrayIcon();
-				}
+		String externalCommand = app.getSettingsValue(KEYCLIP_SETTINGS_KEY_EXTERNAL_APPLICATION);
+
+		if(!externalCommand.equals("")){
+			try {
+
+				assert !username.equals("") : "Username is not set.";
+				assert !password.equals("") : "Password is not set.";
+
+				Map<String, String> usrAndPasswordMap = new HashMap<>(2);
+				usrAndPasswordMap.put("keyclip.user", username);
+				usrAndPasswordMap.put("keyclip.pw", password);
+
+				externalCommand = Shell.replaceVariables(externalCommand, (var) -> app.lookup(var, app.getTree().getSelectedNode(), usrAndPasswordMap));
+				assert !externalCommand.equals("") : "Command is empty.";
+
+				System.out.println(externalCommand);
+				Runtime.getRuntime().exec(externalCommand);
 			}
-			else{
-				if(!password.equals("")){fxUI.setClipboardText(password);}
+			catch (IOException e) {
+				app.alert(String.format("Unable to run command '%s': '%s'.", externalCommand, e.getMessage()));
+			}
+			catch (AssertionError e){
+				app.alert(e.getMessage());
+			}
+		}
+		else{
+			// Use the JavaFx SystemTray Icon
+			if(!trayItemCreated){
+				if(!username.equals("")){
+					fxUI.setClipboardText(username);
+
+					if(!password.equals("")){
+						this.pw = password;
+						createSystemTrayIcon();
+					}
+				}
+				else{
+					if(!password.equals("")){fxUI.setClipboardText(password);}
+				}
 			}
 		}
 	}

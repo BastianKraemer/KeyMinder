@@ -10,6 +10,7 @@ import de.akubix.keyminder.shell.annotations.RequireOpenedFile;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
+import javafx.util.Pair;
 
 @Command("keyclip")
 @RequireOpenedFile
@@ -35,7 +36,7 @@ public class KeyClipCmd extends AbstractShellCommand {
 				in.getParameters().get(OPTION_PASSWORD)[0] :
 				in.getTreeNode().getAttribute("password");
 
-		keyclip.copyUserAndPassword(username, password);
+		keyclip.exportUserAndPassword(new Pair<>(username, password));
 		return CommandOutput.success();
 	}
 }

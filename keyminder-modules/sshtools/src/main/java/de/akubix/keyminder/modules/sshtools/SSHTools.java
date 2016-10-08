@@ -149,7 +149,7 @@ public class SSHTools {
 			sidebar.addSeparator();
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarCheckbox("ssh_x11", "Use X11"), "ssh_x11");
 
-			sidebar.setUsernameAndPasswordSupplier(() -> new String[]{sidebar.getValueOf("ssh_user"), sidebar.getValueOf("ssh_password")});
+			sidebar.setUsernameAndPasswordSupplier(() -> new Pair<>(sidebar.getValueOf("ssh_user"), sidebar.getValueOf("ssh_password")));
 
 			fxUI.addSidebarPanel(locale.getString("module.sshtools.tabtitle"), sidebar, 10, true);
 
