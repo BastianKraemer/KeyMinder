@@ -92,31 +92,30 @@ public class CommandLineGeneratorTest {
 	@Test
 	public void testWinScpProfile(){
 
-		app.setSettingsValue("sshtools.winscppath", "C:\\Tools\\WinSCP.exe");
+		app.setSettingsValue("sshtools.winscppath", "WinSCP.exe");
 
 		Map<String, String> var = new HashMap<>();
 		TreeNode node = tree.createNode("Test");
 		node.setAttribute("ssh_host", "localhost");
 
-		assertEquals("[C:\\Tools\\WinSCP.exe, sftp://localhost]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
+		assertEquals("[WinSCP.exe, sftp://localhost]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
 
 		node.setAttribute("ssh_port", "22");
 
-		assertEquals("[C:\\Tools\\WinSCP.exe, sftp://localhost:22]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
+		assertEquals("[WinSCP.exe, sftp://localhost:22]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
 
 		node.setAttribute("ssh_user", "root");
 
-		assertEquals("[C:\\Tools\\WinSCP.exe, sftp://root@localhost:22]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
+		assertEquals("[WinSCP.exe, sftp://root@localhost:22]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
 
 		node.setAttribute("ssh_password", "mypassword");
 
-		assertEquals("[C:\\Tools\\WinSCP.exe, sftp://root:mypassword@localhost:22]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
+		assertEquals("[WinSCP.exe, sftp://root:mypassword@localhost:22]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());
 	}
 
 	private List<String> runParser(Map<String, String> var, TreeNode treeNode, Supplier<InputStream> cmdDescriptor, String profileName) throws IllegalArgumentException {
-		CommandLineGenerator xapp;
 		try {
-			xapp = new CommandLineGenerator(app, XML.loadXmlDocument(cmdDescriptor.get()), var, CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
+			CommandLineGenerator xapp = new CommandLineGenerator(app, XML.loadXmlDocument(cmdDescriptor.get()), var, CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
 			return xapp.generateCommandLineParameters(profileName, treeNode);
 		} catch (SAXException | IOException e) {
 			e.printStackTrace();

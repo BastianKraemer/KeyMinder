@@ -27,6 +27,9 @@ public class ShellTest {
 
 		res = Shell.parseCommandLineString("echo \"hello world\" 123;;;");
 		verify(arr("echo"), arr2d(arr("hello world", "123")), arr(ShellExecOption.NONE), res);
+
+		res = Shell.parseCommandLineString("echo abc \"\\${hello} \\\"\\${world}\\\"\"");
+		verify(arr("echo"), arr2d(arr("abc", "${hello} \"${world}\"")), arr(ShellExecOption.NONE), res);
 	}
 
 	@Test
