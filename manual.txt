@@ -223,3 +223,31 @@ default this path is "./sshtools".
 You can define this path in the 'path configuration' of the SSH-Tools module,
 (take a look at: Edit -> Preferences -> SSH-Tools -> Path configuration) or
 even with the command 'config -s sshtools.cmdlinedescriptors.path [path]'
+
+
+------------------------------[ Module KeyClip ]-------------------------------
+
+The KeyClip module allows you to transfer the user name and password from the
+KeyMinder Sidebar directly to any other application. By default the KeyClip
+module copies the user name into your clip board and displays an icon in your
+task bar. After a click on this task bar icon the password will be copied into
+the clip board.
+
+Alternatively, you can configure the KeyClip module to run a custom application
+instead of copying user name and password to the clip board. This can be done
+using the KeyMinder Shell.
+
+Configure an external application:
+
+To configure an external application that should be launched you have to define
+the KeyMinder configuration setting "keyclip.command" with a string of the
+following pattern: "{program path} {argument 1} {argument 2} {argument n}".
+
+This can be done by using the shell command 'config'. For example the command
+could look like this:
+
+'config --set keyclip.command "/path/to/any/application --user \"\${keyclip.user}\" --pw \"\${keyclip.pw}\""'
+
+To disable this feature you can use
+
+'config --delete keyclip.command'
