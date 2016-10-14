@@ -140,7 +140,7 @@ public class ConsoleMode implements UserInterface {
 
 	@Override
 	public void log(String text) {
-		app.printf("LOG: %s\n", text);
+		app.printf("[INFO] %s\n", text);
 	}
 
 	@Override

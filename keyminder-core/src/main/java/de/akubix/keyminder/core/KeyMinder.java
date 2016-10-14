@@ -108,6 +108,7 @@ public class KeyMinder {
 							i++;
 							break;
 
+						case "settings-file":
 						case "settingsfile":
 						case "settings":
 							environment.put(ENVIRONMENT_KEY_SETTINGS_FILE, args[i+1]);

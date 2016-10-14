@@ -122,12 +122,12 @@ public class ApplicationInstance implements ShellOutputWriter {
 		this.settingsFile = new File(KeyMinder.environment.getOrDefault(KeyMinder.ENVIRONMENT_KEY_SETTINGS_FILE, DEFAULT_SETTINGS_FILE));
 
 		if(KeyMinder.environment.containsKey(KeyMinder.ENVIRONMENT_KEY_SETTINGS_FILE)){
-			settingsFile = new File(KeyMinder.environment.get(KeyMinder.ENVIRONMENT_KEY_SETTINGS_FILE));
+			this.settingsFile = new File(KeyMinder.environment.get(KeyMinder.ENVIRONMENT_KEY_SETTINGS_FILE));
 		}
 		else{
-			settingsFile = new File(DEFAULT_SETTINGS_FILE);
+			this.settingsFile = new File(DEFAULT_SETTINGS_FILE);
 			if(!settingsFile.exists()){
-				// There is no configuration file next to the jar -> maybe there is a global configuration file, placed in the users home directory?
+				// There is no configuration file next to the jar, maybe there is a global configuration file in the users home directory
 				File globalSettingsFile = new File(System.getProperty("user.home") + System.getProperty("file.separator") + DEFAULT_SETTINGS_FILE);
 				if(globalSettingsFile.exists()){
 					this.settingsFile = globalSettingsFile;
