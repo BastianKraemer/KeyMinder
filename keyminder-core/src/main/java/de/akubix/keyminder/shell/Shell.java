@@ -19,6 +19,8 @@
 package de.akubix.keyminder.shell;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
@@ -72,6 +74,8 @@ import de.akubix.keyminder.shell.parse.ShellExecOption;
  * </ul>
  */
 public class Shell {
+
+	private static final String DEFAULT_SHELL_ALIAS_FILE = "keyminder_alias.conf";
 
 	private static final Pattern COMMAND_PATTERN = Pattern.compile("^[a-z0-9-_]+$");
 	private static final Pattern ALIAS_PATTERN = Pattern.compile("^([a-z0-9-_]+) *= *(.+)$");
@@ -170,7 +174,9 @@ public class Shell {
 	 * @param value the command that should be executed instead
 	 */
 	public void addAlias(String alias, String value){
-		aliasMap.put(alias, value);
+		synchronized(aliasMap){
+			aliasMap.put(alias, value);
+		}
 	}
 
 	public void setRuntimeVariable(String key, String value){
@@ -204,7 +210,7 @@ public class Shell {
 			Class<?> cmdClass = availableCommands.get(cmdName.toLowerCase());
 
 			final Description desc = cmdClass.getAnnotation(Description.class);
-			final Operands operands =  cmdClass.getAnnotation(Operands.class);
+			final Operands operands = cmdClass.getAnnotation(Operands.class);
 			final Option[] optionList = cmdClass.getAnnotationsByType(Option.class);
 
 			if(desc != null){
@@ -252,7 +258,7 @@ public class Shell {
 					}
 
 					if(!option.description().equals("")){
-						manualStr.append("\n    ").append(option.description());
+						manualStr.append("\n	").append(option.description());
 					}
 				}
 			}
@@ -475,18 +481,18 @@ public class Shell {
 
 					@Override
 					public boolean hasNext() {
-					  // Lazily fill pending, and avoid calling find() multiple times if the
-					  // clients call hasNext() repeatedly before sampling via next().
-					  if (pending == null && matcher.find()) {
-					    pending = matcher.toMatchResult();
-					  }
-					  return pending != null;
+						// Lazily fill pending, and avoid calling find() multiple times if the
+						 // clients call hasNext() repeatedly before sampling via next().
+						if (pending == null && matcher.find()) {
+							pending = matcher.toMatchResult();
+						}
+						return pending != null;
 					}
 
 					@Override
 					public MatchResult next() {
-					  // Fill pending if necessary (as when clients call next() without
-					  // checking hasNext()), throw if not possible.
+						// Fill pending if necessary (as when clients call next() without
+						// checking hasNext()), throw if not possible.
 						if (!hasNext()) { throw new NoSuchElementException(); }
 						// Consume pending so next call to hasNext() does a find().
 						MatchResult next = pending;
@@ -500,5 +506,53 @@ public class Shell {
 				};
 			}
 		};
+	}
+
+	public void loadAliasListFromDefaultFileAsync(){
+		File aliasFile = new File(DEFAULT_SHELL_ALIAS_FILE);
+
+		if(!aliasFile.exists()){
+			aliasFile = new File(System.getProperty("user.home") + System.getProperty("file.separator") + DEFAULT_SHELL_ALIAS_FILE);
+
+			if(!aliasFile.exists()){
+				return;
+			}
+		}
+
+		loadAliasListFromFileAsync(aliasFile);
+	}
+
+	private void loadAliasListFromFileAsync(File aliasFile){
+		new Thread(() -> loadAliasListFromFile(aliasFile)).start();
+	}
+
+	private void loadAliasListFromFile(File aliasFile){
+		if(aliasFile.exists() && aliasFile.canRead()){
+			final Pattern commentOrEmptyLinePattern = Pattern.compile("^ *(#.*)?$");
+			final Pattern aliasPattern = Pattern.compile("^ *([A-Za-z0-9\\-_]+) *= *(.*) *$");
+
+			try {
+				BufferedReader br = new BufferedReader(new FileReader(aliasFile));
+				String line;
+				int lineNumber = 1;
+				while ((line = br.readLine()) != null) {
+					if(!commentOrEmptyLinePattern.matcher(line).matches()){
+						Matcher m = aliasPattern.matcher(line);
+						if(m.matches()){
+							addAlias(m.group(1), m.group(2));
+						}
+						else{
+							instance.log(String.format("Invalid alias definition: '%s' (file '%s', line %d)", line, aliasFile.getAbsolutePath(), lineNumber));
+						}
+					}
+
+					lineNumber++;
+				}
+				br.close();
+			}
+			catch(IOException e){
+				instance.log(String.format("Unable to read alias file '%s': %s", aliasFile.getAbsolutePath(), e.getMessage()));
+			}
+		}
 	}
 }

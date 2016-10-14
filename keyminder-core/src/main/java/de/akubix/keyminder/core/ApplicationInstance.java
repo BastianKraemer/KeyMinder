@@ -166,6 +166,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 		this.shell = new Shell(this);
 		shell.loadCommandsFromFile("/de/akubix/keyminder/shell/defaultCommands");
+		shell.loadAliasListFromDefaultFileAsync();
 
 		this.moduleLoader = new ModuleLoader(this);
 
