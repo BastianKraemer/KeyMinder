@@ -20,6 +20,7 @@ package de.akubix.keyminder.shell;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -533,26 +534,33 @@ public class Shell {
 
 			try {
 				BufferedReader br = new BufferedReader(new FileReader(aliasFile));
-				String line;
-				int lineNumber = 1;
-				while ((line = br.readLine()) != null) {
-					if(!commentOrEmptyLinePattern.matcher(line).matches()){
-						Matcher m = aliasPattern.matcher(line);
-						if(m.matches()){
-							addAlias(m.group(1), m.group(2));
+				try {
+					String line;
+					int lineNumber = 1;
+					while ((line = br.readLine()) != null) {
+						if(!commentOrEmptyLinePattern.matcher(line).matches()){
+							Matcher m = aliasPattern.matcher(line);
+							if(m.matches()){
+								addAlias(m.group(1), m.group(2));
+							}
+							else{
+								instance.log(String.format("Invalid alias definition: '%s' (file '%s', line %d)", line, aliasFile.getAbsolutePath(), lineNumber));
+							}
 						}
-						else{
-							instance.log(String.format("Invalid alias definition: '%s' (file '%s', line %d)", line, aliasFile.getAbsolutePath(), lineNumber));
-						}
-					}
 
-					lineNumber++;
+						lineNumber++;
+					}
 				}
-				br.close();
+				catch(IOException e){
+					instance.log(String.format("Unable to read alias file '%s': %s", aliasFile.getAbsolutePath(), e.getMessage()));
+				}
+				finally {
+					try {
+						br.close();
+					} catch (IOException e){}
+				}
 			}
-			catch(IOException e){
-				instance.log(String.format("Unable to read alias file '%s': %s", aliasFile.getAbsolutePath(), e.getMessage()));
-			}
+			catch(FileNotFoundException e){}
 		}
 	}
 }
