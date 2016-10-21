@@ -43,12 +43,12 @@ public abstract class AbstractShellCommand implements ShellCommand{
 	public CommandInput parseArguments(ApplicationInstance instance, List<String> args) throws CommandException {
 
 		if(getClass().getAnnotation(RequireOpenedFile.class) != null && !instance.isAnyFileOpened()){
-			throw new CommandException("Error: You have to open a password file before you can use this command.");
+			throw new CommandException("You have to open a password file before you can use this command.");
 		}
 
 		NoArgs noArgs = getClass().getAnnotation(NoArgs.class);
 		if(noArgs != null && args.size() > 0){
-				throw new CommandException("Error: This command does not take any arguments.");
+			throw new CommandException("This command does not take any arguments.");
 		}
 
 		try{
