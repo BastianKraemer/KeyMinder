@@ -1,21 +1,21 @@
 /*	KeyMinder
-	Copyright (C) 2015 Bastian Kraemer
-
-	Terminal.java
-
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2015-2016 Bastian Kraemer
+ *
+ * Terminal.java
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package de.akubix.keyminder.ui.fx;
 
 import java.util.ArrayList;
@@ -29,7 +29,6 @@ import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
@@ -45,7 +44,7 @@ public class Terminal implements de.akubix.keyminder.shell.io.ShellOutputWriter 
 	private TextArea output;
 	private TextField input;
 	private ApplicationInstance app;
-	private List<String> history = new ArrayList<String>();
+	private List<String> history = new ArrayList<>();
 	private int currentHistoryIndex = 0;
 
 	public Terminal(ApplicationInstance instance){
@@ -72,32 +71,30 @@ public class Terminal implements de.akubix.keyminder.shell.io.ShellOutputWriter 
 		Scene myScene = new Scene(root, 640, 320);
 		StylesheetMap.assignStylesheet(myScene, StylesheetMap.WindowSelector.Terminal);
 
-		input.addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
-			@Override
-			public void handle(KeyEvent event) {
-				if(event.getCode() == KeyCode.ENTER){
-					runCommand(input.getText());
-					input.setText("");
-				}
-				else if(event.getCode() == KeyCode.UP && currentHistoryIndex != -1){
-					if(currentHistoryIndex > 0){currentHistoryIndex--;}
-					input.setText(history.get(currentHistoryIndex));
-					input.selectAll();
-					event.consume();
-				}
-				else if(event.getCode() == KeyCode.DOWN && currentHistoryIndex != -1){
-					if(currentHistoryIndex < history.size() - 1){currentHistoryIndex++;}
-					input.setText(history.get(currentHistoryIndex));
-					input.selectAll();
-					event.consume();
-				}
-			}});
+		input.addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent event) -> {
+			if(event.getCode() == KeyCode.ENTER){
+				runCommand(input.getText());
+				input.setText("");
+			}
+			else if(event.getCode() == KeyCode.UP && currentHistoryIndex != -1){
+				currentHistoryIndex--;
+				if(currentHistoryIndex < 0){currentHistoryIndex = 0;}
+				input.setText(history.get(currentHistoryIndex));
+				input.selectAll();
+				event.consume();
+			}
+			else if(event.getCode() == KeyCode.DOWN && currentHistoryIndex != -1){
+				currentHistoryIndex++;
+				if(currentHistoryIndex >= history.size() - 1){currentHistoryIndex = history.size() - 1;}
+				input.setText(history.get(currentHistoryIndex));
+				input.selectAll();
+				event.consume();
+			}
+		});
 
-		output.addEventFilter(KeyEvent.KEY_RELEASED, new EventHandler<KeyEvent>() {
-			@Override
-			public void handle(KeyEvent event) {
-				if(!event.isControlDown()){input.requestFocus(); input.appendText(event.getText());}
-			}});
+		output.addEventFilter(KeyEvent.KEY_RELEASED, (KeyEvent event) -> {
+			if(!event.isControlDown()){input.requestFocus(); input.appendText(event.getText());}
+		});
 
 		output.setWrapText(true);
 		output.setEditable(false);
