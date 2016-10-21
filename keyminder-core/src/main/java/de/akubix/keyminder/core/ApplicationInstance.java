@@ -1,21 +1,21 @@
 /*	KeyMinder
-	Copyright (C) 2015-2016 Bastian Kraemer
-
-	ApplicationInstance.java
-
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2015-2016 Bastian Kraemer
+ *
+ * ApplicationInstance.java
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package de.akubix.keyminder.core;
 
 import java.io.File;
@@ -66,7 +66,6 @@ import de.akubix.keyminder.util.Utilities;
  */
 public class ApplicationInstance implements ShellOutputWriter {
 
-	/* Static configurations variables */
 	public static final String APP_NAME = "KeyMinder";
 
 	public static final String NODE_ATTRIBUTE_CREATION_DATE = "created";
@@ -80,8 +79,6 @@ public class ApplicationInstance implements ShellOutputWriter {
 	public static final String SETTINGS_KEY_BROWSER_PATH = "etc.browserpath";
 
 	private static final String DEFAULT_SETTINGS_FILE = "keyminder_settings.xml";
-
-	/* Other variables */
 
 	private File settingsFile;
 	private UserInterface ui;
@@ -105,19 +102,19 @@ public class ApplicationInstance implements ShellOutputWriter {
 	}
 
 	public ApplicationInstance(UserInterface ui, boolean forceEnglishLocale) throws IllegalArgumentException {
-		this.ui = ui;
 
+		this.ui = ui;
 		this.userInterfaceInformation = ui.getClass().getAnnotation(KeyMinderUserInterface.class);
 
 		if(this.userInterfaceInformation == null){
 			throw new IllegalArgumentException("User interface is not annotated with '" + KeyMinderUserInterface.class.getName() + "'.");
 		}
 
-		outputWriter = new HashSet<>();
-		outputWriter.add(new ConsoleOutput());
+		this.outputWriter = new HashSet<>();
+		this.outputWriter.add(new ConsoleOutput());
 
-		tree = new StandardTree(this);
-		storageManager = new StorageManager();
+		this.tree = new StandardTree(this);
+		this.storageManager = new StorageManager();
 
 		this.settingsFile = new File(KeyMinder.environment.getOrDefault(KeyMinder.ENVIRONMENT_KEY_SETTINGS_FILE, DEFAULT_SETTINGS_FILE));
 
@@ -126,7 +123,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 		}
 		else{
 			this.settingsFile = new File(DEFAULT_SETTINGS_FILE);
-			if(!settingsFile.exists()){
+			if(!this.settingsFile.exists()){
 				// There is no configuration file next to the jar, maybe there is a global configuration file in the users home directory
 				File globalSettingsFile = new File(System.getProperty("user.home") + System.getProperty("file.separator") + DEFAULT_SETTINGS_FILE);
 				if(globalSettingsFile.exists()){
@@ -165,8 +162,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 		LocaleLoader.provideBundle("core", locale);
 
 		this.shell = new Shell(this);
-		shell.loadCommandsFromFile("/de/akubix/keyminder/shell/defaultCommands");
-		shell.loadAliasListFromDefaultFileAsync();
+		this.shell.loadCommandsFromFile("/de/akubix/keyminder/shell/CommandClasses.conf");
 
 		this.moduleLoader = new ModuleLoader(this);
 
@@ -232,6 +228,8 @@ public class ApplicationInstance implements ShellOutputWriter {
 		if(enableModuleLoading){
 			moduleLoader.loadModules();
 		}
+
+		shell.loadAliasListFromDefaultFileAsync();
 	}
 
 	/**
