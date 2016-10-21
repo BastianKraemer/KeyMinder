@@ -1,6 +1,7 @@
 # Maven files
 **/target/
 **/dependency-reduced-pom.xml
+**/*.xml.versionsBackup
 
 # Eclipse project files
 **/.settings/
