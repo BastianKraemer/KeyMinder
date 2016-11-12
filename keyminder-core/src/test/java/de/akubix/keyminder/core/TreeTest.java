@@ -29,6 +29,7 @@ public class TreeTest {
 
 		app.getTree().enableEvents(true);
 		app.getTree().enableNodeTimestamps(true);
+		app.getTree().enableUndo(true);
 
 		final String nodePrefix = "RootNode_";
 		final int number_of_nodes = 10;
@@ -37,20 +38,20 @@ public class TreeTest {
 			tree.getRootNode().addChildNode(new DefaultTreeNode(nodePrefix + i));
 		}
 
-		assertEquals(number_of_nodes + 1, tree.getRootNode().getChildNodes().size());
-
-		tree.getRootNode().getChildNodeByIndex(0).remove();
 		assertEquals(number_of_nodes, tree.getRootNode().getChildNodes().size());
 
-		// Test Add...
-		for(int i = 0; i < number_of_nodes; i++){
-			assertTrue("Verifying RootNodes", tree.getRootNode().getChildNodeByIndex(i).getText().equals(nodePrefix + i));
+		tree.getRootNode().getChildNodeByIndex(0).remove();
+		assertEquals(number_of_nodes - 1, tree.getRootNode().getChildNodes().size());
+
+		// Verify add...
+		for(int i = 1; i < number_of_nodes; i++){
+			assertEquals("Verifying RootNodes", nodePrefix + i, tree.getRootNode().getChildNodeByIndex(i - 1).getText());
 		}
 
 		// Test Undo
 		assertTrue("Undoing last action", tree.undo(false));
 
-		assertEquals(number_of_nodes + 1, tree.getRootNode().getChildNodes().size());
+		assertEquals(number_of_nodes, tree.getRootNode().getChildNodes().size());
 
 		TreeNode x = tree.getRootNode().getChildNodeByIndex(1);
 		final String nodeName = "HelloWorld";
@@ -62,7 +63,7 @@ public class TreeTest {
 
 		assertEquals("Testing method 'getNodeByPath()'", newNode.getId(), myNode.getId());
 
-		assertEquals(number_of_nodes + 3, app.getTree().countAllNodes()); // +3 because the root node has to be included
+		assertEquals(number_of_nodes + 2, app.getTree().countAllNodes()); // +2 because the root node has to be included
 
 		int indexOfNodeX = x.getIndex();
 		String idOfNodeX = x.getId();

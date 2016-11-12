@@ -251,8 +251,8 @@ public abstract class TreeNode {
 		requireRegisteredNode();
 
 		synchronized (childNodes) {
-			getParentNode().childNodes.remove(getId());
 			this.tree.unregisterNode(this);
+			getParentNode().childNodes.remove(getId());
 			this.tree = null;
 		}
 	}

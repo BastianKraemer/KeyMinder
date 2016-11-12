@@ -265,6 +265,16 @@ public class TreeStore {
 				setSelectedNode(prevNode);
 			}
 		}
+		else {
+			final int index = nodePointer.getIndex();
+			final int nodeCount = getRootNode().countChildNodes();
+			if(nodeCount > 1){
+				setSelectedNode(getRootNode().getChildNodeByIndex(index == 0 ? 1 : index - 1));
+			}
+			else{
+				resetNodePointer();
+			}
+		}
 	}
 
 	/**
