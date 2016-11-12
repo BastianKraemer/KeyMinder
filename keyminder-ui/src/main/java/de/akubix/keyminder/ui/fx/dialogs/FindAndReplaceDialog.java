@@ -21,7 +21,7 @@ package de.akubix.keyminder.ui.fx.dialogs;
 import java.time.ZoneId;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.db.Tree;
+import de.akubix.keyminder.core.tree.TreeStore;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
 import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
@@ -52,7 +52,7 @@ public final class FindAndReplaceDialog {
 
 	private static FindAndReplaceDialog instance = null;
 	private final Stage me;
-	private Tree tree;
+	private TreeStore tree;
 	private TextField findTextField;
 	private TextField replaceTextField;
 	private CheckBox isCaseSensitive;
@@ -64,7 +64,7 @@ public final class FindAndReplaceDialog {
 
 	private JavaFxUserInterfaceApi fxUI;
 
-	private FindAndReplaceDialog(Stage primaryStage, Tree tree, JavaFxUserInterfaceApi fxUI){
+	private FindAndReplaceDialog(Stage primaryStage, TreeStore tree, JavaFxUserInterfaceApi fxUI){
 		this.tree = tree;
 		this.fxUI = fxUI;
 
@@ -91,7 +91,7 @@ public final class FindAndReplaceDialog {
 		me.requestFocus();
 	}
 
-	public static synchronized void showInstance(Stage primaryStage, Tree tree, de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI){
+	public static synchronized void showInstance(Stage primaryStage, TreeStore tree, de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi fxUI){
 		if(instance == null){
 			instance = new FindAndReplaceDialog(primaryStage, tree, fxUI);
 			instance.show();

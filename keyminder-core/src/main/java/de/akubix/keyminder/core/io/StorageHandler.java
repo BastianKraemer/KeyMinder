@@ -21,8 +21,8 @@ package de.akubix.keyminder.core.io;
 import java.io.File;
 
 import de.akubix.keyminder.core.FileConfiguration;
-import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.exceptions.StorageException;
+import de.akubix.keyminder.core.tree.TreeStore;
 
 public interface StorageHandler {
 	/**
@@ -34,7 +34,7 @@ public interface StorageHandler {
 	 * @return the file configuration of this file
 	 * @throws StorageException Throw this exception if something went wrong
 	 */
-	public FileConfiguration open(File file, String filePassword, Tree tree, de.akubix.keyminder.core.ApplicationInstance instance) throws StorageException;
+	public FileConfiguration open(File file, String filePassword, Object tree, de.akubix.keyminder.core.ApplicationInstance instance) throws StorageException;
 
 	/**
 	 * This method will be called if the "Storage Handler" is requested to save the tree to a file
@@ -43,5 +43,5 @@ public interface StorageHandler {
 	 * @param instance The application instance, for example to print some output
 	 * @throws StorageException Throw this exception if something went wrong
 	 */
-	public void save(FileConfiguration file, Tree tree, de.akubix.keyminder.core.ApplicationInstance instance) throws StorageException;
+	public void save(FileConfiguration file, TreeStore tree, de.akubix.keyminder.core.ApplicationInstance instance) throws StorageException;
 }

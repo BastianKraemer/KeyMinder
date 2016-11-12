@@ -19,7 +19,8 @@
 package de.akubix.keyminder.shell.commands;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.tree.DefaultTreeNode;
+import de.akubix.keyminder.core.tree.TreeNode;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
@@ -50,11 +51,9 @@ public final class AddNode extends AbstractShellCommand {
 			}
 		}
 
-		TreeNode newNode = instance.getTree().createNode(
-			in.getParameters().get("$1")[0]
-		);
+		TreeNode newNode = new DefaultTreeNode(in.getParameters().get("$1")[0]);
+		selectedNode.addChildNode(newNode);
 
-		instance.getTree().addNode(newNode, selectedNode);
 		return CommandOutput.success(newNode);
 	}
 }

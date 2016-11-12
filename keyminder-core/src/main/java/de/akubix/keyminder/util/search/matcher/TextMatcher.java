@@ -5,7 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.tree.TreeNode;
 import de.akubix.keyminder.util.search.NodeMatchResult;
 
 public class TextMatcher implements NodeMatcher {
@@ -53,7 +53,7 @@ public class TextMatcher implements NodeMatcher {
 		}
 
 		if(this.option != NodeMatcherOption.TEXT_ONLY){;
-			for(Map.Entry<String, String> attrib: node.getAttributeSet()){
+			for(Map.Entry<String, String> attrib: node.getAttributes()){
 				if(attributeRegExFilter == null || attributeRegExFilter.matcher(attrib.getKey()).matches()){
 					m = pattern.matcher(attrib.getValue());
 					if(m.matches()){

@@ -18,9 +18,11 @@
 */
 package de.akubix.keyminder.shell.commands;
 
+import java.util.List;
+
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.InvalidValueException;
+import de.akubix.keyminder.core.tree.TreeNode;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.Alias;
@@ -82,13 +84,13 @@ public final class CopyCmd extends AbstractShellCommand {
 	}
 
 	private static void nodeCopy(TreeNode src, TreeNode dest, boolean move, boolean includeChildNodes) {
-		//src.getTree() and dest.getTree() will point to the same reference
-		if(move){src.getTree().beginUpdate();}
-		TreeNode clone = src.getTree().cloneTreeNode(src, includeChildNodes);
-		dest.getTree().addNode(clone, dest);
-		if(move){
-			src.getTree().removeNode(src);
-			dest.getTree().endUpdate();
-		}
+
+		src.getTree().transaction(() -> {
+			List<TreeNode> copyList = src.getTree().exportNodeStructure(src);
+			if(move){
+				src.remove();
+			}
+			dest.getTree().importNodeStructure(dest, copyList);
+		});
 	}
 }

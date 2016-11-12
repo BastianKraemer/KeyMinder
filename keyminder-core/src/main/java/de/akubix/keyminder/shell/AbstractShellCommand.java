@@ -24,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.InvalidValueException;
+import de.akubix.keyminder.core.tree.TreeNode;
 import de.akubix.keyminder.shell.annotations.AllowCallWithoutArguments;
 import de.akubix.keyminder.shell.annotations.NoArgs;
 import de.akubix.keyminder.shell.annotations.Operands;

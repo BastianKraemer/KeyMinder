@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 
-import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.tree.TreeNode;
 
 public class NodeMatchResult {
 	private TreeNode node;

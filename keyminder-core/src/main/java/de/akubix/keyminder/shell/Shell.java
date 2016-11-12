@@ -41,8 +41,8 @@ import java.util.regex.Pattern;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
-import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.core.tree.TreeNode;
 import de.akubix.keyminder.shell.annotations.Alias;
 import de.akubix.keyminder.shell.annotations.Command;
 import de.akubix.keyminder.shell.annotations.Description;
@@ -328,7 +328,7 @@ public class Shell {
 		List<ParsedCommand> cmdList = parseCommandLineString(
 			replaceVariables(
 				commandLineInput.trim(),
-				(var) -> instance.lookup(var, selectedNode.getId() != 0 ? selectedNode : null, runtimeVariables)));
+				(var) -> instance.lookup(var, selectedNode.isRootNode() ? null : selectedNode, runtimeVariables)));
 
 		for(int i = 0; i < cmdList.size(); i++){
 			ParsedCommand p = cmdList.get(i);

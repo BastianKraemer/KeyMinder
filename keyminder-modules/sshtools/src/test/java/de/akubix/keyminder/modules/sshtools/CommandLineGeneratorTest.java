@@ -17,10 +17,9 @@ import org.xml.sax.SAXException;
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.KeyMinderInstanceBuilder;
-import de.akubix.keyminder.core.db.StandardTree;
-import de.akubix.keyminder.core.db.Tree;
-import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.io.XML;
+import de.akubix.keyminder.core.tree.DefaultTreeNode;
+import de.akubix.keyminder.core.tree.TreeNode;
 
 public class CommandLineGeneratorTest {
 
@@ -31,20 +30,18 @@ public class CommandLineGeneratorTest {
 	private static Supplier<InputStream>  winscpCmdDescriptor = () -> CommandLineGeneratorTest.class.getResourceAsStream("/de/akubix/keyminder/modules/sshtools/winscp.xml");
 
 	private ApplicationInstance app;
-	private Tree tree;
 
 	@Before
 	public void prepare(){
 		KeyMinder.setVerboseMode(false);
 		app = KeyMinderInstanceBuilder.getNewInstance();
-		tree = new StandardTree(app);
 	}
 
 	@Test
 	public void testPuttyProfile() {
 
 		Map<String, String> var = new HashMap<>();
-		TreeNode node = tree.createNode("Test");
+		TreeNode node = new DefaultTreeNode("Test");
 		node.setAttribute("ssh_host", "localhost");
 
 		// Not enough data, should lead to an IllegalArgumentException.
@@ -95,7 +92,7 @@ public class CommandLineGeneratorTest {
 		app.setSettingsValue("sshtools.winscppath", "WinSCP.exe");
 
 		Map<String, String> var = new HashMap<>();
-		TreeNode node = tree.createNode("Test");
+		TreeNode node = new DefaultTreeNode("Test");
 		node.setAttribute("ssh_host", "localhost");
 
 		assertEquals("[WinSCP.exe, sftp://localhost]", runParser(var, node, winscpCmdDescriptor, DEFAULT_PROFILE).toString());

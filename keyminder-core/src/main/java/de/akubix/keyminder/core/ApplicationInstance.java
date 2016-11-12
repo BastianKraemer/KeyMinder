@@ -34,9 +34,6 @@ import javax.xml.transform.TransformerException;
 
 import org.xml.sax.SAXException;
 
-import de.akubix.keyminder.core.db.StandardTree;
-import de.akubix.keyminder.core.db.Tree;
-import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.events.Compliance;
 import de.akubix.keyminder.core.events.ComplianceEventHandler;
@@ -52,6 +49,9 @@ import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.io.StorageManager;
 import de.akubix.keyminder.core.io.XML;
 import de.akubix.keyminder.core.modules.ModuleLoader;
+import de.akubix.keyminder.core.tree.DefaultTreeNode;
+import de.akubix.keyminder.core.tree.TreeNode;
+import de.akubix.keyminder.core.tree.TreeStore;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.Shell;
@@ -88,7 +88,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 	private Map<String, List<Object>> eventCollection = new HashMap<>();
 
-	private StandardTree tree;
+	private TreeStore tree;
 	private final Shell shell;
 	private final ModuleLoader moduleLoader;
 	private final StorageManager storageManager;
@@ -113,7 +113,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 		this.outputWriter = new HashSet<>();
 		this.outputWriter.add(new ConsoleOutput());
 
-		this.tree = new StandardTree(this);
+		this.tree = new TreeStore(this);
 		this.storageManager = new StorageManager();
 
 		this.settingsFile = new File(KeyMinder.environment.getOrDefault(KeyMinder.ENVIRONMENT_KEY_SETTINGS_FILE, DEFAULT_SETTINGS_FILE));
@@ -174,7 +174,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 		addEventHandler(TreeNodeEvent.OnNodeRemoved, fx);
 	}
 
-	public Tree getTree(){
+	public TreeStore getTree(){
 		return tree;
 	}
 
@@ -430,7 +430,6 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 			tree.reset();
 			currentFile = storageManager.getStorageHandler(fileTypeIdentifier).open(file, filepassword, tree, this);
-			tree.verify();
 
 			prepareAppForFileOpened();
 
@@ -447,19 +446,22 @@ public class ApplicationInstance implements ShellOutputWriter {
 	}
 
 	public synchronized void prepareAppForFileOpened(){
-		tree.undoManager.setEnable(true);
+
 		tree.setTreeChangedStatus(false);
 
 		tree.resetNodePointer(); // the node pointer should have a default value, maybe a module listens to the "onFileOpened" event.
 
 		tree.enableNodeTimestamps(true);
-		tree.enableEventFireing(true);
+		tree.enableEvents(true);
+		tree.enableUndo(true);
 
 		fireEvent(DefaultEvent.OnFileOpened);
 
 		buildQuicklinkList();
 
-		if(tree.getSelectedNode().getId() != 0){fireEvent(TreeNodeEvent.OnSelectedItemChanged, tree.getSelectedNode());}
+		if(!tree.getSelectedNode().isRootNode()){
+			fireEvent(TreeNodeEvent.OnSelectedItemChanged, tree.getSelectedNode());
+		}
 	}
 
 	public synchronized boolean saveFile(){
@@ -494,7 +496,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 		if(currentFile != null){
 			if(fireEvent(ComplianceEvent.AllowFileClosing) != Compliance.AGREE){return false;}
 
-			if(tree.treeHasBeenUpdated()){
+			if(tree.hasUnsavedChanges()){
 				Compliance discardChanges = fireEvent(ComplianceEvent.DiscardChanges);
 
 				if(discardChanges == Compliance.CANCEL){return false;}
@@ -503,14 +505,15 @@ public class ApplicationInstance implements ShellOutputWriter {
 				}
 			}
 
-			tree.enableEventFireing(false);
+			tree.enableEvents(false);
 			tree.reset();
 
 			if(currentFile.getEncryptionManager() != null){currentFile.getEncryptionManager().destroy();}
 			currentFile = null;
 			quicklinks.clear();
 			tree.setTreeChangedStatus(false);
-			tree.enableEventFireing(true);
+			tree.enableEvents(true);
+			tree.enableUndo(false);
 			fireEvent(DefaultEvent.OnFileClosed);
 
 			updateStatus(locale.getString("application.file_closed"));
@@ -548,8 +551,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 			}
 		}
 
-		TreeNode firstNode = tree.createNode(APP_NAME);
-		tree.addNode(firstNode, tree.getRootNode());
+		tree.getRootNode().addChildNode(new DefaultTreeNode(APP_NAME));
 
 		prepareAppForFileOpened();
 
@@ -565,7 +567,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 	public String lookup(String varName) throws IllegalArgumentException {
 		try {
-			return lookup(varName, (tree.getSelectedNode().getId() != 0 ? tree.getSelectedNode() : null), null);
+			return lookup(varName, (!tree.getSelectedNode().isRootNode() ? tree.getSelectedNode() : null), null);
 		}
 		catch(IllegalArgumentException e){
 			return "";
@@ -573,7 +575,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 	}
 
 	public boolean variableIsDefined(String varName){
-		return variableIsDefined(varName, (tree.getSelectedNode().getId() != 0 ? tree.getSelectedNode() : null), null);
+		return variableIsDefined(varName, (!tree.getSelectedNode().isRootNode() ? tree.getSelectedNode() : null), null);
 	}
 
 	public boolean variableIsDefined(String varName, TreeNode treeNode, Map<String, String> additionalVarMap){
@@ -630,41 +632,43 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 	public void forEachLinkedNode(TreeNode node, Consumer<TreeNode> forEach){
 		boolean listNeedsToBeCorrected = false;
-		for(String idString: node.getAttribute(NODE_ATTRIBUTE_LINKED_NODES).split(";")){
-			try{
-				int id = Integer.parseInt(idString);
-				TreeNode linkedNode = tree.getNodeById(id);
-				if(linkedNode != null){
-					forEach.accept(linkedNode);
+
+		if(node.hasAttribute(NODE_ATTRIBUTE_LINKED_NODES)){
+
+		for(String id: node.getAttribute(NODE_ATTRIBUTE_LINKED_NODES).split(";")){
+				try{
+					TreeNode linkedNode = tree.getNodeById(id);
+					if(linkedNode != null){
+						forEach.accept(linkedNode);
+					}
+					else{
+						listNeedsToBeCorrected = true;
+					}
 				}
-				else{
+				catch(NumberFormatException numEx){
 					listNeedsToBeCorrected = true;
 				}
 			}
-			catch(NumberFormatException numEx){
-				listNeedsToBeCorrected = true;
-			}
-		}
 
-		if(listNeedsToBeCorrected){removeLinkedNode(node, -1);}
+			if(listNeedsToBeCorrected){removeLinkedNode(node, null);}
+		}
 	}
 
-	public synchronized void addLinkedNode(TreeNode node, int idOfLinkedNode){
+	public synchronized void addLinkedNode(TreeNode node, String idOfLinkedNode){
 		if(node.hasAttribute(NODE_ATTRIBUTE_LINKED_NODES)){
 			String currentValue = node.getAttribute(NODE_ATTRIBUTE_LINKED_NODES);
 			node.setAttribute(NODE_ATTRIBUTE_LINKED_NODES, currentValue + (currentValue.endsWith(";") ? "" : ";") + idOfLinkedNode);
 		}
 		else{
-			node.setAttribute(NODE_ATTRIBUTE_LINKED_NODES, Integer.toString(idOfLinkedNode));
+			node.setAttribute(NODE_ATTRIBUTE_LINKED_NODES, idOfLinkedNode);
 		}
 	}
 
-	public synchronized void removeLinkedNode(TreeNode node, int linkedId){
+	public synchronized void removeLinkedNode(TreeNode node, String linkedId){
 		int cnt = 0;
 		StringBuilder newLinkedNodesString = new StringBuilder();
-		for(String idString: node.getAttribute(NODE_ATTRIBUTE_LINKED_NODES).split(";")){
+		for(String id: node.getAttribute(NODE_ATTRIBUTE_LINKED_NODES).split(";")){
 			try	{
-				int id = Integer.parseInt(idString);
 				if(linkedId != id){
 					TreeNode linkedNode = tree.getNodeById(id);
 					if(linkedNode != null){
@@ -689,7 +693,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 	 * ========================================================================================================================================================
 	 */
 
-	private Map<String, Integer> quicklinks = new HashMap<>();
+	private Map<String, String> quicklinks = new HashMap<>();
 
 	private synchronized void buildQuicklinkList(){
 		quicklinks.clear();
@@ -715,34 +719,36 @@ public class ApplicationInstance implements ShellOutputWriter {
 	}
 
 	public synchronized void addQuicklink(String quicklinkName, TreeNode node){
-		// Currently "quicklinks" cannot be undone - therefore the undo manager is temporary disabled
-		boolean undoWasEnabled = tree.undoManager.isEnabled();
-		if(quicklinks.containsKey(quicklinkName)){
-			TreeNode oldNode = tree.getNodeById(quicklinks.get(quicklinkName));
-			if(oldNode != null){
-				oldNode.removeAttribute(NODE_ATTRIBUTE_QUICKLINK);
-			}
-		}
 
-		node.setAttribute(NODE_ATTRIBUTE_QUICKLINK, quicklinkName);
-		quicklinks.put(quicklinkName, node.getId());
-		tree.undoManager.setEnable(undoWasEnabled);
-		fireEvent(DefaultEvent.OnQuicklinksUpdated);
+		tree.transaction(() -> {
+			if(quicklinks.containsKey(quicklinkName)){
+				TreeNode oldNode = tree.getNodeById(quicklinks.get(quicklinkName));
+				if(oldNode != null){
+					oldNode.removeAttribute(NODE_ATTRIBUTE_QUICKLINK);
+				}
+			}
+
+			node.setAttribute(NODE_ATTRIBUTE_QUICKLINK, quicklinkName);
+			quicklinks.put(quicklinkName, node.getId());
+
+			fireEvent(DefaultEvent.OnQuicklinksUpdated);
+
+		}, () -> buildQuicklinkList());
 	}
 
 	public void removeQuicklink(String quicklinkName){
-		// Currently "quicklinks" cannot be undone - therefore the undo manager is temporary disabled
-		boolean undoWasEnabled = tree.undoManager.isEnabled();
-		if(quicklinks.containsKey(quicklinkName)){
-			TreeNode node = tree.getNodeById(quicklinks.get(quicklinkName));
-			if(node != null){
-				node.removeAttribute(NODE_ATTRIBUTE_QUICKLINK);
-			}
-		}
 
-		quicklinks.remove(quicklinkName);
-		tree.undoManager.setEnable(undoWasEnabled);
-		fireEvent(DefaultEvent.OnQuicklinksUpdated);
+		tree.transaction(() -> {
+			if(quicklinks.containsKey(quicklinkName)){
+				TreeNode node = tree.getNodeById(quicklinks.get(quicklinkName));
+				if(node != null){
+					node.removeAttribute(NODE_ATTRIBUTE_QUICKLINK);
+				}
+			}
+
+			quicklinks.remove(quicklinkName);
+			fireEvent(DefaultEvent.OnQuicklinksUpdated);
+		}, () -> buildQuicklinkList());
 	}
 
 	/*

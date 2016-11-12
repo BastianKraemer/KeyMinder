@@ -3,8 +3,8 @@ package de.akubix.keyminder.util.search;
 import java.util.Arrays;
 import java.util.List;
 
-import de.akubix.keyminder.core.db.Tree;
-import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.tree.TreeNode;
+import de.akubix.keyminder.core.tree.TreeStore;
 import de.akubix.keyminder.util.search.matcher.NodeMatcher;
 
 public final class NodeWalker {
@@ -24,7 +24,7 @@ public final class NodeWalker {
 	 * @param matchConditions the match conditions
 	 * @return the search result
 	 */
-	public static SearchResult find(Tree tree, NodeMatcher... matchConditions){
+	public static SearchResult find(TreeStore tree, NodeMatcher... matchConditions){
 		return find(tree, Arrays.asList(matchConditions));
 	}
 
@@ -34,7 +34,7 @@ public final class NodeWalker {
 	 * @param matchConditions the match conditions
 	 * @return the search result
 	 */
-	public static SearchResult find(Tree tree, List<NodeMatcher> matchConditions){
+	public static SearchResult find(TreeStore tree, List<NodeMatcher> matchConditions){
 
 		NodeWalker walker = new NodeWalker(tree.getSelectedNode(), matchConditions);
 
@@ -104,7 +104,7 @@ public final class NodeWalker {
 			}
 		}
 
-		if(parentNode.getId() != 0 && enableParentSearch){
+		if(!parentNode.isRootNode() && enableParentSearch){
 			TreeNode parentParentNode = parentNode.getParentNode();
 			int nextIndex = parentNode.getIndex() + 1;
 
@@ -122,7 +122,7 @@ public final class NodeWalker {
 
 	private SearchResult findNextUsingParentNode(TreeNode childNode){
 		TreeNode nextitem = childNode.getParentNode();
-		if(nextitem.getId() == 0){ // Verify that it is not the root node
+		if(nextitem.isRootNode()){ // Verify that it is not the root node
 			if(startNode.getTree().getRootNode().countChildNodes() > 0){
 				return findNext(startNode.getTree().getRootNode().getChildNodeByIndex(0), false, true);
 			}

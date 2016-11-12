@@ -1,6 +1,6 @@
 package de.akubix.keyminder.ui.fx.sidebar;
 
-import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.tree.TreeNode;
 import javafx.scene.Node;
 
 public interface FxSidebarElement {

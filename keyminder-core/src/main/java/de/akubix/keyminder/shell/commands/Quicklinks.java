@@ -19,8 +19,8 @@
 package de.akubix.keyminder.shell.commands;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.InvalidValueException;
+import de.akubix.keyminder.core.tree.TreeNode;
 import de.akubix.keyminder.shell.AbstractShellCommand;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.annotations.AllowCallWithoutArguments;
@@ -98,7 +98,7 @@ public class Quicklinks extends AbstractShellCommand {
 			instance.getQuicklinks().stream().sorted().forEach((str) -> {
 				TreeNode node = instance.getQuicklinkNode(str);
 				if(node != null){
-					out.printf("%16s -> %s\n", str, instance.getTree().getNodePath(node, "/"));
+					out.printf("%16s -> %s\n", str, node.getNodePath());
 				}
 			});
 			return CommandOutput.success();

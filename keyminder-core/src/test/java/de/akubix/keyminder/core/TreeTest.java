@@ -7,9 +7,9 @@ import static org.junit.Assert.fail;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.akubix.keyminder.core.db.StandardTree;
-import de.akubix.keyminder.core.db.Tree;
-import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.tree.DefaultTreeNode;
+import de.akubix.keyminder.core.tree.TreeNode;
+import de.akubix.keyminder.core.tree.TreeStore;
 
 public class TreeTest {
 
@@ -25,27 +25,22 @@ public class TreeTest {
 		runSimpleTreeTest(app.getTree());
 	}
 
-	private void runSimpleTreeTest(Tree tree)
-	{
-		StandardTree defaultTree = (StandardTree) tree;
-		defaultTree.enableEventFireing(true);
-		defaultTree.enableNodeTimestamps(true);
-		defaultTree.undoManager.setEnable(true);
+	private void runSimpleTreeTest(TreeStore tree){
 
-		tree.removeAllChildNodes(tree.getRootNode());
+		app.getTree().enableEvents(true);
+		app.getTree().enableNodeTimestamps(true);
 
 		final String nodePrefix = "RootNode_";
 		final int number_of_nodes = 10;
 		// Create some root nodes
 		for(int i = 0; i < number_of_nodes; i++){
-			TreeNode n = tree.createNode(nodePrefix + i);
-			assertTrue("Adding Node #" + i, tree.addNode(n, tree.getRootNode()));
+			tree.getRootNode().addChildNode(new DefaultTreeNode(nodePrefix + i));
 		}
 
-		assertEquals(number_of_nodes + 1, tree.getRootNode().getChildNodes().length);
+		assertEquals(number_of_nodes + 1, tree.getRootNode().getChildNodes().size());
 
-		tree.removeNode(tree.getRootNode().getChildNodeByIndex(0));
-		assertEquals(number_of_nodes, tree.getRootNode().getChildNodes().length);
+		tree.getRootNode().getChildNodeByIndex(0).remove();
+		assertEquals(number_of_nodes, tree.getRootNode().getChildNodes().size());
 
 		// Test Add...
 		for(int i = 0; i < number_of_nodes; i++){
@@ -53,28 +48,28 @@ public class TreeTest {
 		}
 
 		// Test Undo
-		assertTrue("Undoing last action", tree.undo());
+		assertTrue("Undoing last action", tree.undo(false));
 
-		assertEquals(number_of_nodes + 1, tree.getRootNode().getChildNodes().length);
+		assertEquals(number_of_nodes + 1, tree.getRootNode().getChildNodes().size());
 
 		TreeNode x = tree.getRootNode().getChildNodeByIndex(1);
 		final String nodeName = "HelloWorld";
-		TreeNode newNode = tree.createNode(nodeName);
-		assertTrue("Adding another node...", tree.addNode(newNode, x));
+		TreeNode newNode = new DefaultTreeNode(nodeName);
+		x.addChildNode(newNode);
 
 		// Testing getNodeByPath()
 		TreeNode myNode = tree.getNodeByPath("/" + x.getText() + "/" + newNode.getText());
 
 		assertEquals("Testing method 'getNodeByPath()'", newNode.getId(), myNode.getId());
 
-		assertEquals(number_of_nodes + 3, defaultTree.countAllNodes()); // +3 because the root node has to be included
+		assertEquals(number_of_nodes + 3, app.getTree().countAllNodes()); // +3 because the root node has to be included
 
 		int indexOfNodeX = x.getIndex();
-		int idOfNodeX = x.getId();
-		tree.removeNode(x.getId());
+		String idOfNodeX = x.getId();
+		tree.getNodeById(idOfNodeX).remove();
 
-		if(tree.getRootNode().getChildNodeByIndex(indexOfNodeX).getId() == idOfNodeX){
-			fail("Method 'removeNode()' doesn't work.");
+		if(tree.getRootNode().getChildNodeByIndex(indexOfNodeX).getId().equals(idOfNodeX)){
+			fail("Method 'TreeNode.remove()' doesn't work.");
 		}
 	}
 

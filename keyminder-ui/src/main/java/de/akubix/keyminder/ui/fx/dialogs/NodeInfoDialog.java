@@ -18,7 +18,7 @@
 */
 package de.akubix.keyminder.ui.fx.dialogs;
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.tree.TreeNode;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.MainWindow;
@@ -277,16 +277,17 @@ public class NodeInfoDialog {
 		return attribList;
 	}
 
-	private void WriteAttributesToNode(TreeNode node, ObservableList<Record> attribList){
+	private void WriteAttributesToNode(final TreeNode node, final ObservableList<Record> attribList){
 		synchronized(node.getTree()){
 			synchronized(node){
-				node.getTree().beginUpdate();
-				node.getUnrestrictedAccess().clearAttributes(false);
 
-				for(Record entry: attribList){
-					node.setAttribute(entry.getAttributeName(), entry.getAttributeValue());
-				}
-				node.getTree().endUpdate();
+				node.getTree().transaction(() -> {
+					node.listAttributes().forEach(node::removeAttribute);
+
+					for(Record entry: attribList){
+						node.setAttribute(entry.getAttributeName(), entry.getAttributeValue());
+					}
+				});
 			}
 		}
 	}

@@ -40,13 +40,13 @@ import org.xml.sax.SAXException;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
-import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.events.Compliance;
 import de.akubix.keyminder.core.events.DefaultEventHandler;
 import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.io.XML;
+import de.akubix.keyminder.core.tree.TreeNode;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;

@@ -30,11 +30,11 @@ import java.util.function.Consumer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
-import de.akubix.keyminder.core.db.Tree;
-import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.events.Compliance;
 import de.akubix.keyminder.core.events.EventTypes.ComplianceEvent;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
+import de.akubix.keyminder.core.tree.TreeNode;
+import de.akubix.keyminder.core.tree.TreeStore;
 import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
@@ -212,9 +212,9 @@ public class Deadline {
 	private class ExpiredNodeData{
 		public final boolean isExpired;
 		public final String date;
-		public final int nodeId;
+		public final String nodeId;
 
-		public ExpiredNodeData(boolean alreadyExpired, String expiresOn, int nodeId){
+		public ExpiredNodeData(boolean alreadyExpired, String expiresOn, String nodeId){
 			this.isExpired = alreadyExpired;
 			this.date = expiresOn;
 			this.nodeId = nodeId;
@@ -286,7 +286,7 @@ public class Deadline {
 		}
 	}
 
-	private void checkForExpiredNodes(Tree tree, long now, List<ExpiredNodeData> expiredNodes, List<ExpiredNodeData> nearlyExpiredNodes, boolean enableLiveLog){
+	private void checkForExpiredNodes(TreeStore tree, long now, List<ExpiredNodeData> expiredNodes, List<ExpiredNodeData> nearlyExpiredNodes, boolean enableLiveLog){
 		tree.allNodes((TreeNode node) -> {
 			if(Thread.interrupted()){return;}
 			if(node.hasAttribute(NODE_EXPIRATION_ATTRIBUTE)){
@@ -312,15 +312,15 @@ public class Deadline {
 	}
 
 	private void printExpireNodeList(List<ExpiredNodeData> list, boolean printExpiredNodes){
-		Tree t = app.getTree();
+		TreeStore t = app.getTree();
 		app.println(
-				String.format("\n" + (printExpiredNodes ? "Already expired nodes:" : "Nodes that will expire during the next %d days:") + "\n"
-							+ "----------------------------------------------------------------------", warningDifferenceInDays));
+			String.format("\n" + (printExpiredNodes ? "Already expired nodes:" : "Nodes that will expire during the next %d days:") + "\n"
+						+ "----------------------------------------------------------------------", warningDifferenceInDays));
 		for(ExpiredNodeData x: list){
 			if(x.isExpired == printExpiredNodes){
 				TreeNode n = t.getNodeById(x.nodeId);
 				if(n != null){
-					app.println(String.format("%s\t%s (%s)", x.date, n.getText(), t.getNodePath(n, "/")));
+					app.println(String.format("%s\t%s (%s)", x.date, n.getText(), n.getNodePath()));
 				}
 			}
 		}

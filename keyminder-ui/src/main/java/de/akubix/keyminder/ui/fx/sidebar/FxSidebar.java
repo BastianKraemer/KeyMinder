@@ -23,8 +23,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.core.tree.TreeNode;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
 import javafx.geometry.Insets;

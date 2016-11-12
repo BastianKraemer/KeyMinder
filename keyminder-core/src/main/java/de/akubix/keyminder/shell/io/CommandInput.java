@@ -2,7 +2,7 @@ package de.akubix.keyminder.shell.io;
 
 import java.util.Map;
 
-import de.akubix.keyminder.core.db.TreeNode;
+import de.akubix.keyminder.core.tree.TreeNode;
 import de.akubix.keyminder.shell.annotations.Operands;
 
 /**

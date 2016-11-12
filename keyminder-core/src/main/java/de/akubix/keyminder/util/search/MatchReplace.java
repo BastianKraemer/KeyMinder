@@ -16,34 +16,32 @@ public final class MatchReplace {
 	 * @param replacement the string that will be the replacement
 	 * @return {@code true} if there has been anything replaced, {@code false} if not
 	 */
-	public static boolean replaceContent(NodeMatchResult matchResult, String replacement, boolean allowRegularExpression) throws IllegalArgumentException {
+	public static boolean replaceContent(final NodeMatchResult matchResult, final String replacement, final boolean allowRegularExpression) throws IllegalArgumentException {
 
 		try{
-			boolean anyReplacePerformed = false;
+			boolean anyReplacePerformed[] = {false};
+			final String replacementStr = allowRegularExpression ? replacement : TextMatcher.regularExpressionSpecialCharacterEscaping(replacement);
 
-			if(!allowRegularExpression){
-				replacement = TextMatcher.regularExpressionSpecialCharacterEscaping(replacement);
-			}
+			matchResult.getNode().getTree().transaction(() -> {
 
-			if(matchResult.nodeMatches()){
-				for(MatchElement match: matchResult.getMatchElements()){
-					if(match.hasMatcher()){
-						String newValue = match.getMatcher().replaceAll(replacement);
+				if(matchResult.nodeMatches()){
+					for(MatchElement match: matchResult.getMatchElements()){
+						if(match.hasMatcher()){
+							String newValue = match.getMatcher().replaceAll(replacementStr);
 
-						matchResult.getNode().getTree().beginUpdate();
-						anyReplacePerformed = true;
-						if(match.isTextMatch()){
-							matchResult.getNode().setText(newValue);
-						}
-						else{
-							matchResult.getNode().setAttribute(match.getAttributeName(), newValue);
+							anyReplacePerformed[0] = true;
+							if(match.isTextMatch()){
+								matchResult.getNode().setText(newValue);
+							}
+							else{
+								matchResult.getNode().setAttribute(match.getAttributeName(), newValue);
+							}
 						}
 					}
 				}
-			}
+			});
 
-			matchResult.getNode().getTree().endUpdate();
-			return anyReplacePerformed;
+			return anyReplacePerformed[0];
 		}
 		catch(Exception ex){
 			throw new IllegalArgumentException(ex.getMessage(), ex);

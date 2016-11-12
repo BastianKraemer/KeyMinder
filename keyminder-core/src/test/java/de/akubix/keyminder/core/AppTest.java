@@ -11,10 +11,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.akubix.keyminder.core.db.Tree;
 import de.akubix.keyminder.core.events.EventTypes.DefaultEvent;
 import de.akubix.keyminder.core.events.EventTypes.TreeNodeEvent;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.core.tree.TreeStore;
 import de.akubix.keyminder.shell.CommandException;
 
 public class AppTest {
@@ -44,7 +44,7 @@ public class AppTest {
 
 		// Move to node example@somedomain.com
 
-		Tree tree = app.getTree();
+		TreeStore tree = app.getTree();
 
 		app.addEventHandler(TreeNodeEvent.OnNodeAdded, (node) -> {event_node_added = true;});
 		app.addEventHandler(TreeNodeEvent.OnNodeEdited, (node) -> {event_node_edited = true;});
@@ -89,7 +89,7 @@ public class AppTest {
 
 		// Test "mv"
 
-		int currentSelectedNodeId = tree.getSelectedNode().getId();
+		String currentSelectedNodeId = tree.getSelectedNode().getId();
 		app.getShell().runShellCommand("mv . /");
 
 		assertEquals(prevNumberOfRootNodes + 1, tree.getRootNode().countChildNodes());
@@ -107,7 +107,7 @@ public class AppTest {
 
 		assertTrue("Check event 'onNodeEdited", event_node_edited);
 
-		assertTrue(tree.undo());
+		assertTrue(tree.undo(false));
 		assertEquals(prevText, tree.getSelectedNode().getText());
 
 		// Test "Add"
@@ -137,7 +137,7 @@ public class AppTest {
 		tree.setSelectedNode(tree.getRootNode().getChildNodeByIndex(0).getChildNodeByIndex(0));
 		app.getShell().runShellCommand("set hello world");
 
-		assertTrue(tree.treeHasBeenUpdated());
+		assertTrue(tree.hasUnsavedChanges());
 		assertTrue("Save file", app.saveFile());
 		assertTrue(app.closeFile());
 

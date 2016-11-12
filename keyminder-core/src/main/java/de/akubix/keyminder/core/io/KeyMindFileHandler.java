@@ -37,14 +37,14 @@ import org.xml.sax.SAXException;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.FileConfiguration;
-import de.akubix.keyminder.core.db.StandardNode;
-import de.akubix.keyminder.core.db.Tree;
-import de.akubix.keyminder.core.db.TreeNode;
 import de.akubix.keyminder.core.encryption.AES;
 import de.akubix.keyminder.core.encryption.EncryptionManager;
 import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.StorageExceptionType;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
+import de.akubix.keyminder.core.tree.DefaultTreeNode;
+import de.akubix.keyminder.core.tree.TreeNode;
+import de.akubix.keyminder.core.tree.TreeStore;
 import de.akubix.keyminder.locale.LocaleLoader;
 
 public class KeyMindFileHandler implements StorageHandler {
@@ -56,7 +56,7 @@ public class KeyMindFileHandler implements StorageHandler {
 	}
 
 	@Override
-	public FileConfiguration open(File xmlFile, String filePassword, Tree tree, ApplicationInstance instance) throws StorageException {
+	public FileConfiguration open(File xmlFile, String filePassword, Object tree, ApplicationInstance instance) throws StorageException {
 		if(!xmlFile.exists()){throw new StorageException(StorageExceptionType.FileNotFound, "File not Found.");}
 
 		try {
@@ -69,7 +69,7 @@ public class KeyMindFileHandler implements StorageHandler {
 	}
 
 	@Override
-	public void save(FileConfiguration file, Tree tree, ApplicationInstance instance) throws StorageException {
+	public void save(FileConfiguration file, TreeStore tree, ApplicationInstance instance) throws StorageException {
 		try {
 			XML.writeXmlDocumentToFile(file.getFilepath(), createXMLFrame(tree.getRootNode(), file));
 			file.setFileFormatVersion(latestFileFormatVersion);
@@ -90,7 +90,7 @@ public class KeyMindFileHandler implements StorageHandler {
 	 * ==============================================================================================================================================
 	 */
 
-	private FileConfiguration readXMLFrame(File xmlFile, String filepassword, Tree tree, ApplicationInstance app) throws XMLParseException, UserCanceledOperationException, StorageException {
+	private FileConfiguration readXMLFrame(File xmlFile, String filepassword, TreeStore tree, ApplicationInstance app) throws XMLParseException, UserCanceledOperationException, StorageException {
 		String fileVersion = latestFileFormatVersion; // Will be overwritten by the value in the file (if available)
 		boolean fileIsEncrypted;
 		Map<String, String> fileAttributes = new HashMap<>();
@@ -271,8 +271,8 @@ public class KeyMindFileHandler implements StorageHandler {
 			org.w3c.dom.Node childXMLNode = parentXMLNode.getChildNodes().item(i);
 
 			if(childXMLNode.getNodeType() == Node.ELEMENT_NODE){
-				StandardNode newTreenode = createTreeNode(childXMLNode, parentTreeNode.getTree());
-				parentTreeNode.getTree().addNode(newTreenode, parentTreeNode);
+				TreeNode newTreenode = createTreeNode(childXMLNode);
+				parentTreeNode.addChildNode(newTreenode);
 
 				if(childXMLNode.getChildNodes().getLength() > 0){
 					addChildNodes(childXMLNode, newTreenode);
@@ -281,39 +281,34 @@ public class KeyMindFileHandler implements StorageHandler {
 		}
 	}
 
-	private static StandardNode createTreeNode(org.w3c.dom.Node xmlNode, Tree tree){
-		Map<String, String> attribs = new HashMap<>();
-		String text = "";
-		String color = "";
-		int id = 0;
+	private static TreeNode createTreeNode(org.w3c.dom.Node xmlNode){
+		String id = null;
+
+		TreeNode newNode = new DefaultTreeNode();
+
 		for(int i = 0; i < xmlNode.getAttributes().getLength(); i++){
 			String name = xmlNode.getAttributes().item(i).getNodeName();
 			String value = xmlNode.getAttributes().item(i).getNodeValue();
 
 			switch(name){
 				case "id":
-					try{
-						id = Integer.parseInt(value);
-					}
-					catch(NumberFormatException numEx){
-						System.out.println(String.format("Warning: Illegal node id value (id=\"%s\"). Using temporary id and fix this later.", value));
-					}
+					id = value;
 					break;
 
 				case "text":
-					text = value;
+					newNode.setText(value);
 					break;
 
 				case "color":
-					color = value;
+					newNode.setColor(value);
 					break;
 
 				default:
-					attribs.put(name, value);
+					newNode.setAttribute(name, value);
 			}
 		}
-		StandardNode newNode = tree.loadNode(text, id, color, attribs).getUnrestrictedAccess();
-		return newNode;
+
+		return id == null ? newNode : TreeStore.restoreNode(newNode, id);
 	}
 
 	/*
@@ -402,7 +397,7 @@ public class KeyMindFileHandler implements StorageHandler {
 			xmlNode.getAttributes().setNamedItem(attrib);
 
 			attrib = xmldoc.createAttribute("id");
-			attrib.setNodeValue(Integer.toString(childNode.getId()));
+			attrib.setNodeValue(childNode.getId());
 			xmlNode.getAttributes().setNamedItem(attrib);
 
 			if(childNode.getColor() != null){

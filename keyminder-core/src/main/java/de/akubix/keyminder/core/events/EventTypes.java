@@ -23,6 +23,11 @@ public class EventTypes {
 
 	public enum TreeNodeEvent {
 		// Events, that will need a TreeNode as parameter
-		OnNodeAdded, OnNodeEdited,  OnNodeVerticallyMoved, OnNodeRemoved, OnSelectedItemChanged
+		OnNodeAdded,
+		OnNodeEdited,
+		OnNodeVerticallyMoved,
+		OnNodeRemoved,
+		OnNodeReset,
+		OnSelectedItemChanged
 	}
 }

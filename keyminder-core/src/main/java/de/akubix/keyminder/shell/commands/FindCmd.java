@@ -125,7 +125,7 @@ public final class FindCmd extends AbstractShellCommand {
 
 				if(result.getState() == NodeWalker.SearchState.FOUND){
 					out.setColor(AnsiColor.CYAN);
-					out.println(instance.getTree().getNodePath(result.getMatchResult().getNode(), "/"));
+					out.println(result.getMatchResult().getNode().getNodePath());
 					out.setColor(AnsiColor.RESET);
 
 					instance.getTree().setSelectedNode(result.getMatchResult().getNode());
@@ -147,7 +147,7 @@ public final class FindCmd extends AbstractShellCommand {
 				}
 				else if(!in.outputIsPiped()){
 					out.setColor(AnsiColor.CYAN);
-					resultList.forEach((result) -> out.println(instance.getTree().getNodePath(result.getNode(), "/")));
+					resultList.forEach((result) -> out.println(result.getNode().getNodePath()));
 					out.setColor(AnsiColor.RESET);
 				}
 
