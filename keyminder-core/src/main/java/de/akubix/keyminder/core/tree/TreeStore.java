@@ -42,6 +42,10 @@ import de.akubix.keyminder.core.events.EventTypes.TreeNodeEvent;
 public class TreeStore {
 
 	private static final int DEFAULT_IDENTIFIER_LENGTH_IN_BYTES = 6;
+
+	private static final String SETTINGS_KEY_MAX_UNDO_HISTORY =  "tree.undo.limit";
+	private static final int DEFAULT_MAX_UNDO_HINSTORY_SIZE = 20;
+
 	static final String ROOT_NODE_IDENTIFIER = "0";
 
 	private ApplicationInstance app;
@@ -55,12 +59,26 @@ public class TreeStore {
 	private boolean enableUndo = false;
 	private UndoBuilder undoBuilder;
 	private LinkedList<UndoStep> undoHistory;
+	private int maxUndoHistorySize = DEFAULT_MAX_UNDO_HINSTORY_SIZE;
 
 	public TreeStore(ApplicationInstance instance){
 		app = instance;
 		random = new Random();
 		createRoot();
 		undoHistory = new LinkedList<>();
+		reloadConfig();
+	}
+
+	public void reloadConfig(){
+		try{
+			if(app.settingsContainsKey(SETTINGS_KEY_MAX_UNDO_HISTORY)){
+				maxUndoHistorySize = Integer.parseInt(app.getSettingsValue(SETTINGS_KEY_MAX_UNDO_HISTORY));
+			}
+		}
+		catch(NumberFormatException e){
+			maxUndoHistorySize = DEFAULT_MAX_UNDO_HINSTORY_SIZE;
+			app.alert(String.format("Invalid value for setting '%s' (Integer): '%s'", SETTINGS_KEY_MAX_UNDO_HISTORY, app.getSettingsValue(SETTINGS_KEY_MAX_UNDO_HISTORY)));
+		}
 	}
 
 	private void createRoot(){
@@ -437,6 +455,10 @@ public class TreeStore {
 		synchronized (undoHistory) {
 			if(undoBuilder == null && !step.getChangedNodesMap().isEmpty() && isUndoEnabled()){
 				undoHistory.add(step);
+
+				if(undoHistory.size() > maxUndoHistorySize){
+					undoHistory.removeFirst();
+				}
 			}
 		}
 	}
