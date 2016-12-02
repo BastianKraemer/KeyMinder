@@ -1,14 +1,13 @@
 package de.akubix.keyminder.ui.fx.components;
 
 import de.akubix.keyminder.core.tree.TreeNode;
-import javafx.event.EventHandler;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeCell;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
 
-public abstract class AbstractEditableTreeCell extends TreeCell<TreeNode> {
+public abstract class AbstractEditableTreeCell extends TreeCell<TreeNodeReference> {
 
 	/*
 	 * ======================================================================================================================================================
@@ -32,10 +31,10 @@ public abstract class AbstractEditableTreeCell extends TreeCell<TreeNode> {
 			super.startEdit();
 
 			if (textField == null) {
-				createTextField();
+				createTextField(getItem());
 			}
 			else{
-				textField.setText(getItem().getText());
+				textField.setText(getString());
 			}
 			setText(null);
 			setGraphic(textField);
@@ -45,23 +44,17 @@ public abstract class AbstractEditableTreeCell extends TreeCell<TreeNode> {
 	}
 
 	@Override
-	public void commitEdit(TreeNode newValue){
-		super.commitEdit(newValue);
-
-	};
-
-	@Override
 	public void cancelEdit() {
 		super.cancelEdit();
 
-		setText((String) getItem().getText());
+		setText(getString());
 		setGraphic(getTreeItem().getGraphic());
 		setTreeEditStatus(false);
 	}
 
 	@Override
-	public void updateItem(TreeNode item, boolean empty) {
-		super.updateItem(item, empty);
+	public void updateItem(TreeNodeReference ref, boolean empty) {
+		super.updateItem(ref, empty);
 
 		if (empty) {
 			setText(null);
@@ -77,16 +70,18 @@ public abstract class AbstractEditableTreeCell extends TreeCell<TreeNode> {
 			} else {
 				setText(getString());
 
+				TreeNode node = ref.getTreeNode();
+
 				this.getStyleClass().removeAll("bold", "italic", "strikeout");
-				if(item.hasAttribute("style")){
-					this.getStyleClass().addAll(item.getAttribute("style").split(";"));
+				if(node.hasAttribute("style")){
+					this.getStyleClass().addAll(node.getAttribute("style").split(";"));
 				}
 
-				if(item.getColor().equals("")){
+				if(node.getColor().equals("")){
 					setTextFill(Color.BLACK);
 				}
 				else{
-					setTextFill(Color.web(item.getColor()));
+					setTextFill(Color.web(node.getColor()));
 				}
 
 				setGraphic(getTreeItem().getGraphic());
@@ -94,26 +89,23 @@ public abstract class AbstractEditableTreeCell extends TreeCell<TreeNode> {
 		}
 	}
 
-	private void createTextField() {
+	private void createTextField(TreeNodeReference ref) {
 		textField = new TextField(getString());
-		textField.setOnKeyReleased(new EventHandler<KeyEvent>() {
-			@Override
-			public void handle(KeyEvent t) {
-				if (t.getCode() == KeyCode.ENTER) {
-					commitEdit(commitTreeNodeEdit(textField.getText()));
-				} else if (t.getCode() == KeyCode.ESCAPE) {
-					cancelEdit();
-				}
+		textField.setOnKeyReleased((KeyEvent t) -> {
+			if (t.getCode() == KeyCode.ENTER) {
+				ref.getTreeNode().setText(textField.getText());
+				commitEdit(ref);
+			} else if (t.getCode() == KeyCode.ESCAPE) {
+				cancelEdit();
 			}
 		});
 	}
 
 	private String getString() {
-		TreeNode item = getItem();
-		return item == null ? "" : item.getText();
+		TreeNodeReference item = getItem();
+		return item == null ? "" : item.getTreeNode().getText();
 	}
 
 	public abstract boolean isTreeEdited();
 	public abstract void setTreeEditStatus(boolean value);
-	public abstract TreeNode commitTreeNodeEdit(String newNodeText);
 }

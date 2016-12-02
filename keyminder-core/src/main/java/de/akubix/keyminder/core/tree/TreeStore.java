@@ -520,7 +520,9 @@ public class TreeStore {
 
 		for(Entry<String, TreeNode> entry: step.getChangedNodesMap().entrySet()){
 			if(entry.getValue() == null){
+				this.enableEvents(eventsEnabled);
 				getNodeById(entry.getKey()).remove();
+				this.enableEvents(false);
 			}
 			else{
 				registerNode(entry.getValue(), true);

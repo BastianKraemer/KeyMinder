@@ -1,6 +1,5 @@
 package de.akubix.keyminder.ui.fx.components;
 
-import de.akubix.keyminder.core.tree.TreeNode;
 import javafx.scene.control.TreeView;
 
 /*
@@ -22,8 +21,8 @@ import javafx.scene.control.TreeView;
  * WARNING: This method relies on classes, which does not contain to the Java API
  */
 @SuppressWarnings("restriction")
-public final class VisibleTreeNodesSkin extends com.sun.javafx.scene.control.skin.TreeViewSkin<TreeNode> {
-	public VisibleTreeNodesSkin(TreeView<TreeNode> treeView){
+public final class VisibleTreeNodesSkin extends com.sun.javafx.scene.control.skin.TreeViewSkin<TreeNodeReference> {
+	public VisibleTreeNodesSkin(TreeView<TreeNodeReference> treeView){
 		super(treeView);
 	}
 

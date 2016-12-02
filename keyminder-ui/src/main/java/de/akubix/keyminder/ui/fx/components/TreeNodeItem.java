@@ -18,30 +18,22 @@
  */
 package de.akubix.keyminder.ui.fx.components;
 
-import de.akubix.keyminder.core.tree.TreeNode;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TreeItem;
 
-public class TreeNodeItem extends TreeItem<TreeNode> {
+public class TreeNodeItem extends TreeItem<TreeNodeReference> {
 
-	public TreeNodeItem() {
-		super();
-		addExpandListener();
-	}
+	public TreeNodeItem(TreeNodeReference ref) {
+		super(ref);
 
-	public TreeNodeItem(TreeNode node) {
-		super(node);
-		addExpandListener();
-		setExpanded(node.isExpanded());
-	}
-
-	private void addExpandListener() {
 		this.expandedProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) -> {
 			expandChanged(newValue);
 		});
+
+		setExpanded(ref.getTreeStore().getNodeById(ref.getNodeId()).isExpanded());
 	}
 
 	private void expandChanged(boolean value) {
-		getValue().setExpanded(value);
+		getValue().getTreeNode().setExpanded(value);
 	}
 }

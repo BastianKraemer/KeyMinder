@@ -49,6 +49,7 @@ import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.KeyMinderUserInterface;
 import de.akubix.keyminder.ui.fx.components.AbstractEditableTreeCell;
 import de.akubix.keyminder.ui.fx.components.TreeNodeItem;
+import de.akubix.keyminder.ui.fx.components.TreeNodeReference;
 import de.akubix.keyminder.ui.fx.components.VisibleTreeNodesSkin;
 import de.akubix.keyminder.ui.fx.dialogs.FileSettingsDialog;
 import de.akubix.keyminder.ui.fx.dialogs.FindAndReplaceDialog;
@@ -129,7 +130,7 @@ import javafx.util.Callback;
 )
 public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
-	private HashMap<String, TreeItem<TreeNode>> treeNodeTranslator = new HashMap<>();
+	private HashMap<String, TreeItem<TreeNodeReference>> treeNodeTranslator = new HashMap<>();
 
 	private ApplicationInstance app;
 	private TreeStore dataTree;
@@ -142,7 +143,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 	private boolean treeEditModeActive = false;
 
-	private TreeView<TreeNode> fxtree;
+	private TreeView<TreeNodeReference> fxtree;
 	private Stage me;
 
 	private BorderPane rootPanel;
@@ -222,11 +223,11 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		app.addEventHandler(TreeNodeEvent.OnSelectedItemChanged, (node) -> selectedNodeChanged(node));
 
 		app.addEventHandler(TreeNodeEvent.OnNodeAdded, (node) -> displayNewTreePart(node));
-		app.addEventHandler(TreeNodeEvent.OnNodeEdited,(node) -> updateTree(getTreeItemOfTreeNode(node)));
+		app.addEventHandler(TreeNodeEvent.OnNodeEdited,(node) -> fxtree.refresh());
 		app.addEventHandler(TreeNodeEvent.OnNodeVerticallyMoved, (node) -> rebuildTreePart(node.getParentNode(), node.getId()));
-		app.addEventHandler(TreeNodeEvent.OnNodeReset, (node) -> rebuildTreePart(node.getParentNode(), null));
+		app.addEventHandler(TreeNodeEvent.OnNodeReset, (node) -> resetNode(node));
 		app.addEventHandler(TreeNodeEvent.OnNodeRemoved, (node) -> {
-			TreeItem<TreeNode> treeitem = getTreeItemOfTreeNode(node);
+			TreeItem<TreeNodeReference> treeitem = getTreeItemOfTreeNode(node);
 			treeitem.getParent().getChildren().remove(treeitem);
 			deleteTranslatorHashItems(treeitem, true);
 		});
@@ -501,7 +502,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		strikeoutNode.setOnAction((event) -> node_toogleStyle(getSelectedTreeItem(), "strikeout"));
 
 		nodeFontSettings.setOnShowing((event) -> {
-			TreeItem<TreeNode> n = getSelectedTreeItem();
+			TreeItem<TreeNodeReference> n = getSelectedTreeItem();
 			boldNode.setSelected(node_hasStyle(n, "bold"));
 			italicNode.setSelected(node_hasStyle(n, "italic"));
 			strikeoutNode.setSelected(node_hasStyle(n, "strikeout"));
@@ -567,7 +568,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		 * ===================================================================================
 		 */
 
-		TreeNodeItem rootItem = new TreeNodeItem(dataTree.getRootNode());
+		TreeNodeItem rootItem = new TreeNodeItem(new TreeNodeReference(dataTree.getRootNode()));
 		rootItem.setExpanded(true);
 		fxtree = new TreeView<> (rootItem);
 		fxtree.setId("Tree");
@@ -576,12 +577,12 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		fxtree.setMinWidth(200);
 
 		// Add a change listener to the tree
-		fxtree.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<TreeItem<TreeNode>>() {
+		fxtree.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<TreeItem<TreeNodeReference>>() {
 			@Override
-			public void changed(ObservableValue<? extends TreeItem<TreeNode>> observable, TreeItem<TreeNode> oldValue, TreeItem<TreeNode> newValue) {
+			public void changed(ObservableValue<? extends TreeItem<TreeNodeReference>> observable, TreeItem<TreeNodeReference> oldValue, TreeItem<TreeNodeReference> newValue) {
 				if(newValue != null){
 					if(!nextSelectedItemChangeEventWasFiredByMe){
-						TreeNode n = newValue.getValue();
+						TreeNode n = newValue.getValue().getTreeNode();
 						nextSelectedItemChangeEventWasFiredByMe = true;
 						dataTree.setSelectedNode(n);
 					}
@@ -600,9 +601,9 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		root.setCenter(splitPane);
 
-		fxtree.setCellFactory(new Callback<TreeView<TreeNode>, TreeCell<TreeNode>>(){
+		fxtree.setCellFactory(new Callback<TreeView<TreeNodeReference>, TreeCell<TreeNodeReference>>(){
 			@Override
-			public TreeCell<TreeNode> call(TreeView<TreeNode> p) {
+			public TreeCell<TreeNodeReference> call(TreeView<TreeNodeReference> p) {
 				return new AbstractEditableTreeCell(){
 					@Override
 					public boolean isTreeEdited() {
@@ -612,11 +613,6 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 					@Override
 					public void setTreeEditStatus(boolean value) {
 						treeEditModeActive = value;
-					}
-
-					@Override
-					public TreeNode commitTreeNodeEdit(String newNodeText) {
-						return getSelectedTreeNode().setText(newNodeText);
 					}
 				};
 			}
@@ -668,7 +664,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 						}
 						else{
 							TreeNode node = dataTree.getPreviousNode(dataTree.getSelectedNode());
-							TreeItem<TreeNode> item = getTreeItemOfTreeNode(node);
+							TreeItem<TreeNodeReference> item = getTreeItemOfTreeNode(node);
 
 							if(item.isExpanded() && !item.isLeaf()){
 								dataTree.setSelectedNode(node.getChildNodeByIndex(node.countChildNodes() - 1));
@@ -1131,32 +1127,51 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	private void buildTree(){
 		treeNodeTranslator.clear();
 		fxtree.getRoot().getChildren().clear();
-		fxtree.getRoot().setValue(dataTree.getRootNode());
+		fxtree.getRoot().setValue(new TreeNodeReference(dataTree.getRootNode()));
 		addChildNodes2FxTree(fxtree.getRoot());
 	}
 
-	private void addChildNodes2FxTree(TreeItem<TreeNode> parentNode){
-		parentNode.getValue().forEachChildNode((childNode) -> {
-			TreeNodeItem node = new TreeNodeItem(childNode);
-			treeNodeTranslator.put(childNode.getId(), node);
-			parentNode.getChildren().add(node);
-			addChildNodes2FxTree(node);
+	private void addChildNodes2FxTree(TreeItem<TreeNodeReference> parentNode){
+
+		parentNode.getValue().getTreeNode().forEachChildNode((childNode) -> {
+			if(!treeNodeTranslator.containsKey(childNode.getId())){
+				TreeNodeItem node = new TreeNodeItem(new TreeNodeReference(childNode));
+				treeNodeTranslator.put(childNode.getId(), node);
+				parentNode.getChildren().add(childNode.getIndex(), node);
+				addChildNodes2FxTree(node);
+			}
+			else{
+				addChildNodes2FxTree(treeNodeTranslator.get(childNode.getId()));
+			}
 		});
 	}
 
-	private void updateTree(TreeItem<TreeNode> node) {
-		if(node.isLeaf()){
-			nextSelectedItemChangeEventWasFiredByMe = true;
-			boolean wasExpanded = node.getParent().isExpanded();
-			node.getParent().setExpanded(!wasExpanded);
-			nextSelectedItemChangeEventWasFiredByMe = true;
-			node.getParent().setExpanded(wasExpanded);
-			fxtree.getSelectionModel().select(node);
+	private void resetNode(TreeNode node){
+
+		if(treeNodeTranslator.containsKey(node.getId())){
+			treeNodeTranslator.get(node.getId()).setExpanded(node.isExpanded());
+			fxtree.refresh();
 		}
-		else{
-			boolean wasExpanded = node.isExpanded();
-			node.setExpanded(!wasExpanded);
-			node.setExpanded(wasExpanded);
+		else {
+
+			TreeNode parentNode = node.getParentNode();
+			TreeItem<TreeNodeReference> parentTreeItem = null;
+			// this method will be called for every reset node.
+			// If a node is more than one level "away" it will be added when its parent node is reset.
+
+			if(treeNodeTranslator.containsKey(parentNode.getId())){
+				parentTreeItem = treeNodeTranslator.get(parentNode.getId());
+			}
+			else if(parentNode.isRootNode()){
+				parentTreeItem = fxtree.getRoot();
+			}
+
+			if(parentTreeItem != null){
+				TreeNodeItem treeNodeItem = new TreeNodeItem(new TreeNodeReference(node));
+				treeNodeTranslator.put(node.getId(), treeNodeItem);
+				parentTreeItem.getChildren().add(node.getIndex(), treeNodeItem);
+				addChildNodes2FxTree(treeNodeItem);
+			}
 		}
 	}
 
@@ -1164,7 +1179,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		if(!parentNode.isRootNode()){
 
-			TreeItem<TreeNode> fxTreeNode = treeNodeTranslator.get(parentNode.getId());
+			TreeItem<TreeNodeReference> fxTreeNode = treeNodeTranslator.get(parentNode.getId());
 
 			deleteTranslatorHashItems(fxTreeNode, false);
 			fxTreeNode.getChildren().clear();
@@ -1179,7 +1194,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 						dataTree.setSelectedNode(changedNode);
 					}
 
-					TreeItem<TreeNode> ti = treeNodeTranslator.get(childNodeId);
+					TreeItem<TreeNodeReference> ti = treeNodeTranslator.get(childNodeId);
 					ti.setExpanded(true);
 				}
 			}
@@ -1191,19 +1206,19 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		}
 	}
 
-	private void deleteTranslatorHashItems(TreeItem<TreeNode> parentNode, boolean includeParentNode){
+	private void deleteTranslatorHashItems(TreeItem<TreeNodeReference> parentNode, boolean includeParentNode){
 		if(includeParentNode){
-			treeNodeTranslator.remove(parentNode.getValue().getId());
+			treeNodeTranslator.remove(parentNode.getValue().getNodeId());
 		}
 
 		parentNode.getChildren().forEach((node) -> {
-			treeNodeTranslator.remove(node.getValue().getId());
+			treeNodeTranslator.remove(node.getValue().getNodeId());
 			deleteTranslatorHashItems(node, false);
 		});
 	}
 
 	private void displayNewTreePart(TreeNode newNode) {
-		TreeNodeItem node = new TreeNodeItem(newNode);
+		TreeNodeItem node = new TreeNodeItem(new TreeNodeReference(newNode));
 		treeNodeTranslator.put(newNode.getId(), node);
 
 		TreeNode parentNode = newNode.getParentNode();
@@ -1217,22 +1232,29 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		if(newNode.countChildNodes() != 0){addChildNodes2FxTree(node);}
 	}
 
-	public TreeItem<TreeNode> getSelectedTreeItem(){
+	public TreeItem<TreeNodeReference> getSelectedTreeItem(){
 		return fxtree.getSelectionModel().getSelectedItem();
 	}
 
 	private TreeNode getSelectedTreeNode(){
-		return fxtree.getSelectionModel().getSelectedItem().getValue();
+		return fxtree.getSelectionModel().getSelectedItem().getValue().getTreeNode();
 	}
 
-	private void removeNode(TreeItem<TreeNode> node){
-		node.getValue().remove();
+	private void removeNode(TreeItem<TreeNodeReference> node){
+		node.getValue().getTreeNode().remove();
 	}
 
-	private TreeItem<TreeNode> getTreeItemOfTreeNode(TreeNode node){
-		if(node.isRootNode()){return fxtree.getRoot();}
-		if(treeNodeTranslator.containsKey(node.getId())){return treeNodeTranslator.get(node.getId());}
-		alert("ERROR - Node '" + node.getText() + "' is not assigned to tree!");
+	private TreeItem<TreeNodeReference> getTreeItemOfTreeNode(TreeNode node){
+
+		if(node.isRootNode()){
+			return fxtree.getRoot();
+		}
+
+		if(treeNodeTranslator.containsKey(node.getId())){
+			return treeNodeTranslator.get(node.getId());
+		}
+
+		alert(String.format("Internal application error: View is out of sync with data model.\nUnable to lookup node '%s' (id: '%s')",  node.getText(), node.getId()));
 
 		if(fxtree.getRoot().getChildren().size() > 0){
 			return fxtree.getRoot().getChildren().get(0);
@@ -1250,7 +1272,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		}
 	}
 
-	private void editTreeItem(TreeItem<TreeNode> treeitem){
+	private void editTreeItem(TreeItem<TreeNodeReference> treeitem){
 		treeEditModeActive = true;
 		fxtree.edit(getSelectedTreeItem());
 	}
@@ -1261,21 +1283,23 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	 * ======================================================================================================================================================
 	 */
 
-	private boolean node_hasStyle(TreeItem<TreeNode> node, String styleClass){
-		return node.getValue().getAttribute("style").contains(styleClass + ";");
+	private boolean node_hasStyle(TreeItem<TreeNodeReference> node, String styleClass){
+		return node.getValue().getTreeNode().getAttribute("style").contains(styleClass + ";");
 	}
 
-	private void node_addStyle(TreeItem<TreeNode> node, String styleClass){
-		node.getValue().setAttribute("style", node.getValue().getAttribute("style") + styleClass + ";");
-		updateTree(node);
+	private void node_addStyle(TreeItem<TreeNodeReference> nodeRef, String styleClass){
+		TreeNode node = nodeRef.getValue().getTreeNode();
+		node.setAttribute("style", node.getAttribute("style") + styleClass + ";");
+		fxtree.refresh();
 	}
 
-	private void node_removeStyle(TreeItem<TreeNode> node, String styleClass){
-		node.getValue().setAttribute("style", node.getValue().getAttribute("style").replace(styleClass + ";", ""));
-		updateTree(node);
+	private void node_removeStyle(TreeItem<TreeNodeReference> nodeRef, String styleClass){
+		TreeNode node = nodeRef.getValue().getTreeNode();
+		node.setAttribute("style", node.getAttribute("style").replace(styleClass + ";", ""));
+		fxtree.refresh();
 	}
 
-	private void node_toogleStyle(TreeItem<TreeNode> node, String styleClass){
+	private void node_toogleStyle(TreeItem<TreeNodeReference> node, String styleClass){
 		if(!node_hasStyle(node, styleClass)){
 			node_addStyle(node, styleClass);
 		}
@@ -1769,6 +1793,11 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 	private void showEditCurrentNodeDialog(){
 		TreeNode selectedNode = getSelectedTreeNode();
+
+		if(selectedNode == null){
+			return;
+		}
+
 		InputDialog id = new InputDialog(this, localeBundle.getString("mainwindow.dialogs.edit_node.text"), localeBundle.getString("mainwindow.dialogs.edit_node.text"), selectedNode.getText(), false);
 		try {
 			String value = id.getInput();
