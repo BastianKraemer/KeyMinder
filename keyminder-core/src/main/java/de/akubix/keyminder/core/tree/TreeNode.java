@@ -40,9 +40,11 @@ public abstract class TreeNode {
 	private String parentNodeIdentifer;
 	private TreeStore tree;
 	private List<String> childNodes;
+	private boolean isExpanded;
 
 	protected TreeNode(){
 		this.childNodes = canHaveChildNodes() ? new ArrayList<>() : null;
+		this.isExpanded = false;
 	}
 
 	/**
@@ -90,6 +92,20 @@ public abstract class TreeNode {
 		}
 
 		return -1;
+	}
+
+	/**
+	 * @return the isExpanded
+	 */
+	public boolean isExpanded() {
+		return isExpanded;
+	}
+
+	/**
+	 * @param isExpanded the isExpanded to set
+	 */
+	public void setExpanded(boolean isExpanded) {
+		this.isExpanded = isExpanded;
 	}
 
 	/**
@@ -471,6 +487,7 @@ public abstract class TreeNode {
 		clone.setId(this.getId());
 		clone.setText(this.getText());
 		clone.setColor(this.getColor());
+		clone.setExpanded(isExpanded);
 
 		if(cloneMode != CloneMode.NODE_ONLY){
 			this.childNodes.forEach(clone.childNodes::add);

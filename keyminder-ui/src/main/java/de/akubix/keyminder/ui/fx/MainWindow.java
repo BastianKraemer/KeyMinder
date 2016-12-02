@@ -48,6 +48,7 @@ import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.shell.CommandException;
 import de.akubix.keyminder.ui.KeyMinderUserInterface;
 import de.akubix.keyminder.ui.fx.components.AbstractEditableTreeCell;
+import de.akubix.keyminder.ui.fx.components.TreeNodeItem;
 import de.akubix.keyminder.ui.fx.components.VisibleTreeNodesSkin;
 import de.akubix.keyminder.ui.fx.dialogs.FileSettingsDialog;
 import de.akubix.keyminder.ui.fx.dialogs.FindAndReplaceDialog;
@@ -223,7 +224,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		app.addEventHandler(TreeNodeEvent.OnNodeAdded, (node) -> displayNewTreePart(node));
 		app.addEventHandler(TreeNodeEvent.OnNodeEdited,(node) -> updateTree(getTreeItemOfTreeNode(node)));
 		app.addEventHandler(TreeNodeEvent.OnNodeVerticallyMoved, (node) -> rebuildTreePart(node.getParentNode(), node.getId()));
-		app.addEventHandler(TreeNodeEvent.OnNodeReset, (node) -> rebuildTreePart(node.getParentNode(), node.getId()));
+		app.addEventHandler(TreeNodeEvent.OnNodeReset, (node) -> rebuildTreePart(node.getParentNode(), null));
 		app.addEventHandler(TreeNodeEvent.OnNodeRemoved, (node) -> {
 			TreeItem<TreeNode> treeitem = getTreeItemOfTreeNode(node);
 			treeitem.getParent().getChildren().remove(treeitem);
@@ -565,9 +566,8 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		 * 	Treeview
 		 * ===================================================================================
 		 */
-		// Node rootIcon = new ImageView(new Image(getClass().getResourceAsStream("file://...")));
 
-		TreeItem<TreeNode> rootItem = new TreeItem<>(dataTree.getRootNode());//, rootIcon);
+		TreeNodeItem rootItem = new TreeNodeItem(dataTree.getRootNode());
 		rootItem.setExpanded(true);
 		fxtree = new TreeView<> (rootItem);
 		fxtree.setId("Tree");
@@ -1137,7 +1137,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 	private void addChildNodes2FxTree(TreeItem<TreeNode> parentNode){
 		parentNode.getValue().forEachChildNode((childNode) -> {
-			TreeItem<TreeNode> node = new TreeItem<>(childNode);
+			TreeNodeItem node = new TreeNodeItem(childNode);
 			treeNodeTranslator.put(childNode.getId(), node);
 			parentNode.getChildren().add(node);
 			addChildNodes2FxTree(node);
@@ -1203,11 +1203,11 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	}
 
 	private void displayNewTreePart(TreeNode newNode) {
-		TreeItem<TreeNode> node = new TreeItem<>(newNode);
+		TreeNodeItem node = new TreeNodeItem(newNode);
 		treeNodeTranslator.put(newNode.getId(), node);
 
 		TreeNode parentNode = newNode.getParentNode();
-		if(parentNode.isRootNode()){ // -> RootNode
+		if(parentNode.isRootNode()){
 			fxtree.getRoot().getChildren().add(node);
 		}
 		else{

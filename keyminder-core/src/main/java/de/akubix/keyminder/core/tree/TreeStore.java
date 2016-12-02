@@ -34,8 +34,7 @@ import de.akubix.keyminder.core.events.EventTypes;
 import de.akubix.keyminder.core.events.EventTypes.TreeNodeEvent;
 
 /**
- * This class is the core of the whole database. All data stored in this applications will be assigned to the HashMap treeNodeDB in this class
- * @see StandardNode
+ * This class is the core of the whole database. All data stored in this applications will be assigned to the HashMap {@link TreeStore#treeNodeMap} in this class
  * @see TreeStore
  * @see TreeNode
  */
@@ -84,6 +83,7 @@ public class TreeStore {
 	private void createRoot(){
 		synchronized (treeNodeMap) {
 			TreeNode rootNode = new DefaultTreeNode("root");
+			rootNode.setExpanded(true);
 			restoreNode(rootNode, "0");
 			rootNode.setTree(this);
 			treeNodeMap.put("0", rootNode);
