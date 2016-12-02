@@ -1223,10 +1223,10 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		TreeNode parentNode = newNode.getParentNode();
 		if(parentNode.isRootNode()){
-			fxtree.getRoot().getChildren().add(node);
+			fxtree.getRoot().getChildren().add(newNode.getIndex(), node);
 		}
 		else{
-			treeNodeTranslator.get(parentNode.getId()).getChildren().add(node);
+			treeNodeTranslator.get(parentNode.getId()).getChildren().add(newNode.getIndex(), node);
 		}
 
 		if(newNode.countChildNodes() != 0){addChildNodes2FxTree(node);}

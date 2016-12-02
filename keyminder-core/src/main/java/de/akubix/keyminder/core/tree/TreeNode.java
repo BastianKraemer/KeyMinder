@@ -240,7 +240,6 @@ public abstract class TreeNode {
 			this.childNodes.add(index, treeNode.getId());
 			this.tree.setTreeChangedStatus(true);
 			this.tree.fireNodeEvent(treeNode, TreeNodeEvent.OnNodeAdded);
-			this.tree.fireNodeEvent(treeNode, TreeNodeEvent.OnNodeVerticallyMoved);
 		}
 	}
 
@@ -320,6 +319,8 @@ public abstract class TreeNode {
 				if(reselectNode){
 					tree.setSelectedNode(this);
 				}
+
+				getTree().fireNodeEvent(this, TreeNodeEvent.OnNodeVerticallyMoved);
 			}
 		}
 	}
