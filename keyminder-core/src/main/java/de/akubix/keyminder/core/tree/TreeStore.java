@@ -155,14 +155,6 @@ public class TreeStore {
 		}
 	}
 
-	final void verifyNotEmptyTree(){
-		if(getRootNode().countChildNodes() == 0){
-			TreeNode newNode = new DefaultTreeNode(ApplicationInstance.APP_NAME);
-			getRootNode().addChildNode(newNode);
-			setSelectedNode(newNode);
-		}
-	}
-
 	private String generateIdentifier(final TreeNode treeNode, final int length){
 
 		byte[] generatedId = new byte[length];

@@ -472,7 +472,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.copy_text"),
 												ImageMap.getIcon("icon_copy"),
-												(event) -> setClipboardText(getSelectedTreeNode().getText()), true));
+												(event) -> setClipboardText(getSelectedTreeNode()), true));
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.insert_text"),	"",
 												(event) -> InsertNodeFromClipboard(), true));
@@ -517,7 +517,12 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		menu_Edit.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.edit.sort"),
 												ImageMap.getIcon("icon_sort"),
-												(event) -> getSelectedTreeNode().sortChildNodes(false), true));
+												(event) -> {
+													TreeNode node = getSelectedTreeNode();
+													if (node != null) {
+														node.sortChildNodes(false);
+													}
+												}, true));
 
 		// Menu entry for vertical node moving
 
@@ -709,20 +714,27 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		treeContextMenu.getItems().add(createMenuItem(localeBundle.getString("mainwindow.contextmenu.copy"),
 													  ImageMap.getIcon("icon_copy"),
-													  (event) -> setClipboardText(getSelectedTreeNode().getText()), true));
+													  (event) -> setClipboardText(getSelectedTreeNode()), true));
 
 		treeContextMenu.getItems().add(
 			createMenuItem(
 				localeBundle.getString("mainwindow.contextmenu.copy_node"),	"",
-				(event) -> internalClipboard = dataTree.exportNodeStructure(getSelectedTreeNode()),
-				true));
+				(event) -> {
+					TreeNode node = getSelectedTreeNode();
+					if (node != null) {
+						internalClipboard = dataTree.exportNodeStructure(node);
+					}
+				}, true));
 
 		treeContextMenu.getItems().add(
 			createMenuItem(
 					localeBundle.getString("mainwindow.contextmenu.cut_node"), "",
 					(event) -> {
-						internalClipboard = dataTree.exportNodeStructure(getSelectedTreeNode());
-						removeNode(getSelectedTreeItem());
+						TreeNode node = getSelectedTreeNode();
+						if (node != null) {
+							internalClipboard = dataTree.exportNodeStructure(node);
+							node.remove();
+						}
 					}, true));
 
 		treeContextMenu.getItems().add(
@@ -807,7 +819,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		sidebarGrid.add(
 			createSmallButton(
 				localeBundle.getString("mainwindow.sidebar.collapsed.show"), "icon_add", 24, (event) -> {
-				if(sidebarTabPanel.getTabs().size() > 0){
+				if(sidebarTabPanel.getTabs().size() > 0 && !dataTree.getSelectedNode().isRootNode()){
 					showSidebar(true);
 				}
 				else {
@@ -817,7 +829,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		sidebarGrid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.edit_node"), "icon_edit", 24, (event) -> showEditCurrentNodeDialog()), 0, 1);
 		sidebarGrid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.move_node_up"), "icon_up", 24, (event) -> dataTree.getSelectedNode().move(Direction.UP)), 0, 2);
 		sidebarGrid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.move_node_down"), "icon_down", 24, (event) -> dataTree.getSelectedNode().move(Direction.DOWN)), 0, 3);
-		sidebarGrid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.copy_text"), "icon_copy", 24, (event) -> setClipboardText(getSelectedTreeNode().getText())), 0, 4);
+		sidebarGrid.add(createSmallButton(localeBundle.getString("mainwindow.sidebar.collapsed.copy_text"), "icon_copy", 24, (event) -> setClipboardText(getSelectedTreeNode())), 0, 4);
 
 		this.sidebarToolPanel = sidebarGrid;
 
@@ -879,9 +891,12 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 	private MenuItem createColorContextMenu(String colorName, String iconKeyWord, String colorHTMLValue) {
 		return createMenuItem(colorName, ImageMap.getIcon(iconKeyWord), (event) -> {
-				getSelectedTreeNode().setColor(colorHTMLValue);
+			TreeNode node = getSelectedTreeNode();
+			if (node != null) {
+				node.setColor(colorHTMLValue);
 				updateStatus(localeBundle.getString("mainwindow.messages.node_color_changed"));
-			}, false);
+			}
+		}, false);
 	}
 
 	/*
@@ -917,7 +932,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		addApplicationHotKey(KeyCode.C, true, false, false, new HotKeyEvent(condition_nodesAvailable) {
 			@Override
 			public void onKeyDown() {
-				setClipboardText(getSelectedTreeNode().getText());
+				setClipboardText(getSelectedTreeNode());
 			}
 		});
 
@@ -1241,7 +1256,12 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	}
 
 	private void removeNode(TreeItem<TreeNodeReference> node){
-		node.getValue().getTreeNode().remove();
+		if(node != null){
+			TreeNode treeNode = node.getValue().getTreeNode();
+			if(treeNode != null){
+				treeNode.remove();
+			}
+		}
 	}
 
 	private TreeItem<TreeNodeReference> getTreeItemOfTreeNode(TreeNode node){
@@ -1265,10 +1285,12 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	}
 
 	private void duplicateNode(TreeNode node, boolean selectNewNodeAfterDuplicate){
-		List<TreeNode> clonedNodes = dataTree.exportNodeStructure(node);
-		dataTree.importNodeStructure(node.getParentNode(), clonedNodes, node.getIndex() + 1);
-		if(selectNewNodeAfterDuplicate){
-			dataTree.setSelectedNode(dataTree.getNextNode(node));
+		if(node != null){
+			List<TreeNode> clonedNodes = dataTree.exportNodeStructure(node);
+			dataTree.importNodeStructure(node.getParentNode(), clonedNodes, node.getIndex() + 1);
+			if(selectNewNodeAfterDuplicate){
+				dataTree.setSelectedNode(dataTree.getNextNode(node));
+			}
 		}
 	}
 
@@ -1283,20 +1305,28 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 	 * ======================================================================================================================================================
 	 */
 
-	private boolean node_hasStyle(TreeItem<TreeNodeReference> node, String styleClass){
-		return node.getValue().getTreeNode().getAttribute("style").contains(styleClass + ";");
+	private boolean node_hasStyle(TreeItem<TreeNodeReference> treeItem, String styleClass){
+		TreeNode node = treeItem.getValue().getTreeNode();
+		if(node != null){
+			return node.getAttribute("style").contains(styleClass + ";");
+		}
+		return false;
 	}
 
 	private void node_addStyle(TreeItem<TreeNodeReference> nodeRef, String styleClass){
 		TreeNode node = nodeRef.getValue().getTreeNode();
-		node.setAttribute("style", node.getAttribute("style") + styleClass + ";");
-		fxtree.refresh();
+		if(node != null){
+			node.setAttribute("style", node.getAttribute("style") + styleClass + ";");
+			fxtree.refresh();
+		}
 	}
 
 	private void node_removeStyle(TreeItem<TreeNodeReference> nodeRef, String styleClass){
 		TreeNode node = nodeRef.getValue().getTreeNode();
-		node.setAttribute("style", node.getAttribute("style").replace(styleClass + ";", ""));
-		fxtree.refresh();
+		if(node != null){
+			node.setAttribute("style", node.getAttribute("style").replace(styleClass + ";", ""));
+			fxtree.refresh();
+		}
 	}
 
 	private void node_toogleStyle(TreeItem<TreeNodeReference> node, String styleClass){
@@ -1671,6 +1701,12 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		return "";
 	}
 
+	private void setClipboardText(TreeNode node) {
+		if(node != null){
+			setClipboardText(node.getText());
+		}
+	}
+
 	@Override
 	public synchronized void setClipboardText(String text) {
 		if(Platform.isFxApplicationThread()){
@@ -1817,8 +1853,15 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		String clipboardText = getClipboardText();
 		if(!clipboardText.trim().equals("")){
 			TreeNode newNode = new DefaultTreeNode(clipboardText);
-			getSelectedTreeNode().addChildNode(newNode);
-			fxtree.getSelectionModel().getSelectedItem().setExpanded(true);
+			TreeNode selectedNode = getSelectedTreeNode();
+			if (selectedNode == null) {
+				dataTree.getRootNode().addChildNode(newNode);;
+			}
+			else {
+				selectedNode.addChildNode(newNode);
+				fxtree.getSelectionModel().getSelectedItem().setExpanded(true);
+			}
+
 			updateStatus(localeBundle.getString("mainwindow.messages.node_insert_from_clipboard"));
 		}
 	}
@@ -1925,7 +1968,12 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 			menuItem.setUserData(name);
 			menuItem.setOnAction((event) -> {
 				TreeNode quicklinkNode = app.getQuicklinkNode(name);
-				if(node != null){dataTree.setSelectedNode(quicklinkNode);}
+				if (quicklinkNode != null) {
+					dataTree.setSelectedNode(quicklinkNode);
+				}
+				else {
+					app.log(String.format("Unable to find node with id '%s'.", name));
+				}
 			});
 
 			menu_Quicklinks.getItems().add(menuItem);

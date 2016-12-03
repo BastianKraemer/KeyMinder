@@ -252,12 +252,9 @@ public abstract class TreeNode {
 			this.tree.getUndoBuilder().addNode(getParentNode()).addNodeIncludeChildNodes(this).commit();
 		}
 
-		final TreeStore myTree = this.tree;
 		this.tree.fireNodeEvent(this, TreeNodeEvent.OnNodeRemoved);
 		unregister();
 		setParentNodeId(null);
-
-		myTree.verifyNotEmptyTree();
 	}
 
 	final void unregister(){

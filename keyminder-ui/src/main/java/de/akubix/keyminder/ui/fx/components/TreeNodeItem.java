@@ -18,6 +18,7 @@
  */
 package de.akubix.keyminder.ui.fx.components;
 
+import de.akubix.keyminder.core.tree.TreeNode;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TreeItem;
 
@@ -34,6 +35,9 @@ public class TreeNodeItem extends TreeItem<TreeNodeReference> {
 	}
 
 	private void expandChanged(boolean value) {
-		getValue().getTreeNode().setExpanded(value);
+		TreeNode node = getValue().getTreeNode();
+		if(node != null){
+			node.setExpanded(value);
+		}
 	}
 }
