@@ -166,12 +166,14 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 		this.moduleLoader = new ModuleLoader(this);
 
-		TreeNodeEventHandler fx = (node) -> {
-			if(node.hasAttribute(NODE_ATTRIBUTE_QUICKLINK)){buildQuicklinkList();}
-		};
 
-		addEventHandler(TreeNodeEvent.OnNodeEdited, fx);
-		addEventHandler(TreeNodeEvent.OnNodeRemoved, fx);
+		addEventHandler(TreeNodeEvent.OnNodeEdited, (node) -> {
+			if(node.hasAttribute(NODE_ATTRIBUTE_QUICKLINK)){buildQuicklinkList();}
+		});
+
+		addEventHandler(TreeNodeEvent.OnNodeRemoved, (node) -> {
+			updatedQuicklinkListAfterNodeRemove(node);
+		});
 	}
 
 	public TreeStore getTree(){
@@ -705,6 +707,42 @@ public class ApplicationInstance implements ShellOutputWriter {
 			});
 		}
 		fireEvent(DefaultEvent.OnQuicklinksUpdated);
+	}
+
+	private synchronized void updatedQuicklinkListAfterNodeRemove(TreeNode node){
+
+		if(!getSettingsValueAsBoolean("nodes.disable_quicklinks", false)){
+
+			boolean anyEntryRemoved = false;
+
+			if(node.hasAttribute(NODE_ATTRIBUTE_QUICKLINK)){
+				quicklinks.remove(node.getAttribute(NODE_ATTRIBUTE_QUICKLINK));
+				anyEntryRemoved = true;
+			}
+
+			anyEntryRemoved |= removeObsoleteQuicklinkListEntries(node);
+
+			if(anyEntryRemoved){
+				fireEvent(DefaultEvent.OnQuicklinksUpdated);
+			}
+		}
+	}
+
+	private synchronized boolean removeObsoleteQuicklinkListEntries(TreeNode parentNode){
+
+		boolean anyEntryRemoved = false;
+		for(TreeNode childNode: parentNode.getChildNodes()){
+			if(childNode.hasAttribute(NODE_ATTRIBUTE_QUICKLINK)){
+				quicklinks.remove(childNode.getAttribute(NODE_ATTRIBUTE_QUICKLINK));
+				anyEntryRemoved = true;
+			}
+
+			if(childNode.countChildNodes() > 0){
+				anyEntryRemoved |= removeObsoleteQuicklinkListEntries(childNode);
+			}
+		}
+
+		return anyEntryRemoved;
 	}
 
 	public synchronized Set<String> getQuicklinks(){
