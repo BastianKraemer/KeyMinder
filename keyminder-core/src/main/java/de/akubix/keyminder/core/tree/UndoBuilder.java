@@ -40,6 +40,6 @@ public class UndoBuilder {
 	}
 
 	void commit(Runnable postUndoActions){
-		tree.captureNodeState(new UndoStep(changedNodesMap, postUndoActions));
+		tree.captureNodeState(new UndoStep(changedNodesMap, tree.getSelectedNode().getId(), postUndoActions));
 	}
 }

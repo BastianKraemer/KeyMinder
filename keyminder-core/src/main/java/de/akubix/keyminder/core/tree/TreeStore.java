@@ -487,11 +487,11 @@ public class TreeStore {
 		}
 	}
 
-	public final boolean undo(boolean selectChangedNode){
+	public final boolean undo(boolean restoreSelectedNodeState){
 		synchronized (treeNodeMap) {
 			synchronized (undoHistory) {
 				if(undoHistory.size() > 0){
-					undo(undoHistory.getLast(), selectChangedNode);
+					undo(undoHistory.getLast(), restoreSelectedNodeState);
 					undoHistory.getLast().clear();
 					undoHistory.removeLast();
 					return true;
@@ -501,7 +501,7 @@ public class TreeStore {
 		return false;
 	}
 
-	private void undo(UndoStep step, boolean selectChangedNode){
+	private void undo(UndoStep step, boolean restoreSelectedNodeState){
 
 		final boolean eventsEnabled = this.areEventsEnabled();
 		final boolean undoEnabled = this.isUndoEnabled();
@@ -524,10 +524,8 @@ public class TreeStore {
 
 		step.runPostUndoActions();
 
-		TreeNode newSelectedNode = getSelectedNode();
-		if(newSelectedNode != null){
-			newSelectedNode = getNodeById(newSelectedNode.getId());
-		}
+		String newSelectedNodeId = restoreSelectedNodeState ? step.getPreviouslySelectedNodeId() : getSelectedNode().getId();
+		TreeNode newSelectedNode = getNodeById(newSelectedNodeId);
 
 		// First the node point must be set to a valid TreeNode reference (maybe the node was updated)
 		if(newSelectedNode != null){
@@ -543,15 +541,10 @@ public class TreeStore {
 			nodeResetEvents.stream().filter((node) -> !node.isRootNode()).forEach((node) -> {
 				fireNodeEvent(node, TreeNodeEvent.OnNodeReset);
 			});
-
-			// Now fire the node select event
-			if(selectChangedNode && nodeResetEvents.size() > 0){
-				setNodePointer(nodeResetEvents.getFirst());
-			}
-			else{
-				setNodePointer(newSelectedNode);
-			}
 		}
+
+		// Now fire the node select event
+		setNodePointer(newSelectedNode);
 
 		this.enableUndo = undoEnabled;
 	}

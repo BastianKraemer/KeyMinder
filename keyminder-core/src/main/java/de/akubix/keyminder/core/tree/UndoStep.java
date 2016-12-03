@@ -4,22 +4,26 @@ import java.util.Map;
 
 public class UndoStep {
 	private Map<String, TreeNode> changedNodesMap;
+	private String previouslySelectedNodeId;
 	private Runnable postUndoActions;
 
-	UndoStep(Map<String, TreeNode> changedNodesMap, Runnable postUndoActions) {
+	UndoStep(Map<String, TreeNode> changedNodesMap, String previouslySelectedNodeId, Runnable postUndoActions) {
 		super();
 		this.changedNodesMap = changedNodesMap;
+		this.previouslySelectedNodeId = previouslySelectedNodeId;
 		this.postUndoActions = postUndoActions;
 	}
 
-	UndoStep(Map<String, TreeNode> changedNodesMap) {
-		super();
-		this.changedNodesMap = changedNodesMap;
-		this.postUndoActions = null;
+	UndoStep(Map<String, TreeNode> changedNodesMap, String previouslySelectedNodeId) {
+		this(changedNodesMap, previouslySelectedNodeId, null);
 	}
 
 	Map<String, TreeNode> getChangedNodesMap() {
 		return changedNodesMap;
+	}
+
+	String getPreviouslySelectedNodeId(){
+		return previouslySelectedNodeId;
 	}
 
 	void runPostUndoActions(){
@@ -31,5 +35,6 @@ public class UndoStep {
 	void clear(){
 		changedNodesMap.clear();
 		postUndoActions = null;
+		previouslySelectedNodeId = null;
 	}
 }
