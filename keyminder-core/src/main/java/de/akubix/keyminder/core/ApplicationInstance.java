@@ -1,20 +1,20 @@
-/*	KeyMinder
+/* KeyMinder
  * Copyright (C) 2015-2016 Bastian Kraemer
  *
  * ApplicationInstance.java
  *
- * This program is free software: you can redistribute it and/or modify
+ * KeyMinder is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * KeyMinder is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with KeyMinder.  If not, see <http://www.gnu.org/licenses/>.
  */
 package de.akubix.keyminder.core;
 
@@ -67,6 +67,7 @@ import de.akubix.keyminder.util.Utilities;
 public class ApplicationInstance implements ShellOutputWriter {
 
 	public static final String APP_NAME = "KeyMinder";
+	public static final String CORE_LANGUAGE_BUNDLE = "core";
 
 	public static final String NODE_ATTRIBUTE_CREATION_DATE = "created";
 	public static final String NODE_ATTRIBUTE_MODIFICATION_DATE = "modified";
@@ -159,7 +160,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 		}
 
 		this.locale = LocaleLoader.loadLanguagePack("core", "core", applicationLocale);
-		LocaleLoader.provideBundle("core", locale);
+		LocaleLoader.provideBundle(CORE_LANGUAGE_BUNDLE, locale);
 
 		this.shell = new Shell(this);
 		this.shell.loadCommandsFromFile("/de/akubix/keyminder/shell/CommandClasses.conf");

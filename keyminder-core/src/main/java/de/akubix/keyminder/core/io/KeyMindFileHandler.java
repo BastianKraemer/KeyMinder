@@ -1,21 +1,21 @@
 /*	KeyMinder
-	Copyright (C) 2015 Bastian Kraemer
-
-	KeyMindFileHandler.java
-
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU General Public License for more details.
-
-	You should have received a copy of the GNU General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2015-2016 Bastian Kraemer
+ *
+ * KeyMindFileHandler.java
+ *
+ * KeyMinder is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * KeyMinder is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with KeyMinder.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package de.akubix.keyminder.core.io;
 
 import java.io.File;
@@ -171,7 +171,7 @@ public class KeyMindFileHandler implements StorageHandler {
 								}
 							}
 
-							// unencrypted file has been successfully opened
+							// file has been successfully opened
 							return new FileConfiguration(xmlFile, fileVersion, fileIsEncrypted, this.fileType, null, fileAttributes, fileSettings);
 						}
 						else{
@@ -204,7 +204,7 @@ public class KeyMindFileHandler implements StorageHandler {
 
 									char[] pw;
 									if(filepassword.equals("")){
-										String txt = LocaleLoader.getBundle("core").getString("encryption.input_password_label");
+										String txt = LocaleLoader.getBundle(ApplicationInstance.CORE_LANGUAGE_BUNDLE).getString("encryption.input_password_label");
 										pw = app.requestPasswordInput(ApplicationInstance.APP_NAME, txt, fileAttributes.getOrDefault(FileConfiguration.PASSWORD_HINT_ATTRIBUTE_NAME, ""));
 
 										if(pw.length == 0){throw new UserCanceledOperationException("The user canceled the operation.");}
@@ -240,7 +240,7 @@ public class KeyMindFileHandler implements StorageHandler {
 								} catch (NoSuchAlgorithmException e) {
 									throw new StorageException(StorageExceptionType.UnknownEncryptionCipher, "Encryption with '" + cipherName + "' is not supported on this system.");
 								} catch (InvalidKeyException e) {
-									app.alert(LocaleLoader.getBundle("core").getString("encryption.incorrect_password"));
+									app.alert(LocaleLoader.getBundle(ApplicationInstance.CORE_LANGUAGE_BUNDLE).getString("encryption.incorrect_password"));
 								} catch (DOMException e) {
 									throw new XMLParseException(e.getMessage());
 								}
