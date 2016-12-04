@@ -49,15 +49,20 @@ import de.akubix.keyminder.locale.LocaleLoader;
 
 public class KeyMindFileHandler implements StorageHandler {
 
-	private static String latestFileFormatVersion = "1.1.0";
+	private static final String latestFileFormatVersion = "1.2.0";
 	private String fileType;
+
+	// This flag is set to true if a a file with version 1.0 or 1.1 is opened
+	// Prior to KeyMinder 0.3 a node identifier was an integer values
+	private boolean compatibilityRegenerateNodeIds = false;
+
 	public KeyMindFileHandler(String forFileType){
 		this.fileType = forFileType;
 	}
 
 	@Override
 	public FileConfiguration open(File xmlFile, String filePassword, Object tree, ApplicationInstance instance) throws StorageException {
-		if(!xmlFile.exists()){throw new StorageException(StorageExceptionType.FileNotFound, "File not Found.");}
+		if(!xmlFile.exists()){throw new StorageException(StorageExceptionType.FileNotFound, "File not found.");}
 
 		try {
 			return readXMLFrame(xmlFile, filePassword, instance.getTree(), instance);
@@ -102,7 +107,12 @@ public class KeyMindFileHandler implements StorageHandler {
 			// Read the version from the XML root node
 			Map<String, String> rootAttribs = XML.getXmlAttributesAsMap(document.getDocumentElement());
 			if(rootAttribs.containsKey("version")){
-				if(!rootAttribs.get("version").matches("1.[0-1]($|.(.*))")){throw new StorageException(StorageExceptionType.UnsupportedVersion, "Document Version not supported.");}
+				String version = rootAttribs.get("version");
+				if(!version.matches("1.[0-2]($|.(.*))")){throw new StorageException(StorageExceptionType.UnsupportedVersion, "Document version not supported.");}
+
+				if(version.matches("1.[0-1]($|.(.*))")){
+					this.compatibilityRegenerateNodeIds = true;
+				}
 			}
 
 			if(document.getDocumentElement().getChildNodes().getLength() >= 2){
@@ -262,11 +272,11 @@ public class KeyMindFileHandler implements StorageHandler {
 		}
 	}
 
-	private static void addChildNodes(org.w3c.dom.Node parentXMLNode, TreeNode parentTreeNode){
+	private void addChildNodes(org.w3c.dom.Node parentXMLNode, TreeNode parentTreeNode){
 		addChildNodes(parentXMLNode, parentTreeNode, 0);
 	}
 
-	private static void addChildNodes(org.w3c.dom.Node parentXMLNode, TreeNode parentTreeNode, int startindex){
+	private void addChildNodes(org.w3c.dom.Node parentXMLNode, TreeNode parentTreeNode, int startindex){
 		for(int i = startindex; i < parentXMLNode.getChildNodes().getLength(); i++){
 			org.w3c.dom.Node childXMLNode = parentXMLNode.getChildNodes().item(i);
 
@@ -281,7 +291,7 @@ public class KeyMindFileHandler implements StorageHandler {
 		}
 	}
 
-	private static TreeNode createTreeNode(org.w3c.dom.Node xmlNode){
+	private TreeNode createTreeNode(org.w3c.dom.Node xmlNode){
 		String id = null;
 
 		TreeNode newNode = new DefaultTreeNode();
@@ -292,8 +302,10 @@ public class KeyMindFileHandler implements StorageHandler {
 
 			switch(name){
 				case "id":
-					id = value;
-					break;
+					if (!this.compatibilityRegenerateNodeIds) {
+						id = value;
+						break;
+					}
 
 				case "text":
 					newNode.setText(value);
