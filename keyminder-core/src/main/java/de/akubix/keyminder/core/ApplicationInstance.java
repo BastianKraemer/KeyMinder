@@ -48,7 +48,7 @@ import de.akubix.keyminder.core.exceptions.StorageException;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.io.StorageManager;
 import de.akubix.keyminder.core.io.XML;
-import de.akubix.keyminder.core.modules.ModuleLoader;
+import de.akubix.keyminder.core.plugins.PluginLoader;
 import de.akubix.keyminder.core.tree.DefaultTreeNode;
 import de.akubix.keyminder.core.tree.TreeNode;
 import de.akubix.keyminder.core.tree.TreeStore;
@@ -61,7 +61,7 @@ import de.akubix.keyminder.ui.UserInterface;
 import de.akubix.keyminder.util.Utilities;
 
 /**
- * This class is the core of this application, it provides all functions and methods for the whole event handling, manages the loading of all modules
+ * This class is the core of this application, it provides all functions and methods for the whole event handling, manages the loading of all plugins
  * and creates the database. Furthermore it is the only interface to load and store data from respectively into files.
  */
 public class ApplicationInstance implements ShellOutputWriter {
@@ -74,7 +74,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 	public static final String NODE_ATTRIBUTE_QUICKLINK = "quicklink";
 	public static final String NODE_ATTRIBUTE_LINKED_NODES = "linked_nodes";
 
-	public static final String SETTINGS_KEY_ENABLED_MODULES = "enabled_modules";
+	public static final String SETTINGS_KEY_ENABLED_PLUGINS = "enabled_plugins";
 	public static final String SETTINGS_KEY_DEFAULT_FILE = "startup.defaultfile";
 	public static final String SETTINGS_KEY_USE_OTHER_WEB_BROWSER = "etc.useotherbrowser";
 	public static final String SETTINGS_KEY_BROWSER_PATH = "etc.browserpath";
@@ -91,7 +91,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 	private TreeStore tree;
 	private final Shell shell;
-	private final ModuleLoader moduleLoader;
+	private final PluginLoader pluginLoader;
 	private final StorageManager storageManager;
 	private final ResourceBundle locale;
 	private final KeyMinderUserInterface userInterfaceInformation;
@@ -165,7 +165,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 		this.shell = new Shell(this);
 		this.shell.loadCommandsFromFile("/de/akubix/keyminder/shell/CommandClasses.conf");
 
-		this.moduleLoader = new ModuleLoader(this);
+		this.pluginLoader = new PluginLoader(this);
 
 
 		addEventHandler(TreeNodeEvent.OnNodeEdited, (node) -> {
@@ -189,8 +189,8 @@ public class ApplicationInstance implements ShellOutputWriter {
 		return locale.getLocale();
 	}
 
-	public ModuleLoader getModuleLoader(){
-		return this.moduleLoader;
+	public PluginLoader getPluginLoader(){
+		return this.pluginLoader;
 	}
 
 	public UserInterface getUserInterface(){
@@ -225,11 +225,11 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 	/**
 	 * The Startup-Method must be called by the UserInterface when it is ready.
-	 * @param enableModuleLoading specify if modules should be loaded or not
+	 * @param enablePluginLoading specify if plugins should be loaded or not
 	 */
-	public void startup(boolean enableModuleLoading){
-		if(enableModuleLoading){
-			moduleLoader.loadModules();
+	public void startup(boolean enablePluginLoading){
+		if(enablePluginLoading){
+			pluginLoader.loadPlugins();
 		}
 
 		shell.loadAliasListFromDefaultFileAsync();
@@ -268,7 +268,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 	 */
 
 	private void presetDefaultSettings(){
-		settings.put(SETTINGS_KEY_ENABLED_MODULES, "KeyClip;Sidebar;");
+		settings.put(SETTINGS_KEY_ENABLED_PLUGINS, "KeyClip;Sidebar;");
 	}
 
 	private void loadSettingsFromXMLFile(){
@@ -452,7 +452,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 		tree.setTreeChangedStatus(false);
 
-		tree.resetNodePointer(); // the node pointer should have a default value, maybe a module listens to the "onFileOpened" event.
+		tree.resetNodePointer(); // the node pointer should have a default value, maybe a plugin listens to the "onFileOpened" event.
 
 		tree.enableNodeTimestamps(true);
 		tree.enableEvents(true);
@@ -792,7 +792,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 	/*
 	 * ========================================================================================================================================================
-	 * Modules and Interface "EventHost"
+	 * Interface "EventHost"
 	 * ========================================================================================================================================================
 	 */
 
@@ -910,11 +910,11 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 	/*
 	 * ========================================================================================================================================================
-	 * Plugins for JavaFX Interface
+	 * Methods for JavaFX Interface
 	 * ========================================================================================================================================================
 	 */
 
-	// The following methods can be by used all modules to request input dialogs in console mode and graphical mode
+	// The following methods can be by used all plugins to request input dialogs in console mode and graphical mode
 
 	/**
 	 * Request a (single line) text input dialog (if the JavaFX user interface is loaded it will be shown as graphical dialog)
@@ -952,7 +952,7 @@ public class ApplicationInstance implements ShellOutputWriter {
 
 	/*
 	 * ========================================================================================================================================================
-	 * All modules can use this methods to display their information
+	 * All plugins can use this methods to display their information
 	 * ========================================================================================================================================================
 	 */
 

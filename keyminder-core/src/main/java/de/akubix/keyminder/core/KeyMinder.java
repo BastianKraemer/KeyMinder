@@ -150,10 +150,9 @@ public class KeyMinder {
 							System.exit(0);
 							break;
 
-						case "m":
-						case "mod":
-						case "module":
-							environment.put("module." + args[i+1].toLowerCase(), args[i+2]);
+						case "p":
+						case "plugin":
+							environment.put("plugin." + args[i+1].toLowerCase(), args[i+2]);
 							i += 2;
 							break;
 

@@ -3,7 +3,7 @@ KeyMinder is a connection and login credential management program. Originally it
 Consequently you can store all your login credentials for any host in a clear hierarchical structure and directly connect to them using "PuTTY", "WinSCP" or another application – all with the same data.
 All your data will be saved in a single file, which can be encrypted with AES-256.
 
-This sounds a bit technical, but KeyMinder is not just for IT experts, many features are part of optional "modules". If you don’t want to use those "SSH-Tools", just disable the module.
+This sounds a bit technical, but KeyMinder is not just for IT experts, many features are part of optional "plugins". If you don’t want to use those "SSH-Tools", just disable the plugin.
 
 **Note: This is only the first release of this project. The whole application is still in development.**
 
@@ -18,7 +18,7 @@ KeyMinder is able to encrypt your login credentials with AES-256 (and PBKDF2-Has
 
 ##Contributing
 There are several possibilities to contribute something to this project. 
-You can report bugs or offer ideas for new features or other improvements. Another possibility for contributing is to share your own application profiles (see module “SSH-Tools”), but you can even implement new features by yourself.
+You can report bugs or offer ideas for new features or other improvements. Another possibility for contributing is to share your own application profiles (see plugin "SSH-Tools"), but you can even implement new features by yourself.
 
 ##Build
 You can build KeyMinder using Maven. Just run `mvn package` to build the jar file.

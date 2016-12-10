@@ -27,22 +27,22 @@
 		</dependency>
 		<dependency>
 			<groupId>de.akubix.keyminder</groupId>
-			<artifactId>keyminder-module-sshtools</artifactId>
+			<artifactId>keyminder-plugin-sshtools</artifactId>
 			<version>${keyminder.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.akubix.keyminder</groupId>
-			<artifactId>keyminder-module-sidebar</artifactId>
+			<artifactId>keyminder-plugin-sidebar</artifactId>
 			<version>${keyminder.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.akubix.keyminder</groupId>
-			<artifactId>keyminder-module-keyclip</artifactId>
+			<artifactId>keyminder-plugin-keyclip</artifactId>
 			<version>${keyminder.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.akubix.keyminder</groupId>
-			<artifactId>keyminder-module-deadline</artifactId>
+			<artifactId>keyminder-plugin-deadline</artifactId>
 			<version>${keyminder.version}</version>
 		</dependency>
 	</dependencies>

@@ -25,8 +25,8 @@ import java.util.Properties;
 import java.util.function.BiConsumer;
 
 import de.akubix.keyminder.core.ApplicationInstance;
-import de.akubix.keyminder.core.modules.ModuleInfo;
-import de.akubix.keyminder.core.modules.ModuleLoader;
+import de.akubix.keyminder.core.plugins.PluginInfo;
+import de.akubix.keyminder.core.plugins.PluginLoader;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
@@ -70,6 +70,8 @@ public class SettingsDialog {
 	private JavaFxUserInterfaceApi fxUI;
 	private Map<String, String> settingscopy;
 
+	private Map<String, CheckBox> pluginList = new HashMap<>();
+
 	public SettingsDialog(Stage primaryStage, ApplicationInstance instance) throws IllegalStateException {
 		this.app = instance;
 		this.fxUI = JavaFxUserInterface.getInstance(instance);
@@ -90,7 +92,7 @@ public class SettingsDialog {
 		TabPane tabs = new TabPane();
 
 		// General Settings
-		tabs.getTabs().addAll(createGeneralSettingsTab(), createModuleSettingsTab());
+		tabs.getTabs().addAll(createGeneralSettingsTab(), createPluginSettingsTab());
 
 		fireSettingsDialogOpenedEvent(tabs);
 
@@ -105,20 +107,16 @@ public class SettingsDialog {
 
 				Utilities.hashCopy(settingscopy, app.getSettingsMap());
 
-				//Check if the user enabled or disabled some modules
-				ModuleLoader moduleLoader =  app.getModuleLoader();
-				for(String moduleName: moduleList.keySet())
-				{
-					ModuleInfo m = moduleLoader.getModuleInfo(moduleName);
-					if(m.isEnabled() != moduleList.get(moduleName).isSelected())
-					{
-						if(moduleList.get(moduleName).isSelected())
-						{
-							moduleLoader.enableModule(moduleName);
+				//Check if the user enabled or disabled some plugins
+				PluginLoader pluginLoader =  app.getPluginLoader();
+				for(String pluginName: pluginList.keySet()) {
+					PluginInfo m = pluginLoader.getPluginInfo(pluginName);
+					if(m.isEnabled() != pluginList.get(pluginName).isSelected()) {
+						if(pluginList.get(pluginName).isSelected()) {
+							pluginLoader.enablePlugin(pluginName);
 						}
-						else
-						{
-							moduleLoader.disableModule(moduleName);
+						else {
+							pluginLoader.disablePlugin(pluginName);
 						}
 					}
 				}
@@ -276,49 +274,48 @@ public class SettingsDialog {
 		return settings_general;
 	}
 
-	private Map<String, CheckBox> moduleList = new HashMap<>();
-	private Tab createModuleSettingsTab(){
-		Tab settings_modules = new Tab(fxUI.getLocaleBundleString("settings.tabs.modules.title"));
-		settings_modules.setClosable(false);
+	private Tab createPluginSettingsTab(){
+		Tab pluginSettingsTab = new Tab(fxUI.getLocaleBundleString("settings.tabs.plugins.title"));
+		pluginSettingsTab.setClosable(false);
 		BorderPane pane = new BorderPane();
 		pane.setPadding(new Insets(4, 8, 0, 8));
 
-		Label title = new Label(fxUI.getLocaleBundleString("settings.tabs.modules.headline"));
+		Label title = new Label(fxUI.getLocaleBundleString("settings.tabs.plugins.headline"));
 		title.getStyleClass().add("h2");
 
 		VBox vbox = new VBox(4);
-		vbox.getChildren().addAll(title, new Label(fxUI.getLocaleBundleString("settings.modules.infolabel")));
+		vbox.getChildren().addAll(title, new Label(fxUI.getLocaleBundleString("settings.plugins.infolabel")));
 		pane.setTop(vbox);
 
 		VBox list = new VBox(6);
 		list.setPadding(new Insets(4));
-		ModuleLoader moduleLoader = app.getModuleLoader();
-		for(String moduleName: Utilities.asSortedList(moduleLoader.getModules())){
-			ModuleInfo moduleInfo = moduleLoader.getModuleInfo(moduleName);
-			final CheckBox cb = new CheckBox(moduleName);
+		PluginLoader pluginLoader = app.getPluginLoader();
+		for(String pluginName: Utilities.asSortedList(pluginLoader.getPlugins())){
+			PluginInfo pluginInfo = pluginLoader.getPluginInfo(pluginName);
+			final CheckBox cb = new CheckBox(pluginName);
 			try{
-				Properties properties = moduleInfo.getProperties();
+				Properties properties = pluginInfo.getProperties();
 				cb.setTooltip(
 						new Tooltip(
 							String.format(
-								fxUI.getLocaleBundleString("settings.modules.moduleinfo_author") + ": %s\n" +
-								fxUI.getLocaleBundleString("settings.modules.moduleinfo_version") + ": %s\n\n%s",
+								fxUI.getLocaleBundleString("settings.plugins.plugininfo_author") + ": %s\n" +
+								fxUI.getLocaleBundleString("settings.plugins.plugininfo_version") + ": %s\n\n%s",
 								properties.getOrDefault("author", "-"),
 								properties.getOrDefault("version", "-"),
 								forceLineBreak(properties.getOrDefault("description_" + app.getLocale().getLanguage(),	properties.getOrDefault("description", "-")).toString(), 80)
 				)));
 			}
 			catch(IOException | NullPointerException ex){
-				cb.setTooltip(new Tooltip("Error loading module property file."));
+				cb.setTooltip(new Tooltip("Error loading plugin property file."));
 			}
 
-			if(moduleInfo.isEnabled() && !moduleInfo.isStarted()){cb.setText(cb.getText() + " (!)");}
-			if(!moduleInfo.isEnabled() && moduleInfo.isStarted()){cb.setText(cb.getText() + " (*)");}
+			if(pluginInfo.isEnabled() && !pluginInfo.isStarted()){cb.setText(cb.getText() + " (!)");}
+			if(!pluginInfo.isEnabled() && pluginInfo.isStarted()){cb.setText(cb.getText() + " (*)");}
 
-			cb.setSelected(moduleInfo.isEnabled());
+			cb.setSelected(pluginInfo.isEnabled());
 			cb.setMaxWidth(size_x - 18);
 			cb.setMinWidth(size_x - 18);
-			moduleList.put(moduleName, cb);
+			pluginList.put(pluginName, cb);
 			list.getChildren().addAll(cb, new Separator(Orientation.HORIZONTAL));
 		}
 
@@ -330,12 +327,12 @@ public class SettingsDialog {
 		scrollPane.setMinWidth(size_x - 6);
 
 		pane.setCenter(scrollPane);
-		Label l = new Label(fxUI.getLocaleBundleString("settings.modules.restart_hint"));
+		Label l = new Label(fxUI.getLocaleBundleString("settings.plugins.restart_hint"));
 		l.setStyle("-fx-font-size: 10px; -fx-padding: 2px 0px 1px 1px;");
 		pane.setBottom(l);
-		settings_modules.setContent(pane);
+		pluginSettingsTab.setContent(pane);
 
-		return settings_modules;
+		return pluginSettingsTab;
 	}
 
 	private static String forceLineBreak(String src, int maxCharacterPerLine){

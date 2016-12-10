@@ -309,7 +309,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		me.show();
 
-		// Startup the application core (load the optional modules, ...)
+		// Startup the application core (load the optional plugins, ...)
 		app.startup(true);
 
 		runAsFXThread(new Runnable() {
@@ -1120,7 +1120,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		}
 	}
 
-	// To provide the HotKey-Events feature for all modules
+	// To provide the HotKey-Events feature for all plugins
 	@Override
 	public void addApplicationHotKey(KeyCode keyCode, boolean controlKey, boolean shiftKey, boolean altKey, HotKeyEvent onKeyDown){
 		String key = generatreKeyCodeString(keyCode, controlKey, shiftKey, altKey);

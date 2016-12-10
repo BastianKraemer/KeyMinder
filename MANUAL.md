@@ -86,15 +86,15 @@ All options can be used with `--`, `-` or `/`.
 
 	--help
 
-KeyMinder Modules
+KeyMinder Plugins
 -----------------
 
-You can extend KeyMinder with some custom modules. Each module is loaded by the Java Service loader, so you can easily extend KeyMinder with custom Modules by adding them to the Class-Path.
-Every KeyMinder module needs to be enabled at first, this can be done via the KeyMinder settings dialog or the `modules` command.
+You can extend KeyMinder with some custom plugins. Each plugin is loaded by the Java Service loader, so you can easily extend KeyMinder with custom plugins by adding them to the Class-Path.
+Every KeyMinder plugin needs to be enabled at first, this can be done via the KeyMinder settings dialog or the `plugins` command.
 
-### Module SSH-Tools
+### SSH-Tools plugin
 
-To use this features the module "SSH-Tools" must be enabled.
+To use this features the plugin "SSH-Tools" must be enabled.
 
 ##### Configure host port and login credentials
 
@@ -103,7 +103,7 @@ You can use each tree node for a single SSH configuration. Therefore the side ba
 
 ##### Command line generator
 
-KeyMinder SSH-Tools module allows you to start applications using their command line interface and the data you have stored in your password file.
+KeyMinder SSH-Tools plugin allows you to start applications using their command line interface and the data you have stored in your password file.
 Therefore you can pass any required login credentials directly to another application.
 
 Every launchable application is defined in an XML file called _command line descriptor_.
@@ -187,19 +187,19 @@ There are at least a hundred other applications with a command line interface th
 This manual won't explain how it exactly works, in my opinion the best way to create your own application profile is to copy one of the built-in XML files and adjust it to your own requirements.
 Feel free to modify them the way you want.
 
-> You will find the built-in _command line descriptors_ in the main resources of the SSH-Tools module project.
+> You will find the built-in _command line descriptors_ in the main resources of the SSH-Tools plugin project.
 
 The last step to include your own profiles into KeyMinder is very simple: Just put them in a folder and tell KeyMinder the location of this folder, by default this path is './sshtools'.
 
-You can define this path in the 'path configuration' of the SSH-Tools module (take a look at: SSH-Tools settings) or by using the config command: `config -s sshtools.cmdlinedescriptors.path [path]`.
+You can define this path in the 'path configuration' of the SSH-Tools plugin (take a look at: SSH-Tools settings) or by using the config command: `config -s sshtools.cmdlinedescriptors.path [path]`.
 
-### Module KeyClip
+### KeyClip plugin
 
-The KeyClip module allows you to transfer the user name and password from the KeyMinder Sidebar directly to any other application.
-By default the KeyClip module copies the user name into your clip board and displays an icon in your task bar.
+The KeyClip plugin allows you to transfer the user name and password from the KeyMinder Sidebar directly to any other application.
+By default the KeyClip plugin copies the user name into your clip board and displays an icon in your task bar.
 After a click on this task bar icon the password will be copied into the clip board.
 
-Alternatively, you can configure the KeyClip module to run a custom application instead of copying user name and password to the clip board.
+Alternatively, you can configure the KeyClip plugin to run a custom application instead of copying user name and password to the clip board.
 This can be done using the KeyMinder Shell.
 
 ##### Configure an external application:

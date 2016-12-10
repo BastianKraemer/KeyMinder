@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<CommandLineDescriptor name="Putty_Socks" version="0.1">
+
+	<script src="/de/akubix/keyminder/plugins/sshtools/sshtools.js" />
+	<script src="/de/akubix/keyminder/plugins/sshtools/putty.js" />
+
+	<profile id="default" execute="${sshtools.puttypath}" require="${socks_ssh_host}; ${socks_proxyport}" >
+		runSocksProfile(profile);
+	</profile>
+</CommandLineDescriptor>

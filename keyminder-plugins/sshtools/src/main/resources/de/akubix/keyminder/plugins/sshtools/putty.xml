@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<CommandLineDescriptor name="PuTTY" icon="icon_bash" version="0.1">
+
+	<script src="/de/akubix/keyminder/plugins/sshtools/sshtools.js" />
+	<script src="/de/akubix/keyminder/plugins/sshtools/putty.js" />
+
+	<profile id="default" execute="${sshtools.puttypath}" require="${ssh_host}; ${ssh_port}">
+		runPutty(profile, false);
+	</profile>
+
+	<profile id="using_socks" execute="${sshtools.puttypath}" require="${ssh_host}; ${ssh_port}">
+		runPutty(profile, true);
+	</profile>
+</CommandLineDescriptor>
