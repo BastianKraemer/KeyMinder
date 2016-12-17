@@ -95,6 +95,8 @@ import javafx.util.Pair;
 
 public class SSHTools {
 
+	public static final String PLUGIN_NAME = "SSHTools";
+
 	private final ApplicationInstance app;
 	private final JavaFxUserInterfaceApi fxUI;
 

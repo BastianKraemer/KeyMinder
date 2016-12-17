@@ -25,7 +25,7 @@ public class AppStartCmd extends AbstractShellCommand {
 
 	@Override
 	public CommandOutput exec(ShellOutputWriter out, ApplicationInstance instance, CommandInput in) {
-		SSHTools sshtools = (SSHTools) instance.getPluginLoader().getPluginInfo("SSH-Tools").getInstance();
+		SSHTools sshtools = (SSHTools) instance.getPluginLoader().getPluginInfo(SSHTools.PLUGIN_NAME).getInstance();
 
 		String starterName = in.getParameters().get("$0")[0];
 		AppStarter as = sshtools.getAppStarterByName(starterName);
