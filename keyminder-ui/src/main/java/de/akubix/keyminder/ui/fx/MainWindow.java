@@ -215,6 +215,8 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		me.setMinWidth(640);
 		me.setMinHeight(400);
 
+		updateWindowTitle();
+
 		/* ================================================================================================================
 		 * Event Registration
 		 * ================================================================================================================
