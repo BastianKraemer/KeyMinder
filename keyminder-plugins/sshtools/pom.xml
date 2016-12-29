@@ -14,7 +14,10 @@
 		<dependency>
 			<groupId>de.akubix.keyminder</groupId>
 			<artifactId>keyminder-ui</artifactId>
-			<version>${keyminder.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
 		</dependency>
 	</dependencies>
 </project>

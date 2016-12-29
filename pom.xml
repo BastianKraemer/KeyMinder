@@ -22,14 +22,52 @@
 		<module>keyminder-jar</module>
 	</modules>
 
-	<dependencies>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>${junit.version}</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>de.akubix.keyminder</groupId>
+				<artifactId>keyminder-ui</artifactId>
+				<version>${keyminder.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>de.akubix.keyminder</groupId>
+				<artifactId>keyminder-core</artifactId>
+				<version>${keyminder.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>de.akubix.keyminder</groupId>
+				<artifactId>keyminder-ui</artifactId>
+				<version>${keyminder.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>de.akubix.keyminder</groupId>
+				<artifactId>keyminder-plugin-sshtools</artifactId>
+				<version>${keyminder.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>de.akubix.keyminder</groupId>
+				<artifactId>keyminder-plugin-sidebar</artifactId>
+				<version>${keyminder.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>de.akubix.keyminder</groupId>
+				<artifactId>keyminder-plugin-keyclip</artifactId>
+				<version>${keyminder.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>de.akubix.keyminder</groupId>
+				<artifactId>keyminder-plugin-deadline</artifactId>
+				<version>${keyminder.version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>junit</groupId>
+				<artifactId>junit</artifactId>
+				<version>${junit.version}</version>
+				<scope>test</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<build>	
 		<plugins>

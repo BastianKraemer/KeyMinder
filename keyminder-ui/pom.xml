@@ -19,7 +19,6 @@
 		<dependency>
 			<groupId>de.akubix.keyminder</groupId>
 			<artifactId>keyminder-core</artifactId>
-			<version>${keyminder.version}</version>
 		</dependency>
 	</dependencies>
 </project>

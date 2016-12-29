@@ -18,32 +18,26 @@
 		<dependency>
 			<groupId>de.akubix.keyminder</groupId>
 			<artifactId>keyminder-core</artifactId>
-			<version>${keyminder.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.akubix.keyminder</groupId>
 			<artifactId>keyminder-ui</artifactId>
-			<version>${keyminder.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.akubix.keyminder</groupId>
 			<artifactId>keyminder-plugin-sshtools</artifactId>
-			<version>${keyminder.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.akubix.keyminder</groupId>
 			<artifactId>keyminder-plugin-sidebar</artifactId>
-			<version>${keyminder.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.akubix.keyminder</groupId>
 			<artifactId>keyminder-plugin-keyclip</artifactId>
-			<version>${keyminder.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>de.akubix.keyminder</groupId>
 			<artifactId>keyminder-plugin-deadline</artifactId>
-			<version>${keyminder.version}</version>
 		</dependency>
 	</dependencies>
 
