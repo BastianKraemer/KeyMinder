@@ -31,8 +31,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javafx.util.Pair;
-
 /**
  * This class is just a collection of some useful methods
  */
@@ -108,7 +106,7 @@ public final class Utilities {
 	 * @return
 	 * @throws IllegalArgumentException if the input value does not match with the regular expression
 	 */
-	public static Pair<String, String> splitKeyAndValue(String input, String keyRegEx,  String separatorRegEx, String valueRegEx) throws IllegalArgumentException {
+	public static KeyValuePair<String, String> splitKeyAndValue(String input, String keyRegEx,  String separatorRegEx, String valueRegEx) throws IllegalArgumentException {
 		Pattern p = Pattern.compile(String.format("^(%s) *%s *(%s)$", keyRegEx, separatorRegEx, valueRegEx));
 		Matcher matcher = p.matcher(input);
 
@@ -116,6 +114,6 @@ public final class Utilities {
 			throw new IllegalArgumentException(String.format("The input value does not match the following pattern: %s%s%s", keyRegEx, separatorRegEx, valueRegEx));
 		}
 
-		return new Pair<>(matcher.group(1), matcher.group(2));
+		return new KeyValuePair<>(matcher.group(1), matcher.group(2));
 	}
 }

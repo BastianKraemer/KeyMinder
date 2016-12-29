@@ -56,6 +56,7 @@ import de.akubix.keyminder.ui.fx.dialogs.SettingsDialog;
 import de.akubix.keyminder.ui.fx.events.FxSettingsEvent;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import de.akubix.keyminder.ui.fx.utils.FxCommons;
+import de.akubix.keyminder.util.KeyValuePair;
 import de.akubix.keyminder.util.Utilities;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -91,7 +92,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
-import javafx.util.Pair;
 
 public class SSHTools {
 
@@ -151,7 +151,7 @@ public class SSHTools {
 			sidebar.addSeparator();
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarCheckbox("ssh_x11", "Use X11"), "ssh_x11");
 
-			sidebar.setUsernameAndPasswordSupplier(() -> new Pair<>(sidebar.getValueOf("ssh_user"), sidebar.getValueOf("ssh_password")));
+			sidebar.setUsernameAndPasswordSupplier(() -> new KeyValuePair<>(sidebar.getValueOf("ssh_user"), sidebar.getValueOf("ssh_password")));
 
 			fxUI.addSidebarPanel(locale.getString("sshtools.tabtitle"), sidebar, 10, true);
 
@@ -511,8 +511,8 @@ public class SSHTools {
 			for(String line: app.getFileSettingsValue("sshtools.socksprofile:" + socksProfileId + ".customargs").split("\n")){
 				if(!line.matches("^( |\t)*\\#.*")){
 					try{
-						Pair<String, String> p = Utilities.splitKeyAndValue(line, "[A-Za-z0-9_\\.:-]+", "=", ".+");
-						variablePreset.put(p.getKey(), p.getValue().trim());
+						KeyValuePair<String, String> pair = Utilities.splitKeyAndValue(line, "[A-Za-z0-9_\\.:-]+", "=", ".+");
+						variablePreset.put(pair.getKey(), pair.getValue().trim());
 					}
 					catch(IllegalArgumentException e){}
 				}

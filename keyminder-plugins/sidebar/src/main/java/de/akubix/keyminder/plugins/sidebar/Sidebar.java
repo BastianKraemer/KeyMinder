@@ -25,7 +25,7 @@ import de.akubix.keyminder.locale.LocaleLoader;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterface;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
-import javafx.util.Pair;
+import de.akubix.keyminder.util.KeyValuePair;
 
 public class Sidebar {
 	public Sidebar(ApplicationInstance app){
@@ -53,7 +53,7 @@ public class Sidebar {
 			sidebar.addLabel(locale.getString("sidebar.etc"));
 			sidebar.addElementToSidebar(sidebar.createDefaultSidebarTextarea("etc"), "etc");
 
-			sidebar.setUsernameAndPasswordSupplier(() -> new Pair<>(sidebar.getValueOf("username"), sidebar.getValueOf("password")));
+			sidebar.setUsernameAndPasswordSupplier(() -> new KeyValuePair<>(sidebar.getValueOf("username"), sidebar.getValueOf("password")));
 
 			javaFxUserInterfaceApi.addSidebarPanel(locale.getString("sidebar.tabtitle"), sidebar, 0, true);
 		}

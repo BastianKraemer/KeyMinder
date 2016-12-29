@@ -30,8 +30,8 @@ import de.akubix.keyminder.shell.annotations.PipeInfo;
 import de.akubix.keyminder.shell.io.CommandInput;
 import de.akubix.keyminder.shell.io.CommandOutput;
 import de.akubix.keyminder.shell.io.ShellOutputWriter;
+import de.akubix.keyminder.util.KeyValuePair;
 import de.akubix.keyminder.util.Utilities;
-import javafx.util.Pair;
 
 @Command("export")
 @Operands(cnt = 1)
@@ -65,8 +65,8 @@ public final class Export extends AbstractShellCommand {
 			else{
 
 				try{
-					Pair<String, String> p = Utilities.splitKeyAndValue(in.getParameters().get("$0")[0], "[A-Za-z0-9_\\.:-]+", "=", ".+");
-					instance.getShell().setRuntimeVariable(p.getKey(), p.getValue().trim());
+					KeyValuePair<String, String> pair = Utilities.splitKeyAndValue(in.getParameters().get("$0")[0], "[A-Za-z0-9_\\.:-]+", "=", ".+");
+					instance.getShell().setRuntimeVariable(pair.getKey(), pair.getValue().trim());
 				}
 				catch(IllegalArgumentException e){
 					out.setColor(AnsiColor.YELLOW);

@@ -27,13 +27,13 @@ import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.core.tree.TreeNode;
 import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.dialogs.InputDialog;
+import de.akubix.keyminder.util.KeyValuePair;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.util.Pair;
 
 public class FxSidebar {
 
@@ -42,7 +42,7 @@ public class FxSidebar {
 	private final JavaFxUserInterfaceApi javaFxUserInterfaceApi;
 	private final VBox sidebarContainer;
 	private boolean firstLabel = true;
-	private Supplier<Pair<String, String>> usefulValuesSupplier = null;
+	private Supplier<KeyValuePair<String, String>> usefulValuesSupplier = null;
 
 	public FxSidebar(ApplicationInstance app, JavaFxUserInterfaceApi javaFxUserInterfaceApi) throws IllegalStateException {
 
@@ -213,7 +213,7 @@ public class FxSidebar {
 		};
 	}
 
-	public void setUsernameAndPasswordSupplier(Supplier<Pair<String, String>> usefulValuesSupplier){
+	public void setUsernameAndPasswordSupplier(Supplier<KeyValuePair<String, String>> usefulValuesSupplier){
 		this.usefulValuesSupplier = usefulValuesSupplier;
 	}
 
@@ -227,7 +227,7 @@ public class FxSidebar {
 	 * @return The supplier
 	 * @see FxSidebar#hasUsernameAndPasswordSupplier()
 	 */
-	public Supplier<Pair<String, String>> getUserNameAndPasswordSupplier(){
+	public Supplier<KeyValuePair<String, String>> getUserNameAndPasswordSupplier(){
 		return usefulValuesSupplier;
 	}
 }

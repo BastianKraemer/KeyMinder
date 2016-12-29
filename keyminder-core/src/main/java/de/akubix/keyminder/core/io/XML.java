@@ -47,8 +47,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
+import de.akubix.keyminder.util.KeyValuePair;
 import de.akubix.keyminder.util.Utilities;
-import javafx.util.Pair;
 
 /**
  * This class represents a collection of static methods and functions to deal with XML files, documents and nodes
@@ -290,11 +290,11 @@ public final class XML{
 			org.w3c.dom.Node xmlnode;
 			if(nodeName.contains(":")){
 
-				Pair<String, String> p = Utilities.splitKeyAndValue(nodeName, ".+", ":", ".+");
+				KeyValuePair<String, String> pair = Utilities.splitKeyAndValue(nodeName, ".+", ":", ".+");
 
-				xmlnode = parentXmlNode.getOwnerDocument().createElement(p.getKey());
+				xmlnode = parentXmlNode.getOwnerDocument().createElement(pair.getKey());
 				org.w3c.dom.Attr attrib = parentXmlNode.getOwnerDocument().createAttribute("name");
-				attrib.setNodeValue(p.getValue());
+				attrib.setNodeValue(pair.getValue());
 				xmlnode.getAttributes().setNamedItem(attrib);
 			}
 			else{

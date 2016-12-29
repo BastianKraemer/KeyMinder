@@ -34,10 +34,10 @@ import de.akubix.keyminder.ui.fx.JavaFxUserInterfaceApi;
 import de.akubix.keyminder.ui.fx.MainWindow;
 import de.akubix.keyminder.ui.fx.sidebar.FxSidebar;
 import de.akubix.keyminder.ui.fx.utils.ImageMap;
+import de.akubix.keyminder.util.KeyValuePair;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.TabPane;
-import javafx.util.Pair;
 
 /**
  * KeyClip: Provides a functionality which allows the user to transfer a certain user name and password to another application using the clip board.
@@ -82,7 +82,7 @@ public class KeyClip {
 		fxUI.addCustomElement(keyClipSidebarButton, IdentifiableElement.SIDEBAR_HEADER);
 	}
 
-	void exportUserAndPassword(Pair<String, String> data){
+	void exportUserAndPassword(KeyValuePair<String, String> data){
 		String username = data.getKey();
 		String password = data.getValue();
 
