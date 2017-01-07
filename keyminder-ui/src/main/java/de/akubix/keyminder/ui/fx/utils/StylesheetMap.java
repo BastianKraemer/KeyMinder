@@ -20,9 +20,6 @@ public class StylesheetMap {
 			case Terminal:
 				scene.getStylesheets().addAll(defaultCSSFile, "/de/akubix/keyminder/ui/css/terminal.css");
 				break;
-			case About:
-				scene.getStylesheets().addAll(defaultCSSFile, "/de/akubix/keyminder/ui/css/about.css");
-				break;
 			case Other:
 				scene.getStylesheets().add(defaultCSSFile);
 				break;
@@ -32,6 +29,6 @@ public class StylesheetMap {
 	}
 
 	public enum WindowSelector {
-		MainWindow, Terminal, About, Other
+		MainWindow, Terminal, Other
 	}
 }

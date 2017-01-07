@@ -1,0 +1,48 @@
+<?import de.akubix.keyminder.core.ApplicationInstance ?>
+<?import java.net.URL?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.TextArea?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+	fx:controller="de.akubix.keyminder.ui.fx.AboutController">
+	<stylesheets>
+		<URL value="@css/About.css" />
+	</stylesheets>
+
+	<left>
+		<Pane id="application-icon-pane">
+			<ImageView fx:id="applicationIconImageView" id="application-icon"></ImageView>
+		</Pane>
+	</left>
+	<center>
+		<BorderPane>
+			<top>
+				<VBox>
+					<Label id="application-name">
+						<text><ApplicationInstance fx:constant="APP_NAME"></ApplicationInstance></text>
+					</Label>
+					<Label id="application-version" fx:id="applicationVersionLabel"></Label>
+				</VBox>
+			</top>
+			<center>
+				<TextArea fx:id="aboutContent" editable="false"></TextArea>
+			</center>
+		</BorderPane>
+	</center>
+	<bottom>
+		<HBox styleClass="bottom-pane">
+			<children>
+				<Hyperlink text="%about.show_info" onAction="#showInfo"
+					alignment="CENTER" HBox.hgrow="ALWAYS" minWidth="320"></Hyperlink>
+				<Hyperlink text="%about.show_gpl" onAction="#showLicense"
+					alignment="CENTER" HBox.hgrow="ALWAYS" minWidth="320"></Hyperlink>
+			</children>
+		</HBox>
+	</bottom>
+</BorderPane>

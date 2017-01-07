@@ -1,0 +1,81 @@
+.root {
+	/* @SuppressWarning */
+	-light-background: #f8f8f8;
+	/* @SuppressWarning */
+	-dark-background: #e9e9e9;
+}
+
+#Body {
+	-fx-background-color: -light-background;
+}
+
+.bottom-pane {
+	-fx-min-height: 24px;
+	-fx-background-color: -dark-background;
+}
+
+.bottom-pane .hyperlink {
+	-fx-text-alignment: center;
+	-fx-padding: 4px;
+	-fx-text-fill: -fx-accent;
+}
+
+#application-name {
+	-fx-font-size: 48px;
+	-fx-padding: -8px 0 4px 0;
+}
+
+#application-version {
+	-fx-font-style: italic;
+	-fx-font-size: 14px;
+	-fx-padding: -6px 0px 6px 0px;
+}
+
+#application-icon {
+	-fx-scale-x: 0.7;
+	-fx-scale-y: 0.7;
+	-fx-translate-x: -24px;
+	-fx-translate-y: -31px;
+}
+
+#application-icon-pane {
+	-fx-max-width: 200px;
+	-fx-max-height: 200px;
+}
+
+#ScrollPane {
+	-fx-padding: 4px;
+	-fx-background: white;
+}
+
+#ScrollPane:focused {
+	-fx-background-color: -fx-box-border, -fx-background;
+	-fx-background-insets: 0, 1;
+}
+
+.text-area {
+	-fx-min-width: 440px;
+}
+
+.text-area, .text-area:focused {
+	-fx-background-insets: 0;
+	-fx-background-radius: 0;
+	-fx-background-color: -light-background;
+	-fx-border-color: -dark-background;
+	-fx-border-width: 1;
+	-fx-padding: -1 -2 -2 -1;
+	-fx-text-box-border: -fx-control-inner-background;
+}
+
+.text-area:focused {
+	-fx-focus-color: -fx-control-inner-background;
+	-fx-faint-focus-color: -fx-control-inner-background;
+}
+
+.text-area .content {
+	-fx-background-color: -light-background;
+}
+
+.text-area:focused .content {
+	-fx-background-color: -light-background;
+}

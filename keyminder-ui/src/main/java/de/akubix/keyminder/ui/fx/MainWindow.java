@@ -564,7 +564,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 
 		menu_Extras.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.extras.appinfo"),
 				  ImageMap.getIcon("icon_star_filled"),
-				  (event) -> {new de.akubix.keyminder.ui.fx.About(this).show();}, false));
+				  (event) -> StageHandler.showKeyMinderAbout(this), false));
 
 		menuBar.getMenus().addAll(menu_File, menu_Edit, menu_View, menu_Extras, menu_Tools);
 		root.setTop(menuBar);
