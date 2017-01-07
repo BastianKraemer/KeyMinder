@@ -9,12 +9,13 @@ This sounds a bit technical, but KeyMinder is not just for IT experts, many feat
 
 ##Getting started
 KeyMinder is written in Java, so it can be used on Linux and Windows. The graphical user interface is realized with JavaFX.
-To start KeyMinder on your computer you will need a Java 8 installation on your system. _At the moment KeyMinder has been tested with Oracle Java 8, Update 60 only_.
+To start KeyMinder on your computer you will need a Java 8 installation on your system.
+
+> If you are using the OpenJDK Java Platform it's possible that the the JavaFX runtime environment is not included in your installation.
+> In this case you will have to setup the JavaFX runtime environment at first.
 
 ##Security
-KeyMinder is able to encrypt your login credentials with AES-256 (and PBKDF2-Hashes). For more information take a look at ‘manual.txt’.
-
-**Note: Currently the encryption is not enabled automatically; it has to be turned on manually for each file. This will be changed in the next release**
+KeyMinder is able to encrypt your login credentials with AES-256 (and PBKDF2-Hashes). For more information take a look at the **MANUAL.md** file.
 
 ##Contributing
 There are several possibilities to contribute something to this project. 
