@@ -1,0 +1,26 @@
+<?import java.net.URL?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+	fx:controller="de.akubix.keyminder.ui.fx.TerminalController">
+	<stylesheets>
+		<URL value="@css/Terminal.css" />
+	</stylesheets>
+
+	<center>
+		<TextArea fx:id="output" editable="false" onKeyReleased="#outputKeyReleased"
+			focusTraversable="false"></TextArea>
+	</center>
+	<bottom>
+		<HBox styleClass="bottom-pane">
+			<children>
+				<TextField text="\$" maxWidth="16" focusTraversable="false"></TextField>
+				<TextField fx:id="input" HBox.hgrow="ALWAYS" onKeyPressed="#inputKeyPressed"
+					focusTraversable="false"></TextField>
+			</children>
+		</HBox>
+	</bottom>
+</BorderPane>

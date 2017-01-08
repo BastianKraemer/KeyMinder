@@ -551,7 +551,7 @@ public class MainWindow extends Application implements JavaFxUserInterfaceApi {
 		menu_Tools = new Menu(localeBundle.getString("mainwindow.menu.tools"));
 		menu_Tools.getItems().add(createMenuItem(localeBundle.getString("mainwindow.menu.tools.terminal"),
 												 ImageMap.getIcon("icon_bash"),
-												 (event) -> new Terminal(app).show(), false));
+												 (event) -> StageHandler.showTerminal(app, this), false));
 
 		// --- Menu Extras
 		menu_Extras = new Menu(localeBundle.getString("mainwindow.menu.extras"));

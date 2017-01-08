@@ -1,120 +1,64 @@
 /*	KeyMinder
- * Copyright (C) 2015-2016 Bastian Kraemer
+ * Copyright (C) 2015-2017 Bastian Kraemer
  *
- * Terminal.java
+ * TerminalController.java
  *
- * This program is free software: you can redistribute it and/or modify
+ * KeyMinder is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * This program is distributed in the hope that it will be useful,
+ * KeyMinder is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with KeyMinder.  If not, see <http://www.gnu.org/licenses/>.
  */
 package de.akubix.keyminder.ui.fx;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 
 import de.akubix.keyminder.core.ApplicationInstance;
 import de.akubix.keyminder.core.KeyMinder;
 import de.akubix.keyminder.core.exceptions.UserCanceledOperationException;
 import de.akubix.keyminder.shell.AnsiColor;
 import de.akubix.keyminder.shell.CommandException;
-import de.akubix.keyminder.ui.fx.utils.ImageMap;
-import de.akubix.keyminder.ui.fx.utils.StylesheetMap;
+import de.akubix.keyminder.shell.io.ShellOutputWriter;
 import javafx.application.Platform;
-import javafx.scene.Scene;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
 
-public class Terminal implements de.akubix.keyminder.shell.io.ShellOutputWriter {
-	private Stage terminalwindow;
+public class TerminalController implements Initializable, ShellOutputWriter {
+
+	@FXML
 	private TextArea output;
+
+	@FXML
 	private TextField input;
+
 	private ApplicationInstance app;
+	private Stage terminalWindow;
 	private List<String> history = new ArrayList<>();
 	private int currentHistoryIndex = 0;
 
-	public Terminal(ApplicationInstance instance){
-		this.app = instance;
+	public TerminalController() {
+		this.history = new ArrayList<>();
 		this.history.add("");
 	}
 
-	public void show(){
-		BorderPane root = new BorderPane();
-
-		output = new TextArea();
-		input = new TextField();
-
-		root.setCenter(output);
-
-		HBox hbox = new HBox(0);
-		TextField prompt = new TextField("$");
-		prompt.setMaxWidth(16);
-		hbox.getChildren().addAll(prompt, input);
-		HBox.setHgrow(input, Priority.ALWAYS);
-
-		root.setBottom(hbox);
-
-		Scene myScene = new Scene(root, 640, 320);
-		StylesheetMap.assignStylesheet(myScene, StylesheetMap.WindowSelector.Terminal);
-
-		input.addEventFilter(KeyEvent.KEY_PRESSED, (KeyEvent event) -> {
-			if(event.getCode() == KeyCode.ENTER){
-				runCommand(input.getText());
-				input.setText("");
-			}
-			else if(event.getCode() == KeyCode.UP && currentHistoryIndex != -1){
-				currentHistoryIndex--;
-				if(currentHistoryIndex < 0){currentHistoryIndex = 0;}
-				input.setText(history.get(currentHistoryIndex));
-				input.selectAll();
-				event.consume();
-			}
-			else if(event.getCode() == KeyCode.DOWN && currentHistoryIndex != -1){
-				currentHistoryIndex++;
-				if(currentHistoryIndex >= history.size() - 1){currentHistoryIndex = history.size() - 1;}
-				input.setText(history.get(currentHistoryIndex));
-				input.selectAll();
-				event.consume();
-			}
-		});
-
-		output.addEventFilter(KeyEvent.KEY_RELEASED, (KeyEvent event) -> {
-			if(!event.isControlDown()){input.requestFocus(); input.appendText(event.getText());}
-		});
-
+	@Override
+	public void initialize(URL location, ResourceBundle resources) {
 		output.setWrapText(true);
-		output.setEditable(false);
-		input.requestFocus();
-
-		input.setFocusTraversable(false);
-		output.setFocusTraversable(false);
-		prompt.setFocusTraversable(false);
-
-		terminalwindow = new Stage();
-		terminalwindow.setTitle(ApplicationInstance.APP_NAME + " Terminal");
-		terminalwindow.setScene(myScene);
-
-		terminalwindow.setResizable(true);
-		ImageMap.addDefaultIconsToStage(terminalwindow);
-		terminalwindow.setMinWidth(560);
-		terminalwindow.setMinHeight(240);
-
-		terminalwindow.setOnCloseRequest((event) -> app.terminateOutputRedirect(this));
-		terminalwindow.show();
 
 		println(" #    #                    #       #");
 		println(" #   #    ######  #     #  # #   # #   #   #    #  #####   ######  #####");
@@ -124,8 +68,48 @@ public class Terminal implements de.akubix.keyminder.shell.io.ShellOutputWriter 
 		println(" #   #    #          #     #       #   #   #   ##  #    #  #       #   #");
 		println(" #    #   ######     #     #       #   #   #    #  #####   ######  #    #");
 		println("\nVersion: " + KeyMinder.getApplicationVersion() + "\n\n");
+	}
 
+	public void setupAndShow(ApplicationInstance applicationInstance, Stage stage) {
+		this.app = applicationInstance;
+		this.terminalWindow = stage;
 		app.startOutputRedirect(this);
+
+		terminalWindow.setOnCloseRequest((event) -> app.terminateOutputRedirect(this));
+		terminalWindow.show();
+		input.requestFocus();
+	}
+
+	@FXML
+	private void inputKeyPressed(KeyEvent event){
+
+		if(event.getCode() == KeyCode.ENTER){
+			runCommand(input.getText());
+			input.setText("");
+		}
+		else if(event.getCode() == KeyCode.UP && currentHistoryIndex != -1){
+			currentHistoryIndex--;
+			if(currentHistoryIndex < 0){currentHistoryIndex = 0;}
+			input.setText(history.get(currentHistoryIndex));
+			input.selectAll();
+			event.consume();
+		}
+		else if(event.getCode() == KeyCode.DOWN && currentHistoryIndex != -1){
+			currentHistoryIndex++;
+			if(currentHistoryIndex >= history.size() - 1){currentHistoryIndex = history.size() - 1;}
+			input.setText(history.get(currentHistoryIndex));
+			input.selectAll();
+			event.consume();
+		}
+	}
+
+	@FXML
+	private void outputKeyReleased(KeyEvent event){
+
+		if(!event.isControlDown()){
+			input.requestFocus();
+			input.appendText(event.getText());
+		}
 	}
 
 	private void runCommand(String line){
@@ -140,7 +124,7 @@ public class Terminal implements de.akubix.keyminder.shell.io.ShellOutputWriter 
 			} catch (CommandException e) {
 				println(e.getMessage());
 			} catch (UserCanceledOperationException e) {
-				terminalwindow.close();
+				terminalWindow.close();
 				return;
 			}
 		}
