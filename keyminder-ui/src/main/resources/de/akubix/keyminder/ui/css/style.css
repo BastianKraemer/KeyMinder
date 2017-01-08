@@ -16,6 +16,10 @@
 	-fx-underline: true;
 }
 
+.text{
+    -fx-font-smoothing-type: gray;
+}
+
 .button {
 	-fx-text-fill: black;
 	-fx-font-size: 12px;
