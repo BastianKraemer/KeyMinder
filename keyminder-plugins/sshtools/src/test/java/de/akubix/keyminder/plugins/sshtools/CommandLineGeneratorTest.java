@@ -112,7 +112,7 @@ public class CommandLineGeneratorTest {
 
 	private List<String> runParser(Map<String, String> var, TreeNode treeNode, Supplier<InputStream> cmdDescriptor, String profileName) throws IllegalArgumentException {
 		try {
-			CommandLineGenerator xapp = new CommandLineGenerator(app, XML.loadXmlDocument(cmdDescriptor.get()), var, CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
+			CommandLineGenerator xapp = new CommandLineGenerator(app, XML.loadXmlDocument(cmdDescriptor.get()), var, CommandLineGenerator.DEFAULT_RESOURCE_CONTENT_LOADER);
 			return xapp.generateCommandLineParameters(profileName, treeNode);
 		} catch (SAXException | IOException e) {
 			e.printStackTrace();

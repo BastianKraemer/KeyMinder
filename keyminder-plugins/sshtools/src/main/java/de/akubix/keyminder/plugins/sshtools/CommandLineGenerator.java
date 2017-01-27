@@ -1,5 +1,5 @@
 /* KeyMinder
- * Copyright (C) 2015-2016 Bastian Kraemer
+ * Copyright (C) 2015-2017 Bastian Kraemer
  *
  * CommandLineGenerator.java
  *
@@ -18,13 +18,14 @@
  */
 package de.akubix.keyminder.plugins.sshtools;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.script.ScriptException;
 
@@ -46,10 +47,14 @@ import de.akubix.keyminder.shell.Shell;
  */
 public class CommandLineGenerator {
 
-	static final Function<String, String> _DEFAULT_RESOURCE_CONTENT_LOADER = (resourcePath) -> {
+	static final Function<String, String> DEFAULT_RESOURCE_CONTENT_LOADER = (resourcePath) -> {
 		try {
-			return new String(Files.readAllBytes(Paths.get(CommandLineGenerator.class.getResource(resourcePath).toURI())));
-		} catch (IOException | URISyntaxException e) {
+
+			try (BufferedReader buffer = new BufferedReader(new InputStreamReader(CommandLineGenerator.class.getResourceAsStream(resourcePath)))) {
+	            return buffer.lines().collect(Collectors.joining("\n"));
+	        }
+
+		} catch (IOException e) {
 			throw new IllegalArgumentException(String.format("Unable to load file '%s': %s", resourcePath, e.getMessage()));
 		}
 	};

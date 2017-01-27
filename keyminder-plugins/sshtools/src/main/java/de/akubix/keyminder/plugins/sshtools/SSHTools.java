@@ -1,5 +1,5 @@
 /* KeyMinder
- * Copyright (C) 2015-2016 Bastian Kraemer
+ * Copyright (C) 2015-2017 Bastian Kraemer
  *
  * SSHTools.java
  *
@@ -256,7 +256,7 @@ public class SSHTools {
 						return XML.loadXmlDocument(getXMLProfileInputStream(inputStreamSrc));
 					} catch (Exception e) {
 						throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
-				}}, CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
+				}}, CommandLineGenerator.DEFAULT_RESOURCE_CONTENT_LOADER);
 				appStarter.put(as.getName(), as);
 			}
 		}
@@ -278,7 +278,7 @@ public class SSHTools {
 						} catch (SAXException | IOException e) {
 							throw new IllegalArgumentException(String.format("Cannot parse XML-File: '%s'\n\n%s", app.getSettingsValue(SETTINGS_KEY_SOCKS_ACTION), e.getMessage()));
 					}},
-					CommandLineGenerator._DEFAULT_RESOURCE_CONTENT_LOADER);
+					CommandLineGenerator.DEFAULT_RESOURCE_CONTENT_LOADER);
 			}
 			catch(IllegalArgumentException e){
 				final String message = "Warning: Syntax error in socks command line descriptor.";
